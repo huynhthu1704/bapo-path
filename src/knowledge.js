@@ -24,7 +24,7 @@ export function applyKnowledge(kb) {
 
 export async function initKnowledge() {
   try {
-    const kb = await Promise.race([loadKnowledge(), new Promise((r) => setTimeout(() => r(null), 5000))]);
+    const kb = await Promise.race([loadKnowledge(), new Promise((r) => setTimeout(() => r(null), 15000))]);
     if (kb) { applyKnowledge(kb); KB_SOURCE.value = 'cloud'; }
   } catch (e) { console.warn('Knowledge base: using bundled content', e); }
 }

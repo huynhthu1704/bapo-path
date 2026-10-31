@@ -20,12 +20,12 @@ function ScrollTop() {
 const inApp = (el) => <RequireOnboarding><Layout>{el}</Layout></RequireOnboarding>;
 const focus = (el) => <RequireOnboarding>{el}</RequireOnboarding>;
 
-export default function App() {
+export default function App({ kbVersion = 0 }) {
   return (
     <StoreProvider>
       <HashRouter>
         <ScrollTop />
-        <Routes>
+        <Routes key={kbVersion}>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/onboarding/1" element={<Onboarding1 />} />

@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-import { initKnowledge } from './knowledge.js';
+import { initKnowledge, KB_SOURCE } from './knowledge.js';
 import { finishRedirectSignIn } from './firebase.js';
 import './styles.css';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', fontFamily: 'sans-serif', color: '#94A3B8' }}>Loading BAPO Path…</div>);
-Promise.all([initKnowledge(), finishRedirectSignIn()]).finally(() => root.render(<React.StrictMode><App /></React.StrictMode>));
+// Show the site straight away with the bundled content. When the cloud knowledge base arrives,
+// the pages re-render with it (no waiting screen).
+function Root() {
+  const [kbVersion, setKbVersion] = useState(0);
+  useEffect(() => {
+    initKnowledge().then(() => { if (KB_SOURCE.value === 'cloud') setKbVersion((v) => v + 1); });
+    finishRedirectSignIn(); // completes a Google sign-in that used the redirect fallback
+  }, []);
+  return <App kbVersion={kbVersion} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><Root /></React.StrictMode>);
