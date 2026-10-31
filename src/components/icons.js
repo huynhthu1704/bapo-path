@@ -1,0 +1,2 @@
+// Only the icons the app uses (keeps the bundle small).
+export { ArrowRight, Award, BookOpen, Bookmark, Briefcase, Check, ChevronDown, ChevronRight, ChevronUp, Circle, Clock, Copy, Crown, FileText, Flame, Gift, Globe, GraduationCap, Heart, HeartPulse, Home, Landmark, Layers, Lightbulb, ListChecks, Lock, MessageSquare, Minus, PartyPopper, RotateCcw, Route, Search, Shield, ShoppingCart, Shuffle, Smartphone, Snowflake, Sparkles, Square, Star, Swords, Target, Timer, TrendingUp, Trophy, Truck, Unlock, User, Users, Volume2, X, Zap } from 'lucide-react';
