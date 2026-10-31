@@ -124,6 +124,8 @@ export function Jobs() {
               <div className="row center"><div className="col grow" style={{ gap: 2 }}><span className="h3">{j.company}</span><span className="small muted">{j.position || 'Role not set'}</span></div><Tag tone={STATUS_TONE[j.status] || 'ink'}>{j.status}</Tag></div>
               <div className="row wrap gap6">{j.companyDomain && <Tag tone="po">{j.companyDomain}</Tag>}{j.markets && <Tag tone="ink">{j.markets}</Tag>}{j.size && <Tag tone="ink">{j.size} people</Tag>}{j.source && <Tag tone="ink">via {j.source}</Tag>}</div>
               {j.roleDomain && <p className="small muted">{j.roleDomain.length > 180 ? j.roleDomain.slice(0, 178) + '…' : j.roleDomain}</p>}
+              {j.notes && <p className="small" style={{ wordBreak: 'break-word' }}>{j.notes.split(/(https?:\/\/\S+)/).map((part, i) => (/^https?:\/\//.test(part)
+                ? <a key={i} href={part} target="_blank" rel="noreferrer" className="c-primary label">{part.includes('claude.ai/artifact') ? 'Open job research' : 'Link'}</a> : <span key={i} className="muted">{part}</span>))}</p>}
               {j.questions && <div className="soft bg-primary-soft small"><b>Ask them:</b> {j.questions}</div>}
               <div className="row center wrap gap10 caption faint">{j.dateApplied && <span>Applied {j.dateApplied}</span>}{j.nextStep && <span>· Next: {j.nextStep}</span>}{j.followUp && <span>· Follow up {j.followUp}</span>}</div>
               <div className="row center gap8">
