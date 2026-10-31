@@ -2,7 +2,7 @@ import * as L from './icons.js';
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
-import { logSearch } from '../firebase.js';
+import { logSearch, enabled as authEnabled, signInWithGoogle, signInErrorText } from '../firebase.js';
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
 
@@ -119,6 +119,7 @@ function TopBar() {
       <Tag className="hide-sm">{s.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][s.startLevel - 1]}</Tag>
       <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} color="#D97706" />{s.streak.count}</span>
       <span className="pill bg-primary-soft c-primary hide-sm"><Icon name="Star" size={16} color="#4F46E5" />{s.xp.toLocaleString()} XP</span>
+      {!user && <span className="hide-sm"><GoogleButton label="Sign in" small /></span>}
       <Link to="/profile" className="mark" title={user ? `Signed in as ${user.email}` : 'Not signed in'} style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999, overflow: 'hidden' }}>{user && user.photoURL ? <img src={user.photoURL} alt="" width="36" height="36" referrerPolicy="no-referrer" /> : (s.name || 'You')[0].toUpperCase()}</Link>
     </header>
   );
@@ -181,3 +182,26 @@ export function FocusLayout({ title, icon, right, onClose, children }) {
 
 export const trackName = (t) => TRACKS[t].name;
 export const levelName = (n) => LEVEL_NAMES[n] || 'Expert';
+
+export const GoogleG = () => (
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" /><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" /><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" /><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" /></svg>
+);
+
+// "Sign in with Google" button used across the site. After sign-in it calls onDone(user) if given.
+export function GoogleButton({ label = 'Sign in with Google', primary = false, block = false, small = false, onDone }) {
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
+  if (!authEnabled) return null;
+  const go = async () => {
+    setErr(''); setBusy(true);
+    try { const u = await signInWithGoogle(); if (u && onDone) await onDone(u); } catch (e) { setErr(signInErrorText(e)); }
+    setBusy(false);
+  };
+  return (
+    <span className="col" style={{ gap: 6, alignItems: block ? 'stretch' : 'flex-start', width: block ? '100%' : undefined }}>
+      <button type="button" className={`btn ${primary ? 'btn-primary' : 'btn-secondary'} ${block ? 'block' : ''}`} style={small ? { padding: '8px 14px' } : undefined} disabled={busy} onClick={go}>
+        <span style={{ background: '#fff', borderRadius: 4, display: 'grid', placeItems: 'center', padding: primary ? 2 : 0 }}><GoogleG /></span>{busy ? 'Signing in…' : label}
+      </button>
+      {err && <span className="caption c-danger" role="alert">{err}</span>}
+    </span>
+  );
+}

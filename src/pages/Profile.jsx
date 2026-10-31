@@ -5,7 +5,7 @@ import { useStore, rankInfo, dayStr, addDays } from '../store.jsx';
 import { LEVELS, TRACKS, skillsFor } from '../data/skills.js';
 import { CATEGORIES, termsIn } from '../data/terms.js';
 import { enabled, signInWithGoogle, logOut } from '../firebase.js';
-import { GoogleG } from './Account.jsx';
+import { GoogleButton } from '../components/ui.jsx';
 
 export default function Profile() {
   const { s, a, user, sync } = useStore();
@@ -34,7 +34,7 @@ export default function Profile() {
           <span className="caption muted">{user ? ({ loading: 'Loading your cloud progress…', saving: 'Saving…', saved: 'Progress, job search and search history are synced to your account.', error: 'Could not reach the server — changes are kept on this device.' }[sync] || '') : enabled ? 'Sign in to sync your progress across devices and unlock your private job tracker and library.' : 'Google sign-in is not switched on for this site yet — progress is saved in this browser.'}</span>
         </div>
         {user ? <button className="btn btn-secondary" onClick={logOut}><Icon name="LogOut" size={16} />Sign out</button>
-          : enabled && <button className="btn btn-primary" onClick={() => signInWithGoogle().catch(() => {})}><GoogleG />Continue with Google</button>}
+          : <GoogleButton primary label="Sign in with Google" />}
       </div>
       <div className="grid g4">
         {[['Flame', 'accent', `${s.streak.count} days`, 'Current streak'], ['Route', 'primary', `${doneTotal} / ${allTrack}`, 'Skills completed'], ['BookOpen', 'po', s.learned.length, 'Terms learned'], ['Target', 'success', `${avg}%`, 'Average score']].map(([i, t, n, l]) => (

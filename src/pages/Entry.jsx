@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Toggle } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Toggle, GoogleButton } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { DOMAINS } from '../data/domains.js';
 import { TERMS } from '../data/terms.js';
 import { SKILLS } from '../data/skills.js';
 import { enabled, signInWithGoogle, loadProgress } from '../firebase.js';
-import { GoogleG } from './Account.jsx';
 
 const Logo = ({ light }) => (
   <div className="row center gap10">
@@ -16,8 +15,10 @@ const Logo = ({ light }) => (
 );
 
 export function Landing() {
-  const { s } = useStore();
+  const { s, user } = useStore();
+  const nav = useNavigate();
   const start = s.onboarded ? '/home' : '/signup';
+  const afterSignIn = async (u) => { const c = await loadProgress(u.uid).catch(() => null); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); };
   return (
     <div style={{ background: '#fff' }}>
       <nav className="landing-nav">
@@ -26,7 +27,8 @@ export function Landing() {
         <a href="#modules" className="label muted hide-sm">Glossary</a>
         <a href="#domains" className="label muted hide-sm">Domains</a>
         <a href="#how" className="label muted hide-sm">Practice</a>
-        <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
+        {user || !enabled ? <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
+          : <GoogleButton label="Sign in with Google" small onDone={afterSignIn} />}
       </nav>
       <section className="hero">
         <div className="col grow" style={{ gap: 20, minWidth: 0 }}>
@@ -90,7 +92,7 @@ export function SignUp() {
   const { s, a } = useStore();
   const nav = useNavigate();
   const [name, setName] = useState(s.name); const [email, setEmail] = useState(s.email);
-  const [err, setErr] = useState(''); const [g, setG] = useState(false);
+  const [err, setErr] = useState('');
   const go = (e) => { e.preventDefault(); if (!name.trim()) { setErr('Please enter your name.'); return; } a.set({ name: name.trim(), email: email.trim() }); nav('/onboarding/1'); };
   return (
     <div className="row" style={{ minHeight: '100vh', gap: 0, alignItems: 'stretch' }}>
@@ -105,13 +107,8 @@ export function SignUp() {
       <form className="col grow" style={{ padding: '48px clamp(20px, 8vw, 120px)', justifyContent: 'center', gap: 20, maxWidth: 840 }} onSubmit={go}>
         <h1 className="h1">Create your free account</h1>
         <p className="body muted">Sign in with Google to save your progress on every device, or just enter your name.</p>
-        <button type="button" className="btn btn-secondary block" disabled={g === 'busy'} onClick={async () => {
-          if (!enabled) { setG('off'); return; }
-          try { setG('busy'); const u = await signInWithGoogle(); const c = await loadProgress(u.uid); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); }
-          catch (e) { setG(e.code === 'auth/popup-closed-by-user' ? false : 'fail'); }
-        }}><GoogleG />{g === 'busy' ? 'Signing in…' : 'Continue with Google'}</button>
-        {g === 'off' && <p className="caption c-accent">Google sign-in is not switched on for this site yet. Enter your name below — your progress is saved in this browser.</p>}
-        {g === 'fail' && <p className="caption c-danger">Google sign-in failed. Please try again, or continue below.</p>}
+        {enabled ? <GoogleButton label="Continue with Google" block onDone={async (u) => { const c = await loadProgress(u.uid).catch(() => null); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); }} />
+          : <p className="caption c-accent">Google sign-in is not switched on for this site yet. Enter your name below — your progress is saved in this browser.</p>}
         <div className="row center gap10"><div className="grow" style={{ height: 1, background: 'var(--border)' }} /><span className="caption faint">or</span><div className="grow" style={{ height: 1, background: 'var(--border)' }} /></div>
         <label className="col gap6"><span className="label">Full name</span><input className="input" value={name} onChange={(e) => { setName(e.target.value); setErr(''); }} placeholder="Your name" /></label>
         {err && <span className="caption c-danger">{err}</span>}
@@ -196,7 +193,8 @@ export function Onboarding2() {
 }
 
 export function RequireOnboarding({ children }) {
-  const { s } = useStore();
+  const { s, user, sync } = useStore();
+  if (!s.onboarded && user && sync === 'loading') return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#94A3B8' }}>Loading your progress…</div>;
   if (!s.onboarded) return <Navigate to="/signup" replace />;
   return children;
 }

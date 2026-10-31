@@ -12,7 +12,7 @@
 //   users/{uid}/jobs/{jobId}        private job search tracker (owner only)
 //   users/{uid}/searches/{id}       private search history (owner only)
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth';
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch, addDoc, query, orderBy, limit, serverTimestamp,
 } from 'firebase/firestore';
@@ -23,11 +23,28 @@ let auth = null; let db = null;
 if (enabled) { const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); }
 
 // ---------- auth ----------
+const googleProvider = () => { const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
+// Opens Google's account chooser in a popup. If the browser blocks popups, falls back to a full-page redirect.
 export const signInWithGoogle = async () => {
   if (!enabled) throw new Error('not-configured');
-  const res = await signInWithPopup(auth, new GoogleAuthProvider());
-  return res.user;
+  try {
+    const res = await signInWithPopup(auth, googleProvider());
+    return res.user;
+  } catch (e) {
+    if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported'].includes(e.code)) {
+      await signInWithRedirect(auth, googleProvider());
+      return null; // the page navigates away to Google
+    }
+    throw e;
+  }
 };
+export const finishRedirectSignIn = () => (enabled ? getRedirectResult(auth).catch(() => null) : Promise.resolve(null));
+export const signInErrorText = (e) => ({
+  'auth/popup-closed-by-user': '', 'auth/cancelled-popup-request': '',
+  'auth/unauthorized-domain': 'This website address is not allowed to use Google sign-in yet (add it under Firebase → Authentication → Authorised domains).',
+  'auth/network-request-failed': 'No connection. Check your internet and try again.',
+  'not-configured': 'Google sign-in is not switched on for this site yet.',
+}[e?.code || e?.message] ?? 'Google sign-in failed. Please try again.');
 export const logOut = () => (enabled ? signOut(auth) : Promise.resolve());
 export const onUser = (cb) => { if (!enabled) { cb(null); return () => {}; } return onAuthStateChanged(auth, cb); };
 export const isAdmin = async (uid) => { try { return (await getDoc(doc(db, 'admins', uid))).exists(); } catch (e) { return false; } };
