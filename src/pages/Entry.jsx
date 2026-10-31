@@ -27,14 +27,14 @@ export function Landing() {
         <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
       </nav>
       <section className="hero">
-        <div className="col grow" style={{ gap: 20 }}>
-          <span><Tag>FREE · FOR NEW BAs & POs</Tag></span>
-          <h1 className="display" style={{ fontSize: 56, lineHeight: '64px', maxWidth: 620 }}>Learn the BA & PO job, one skill at a time.</h1>
+        <div className="col grow" style={{ gap: 20, minWidth: 0 }}>
+          <span><Tag className="tag-white">FREE · FOR NEW BAs & POs</Tag></span>
+          <h1 className="display hero-title">Learn the BA & PO job, one skill at a time.</h1>
           <p className="h3 muted" style={{ fontWeight: 400, maxWidth: 620 }}>A clear roadmap from beginner to expert, plain-English explanations of IT, teamwork and business jargon, and quick tests that show what you really know.</p>
           <div className="row gap10 wrap"><Link to={start} className="btn btn-primary">Start learning — it’s free</Link><Link to={start} className="btn btn-secondary">Explore the roadmap</Link></div>
           <div className="row center gap8 small muted"><Icon name="Users" size={18} color="#4F46E5" />Built for career switchers, juniors and non-native English speakers</div>
         </div>
-        <div className="col" style={{ width: 520, maxWidth: '100%', gap: 16 }}>
+        <div className="col hero-mock" style={{ gap: 16 }}>
           <div className="card p24">
             <div className="overline faint">Your path · Business Analyst</div>
             {[['Beginner', '#22C55E', 100, '12 / 12'], ['Intermediate', '#3B82F6', 45, '6 / 14'], ['Advanced', '#8B5CF6', 0, '0 / 12'], ['Expert', '#F59E0B', 0, '0 / 10']].map(([n, c, p, d]) => (
@@ -47,11 +47,11 @@ export function Landing() {
           </div>
         </div>
       </section>
-      <section className="section row wrap" style={{ paddingTop: 40, paddingBottom: 40, gap: 24 }}>
+      <section className="section" style={{ paddingTop: 40, paddingBottom: 40 }}><div className="grid g4" style={{ gap: 24 }}>
         {[[`${SKILLS.length}`, 'skills across BA & PO tracks'], [`${TERMS.length}+`, 'IT, teamwork & business terms'], ['8', 'business domains'], ['3', 'practice modes + games']].map(([n, l]) => (
-          <div key={l} className="col grow gap4" style={{ minWidth: 180 }}><div className="h1 c-primary">{n}</div><div className="small muted">{l}</div></div>
+          <div key={l} className="col gap4"><div className="h1 c-primary">{n}</div><div className="small muted">{l}</div></div>
         ))}
-      </section>
+      </div></section>
       <section id="modules" className="section" style={{ background: 'var(--bg)' }}>
         <h2 className="h1">Everything a starter needs, in one place</h2>
         <div className="grid g4">
@@ -77,7 +77,7 @@ export function Landing() {
         <p className="body c-white">Free. No credit card. Progress saves on your device.</p>
         <Link to={start} className="btn btn-secondary">Create free account</Link>
       </section>
-      <footer className="landing-nav" style={{ height: 'auto', padding: '28px 80px', flexWrap: 'wrap', gap: 24 }}>
+      <footer className="landing-nav" style={{ height: 'auto', paddingTop: 28, paddingBottom: 28, flexWrap: 'wrap', gap: 24 }}>
         <Logo /><div className="grow" />{['About', 'Contribute a term', 'Privacy', '© 2026 BAPO Path'].map((l) => <span key={l} className="small faint">{l}</span>)}
       </footer>
     </div>
@@ -110,7 +110,7 @@ export function SignUp() {
         {err && <span className="caption c-danger">{err}</span>}
         <label className="col gap6"><span className="label">Email <span className="faint">(optional)</span></span><input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
         <button className="btn btn-primary block" type="submit">Create account</button>
-        <div className="row center gap10 soft bg-bg small muted"><Icon name="User" size={18} />Just looking?&nbsp;<button type="button" className="btn-ghost label" style={{ border: 0, background: 'none', color: 'var(--primary)', padding: 0 }} onClick={() => { a.set({ name: 'Guest' }); nav('/onboarding/1'); }}>Continue as guest</button> — progress saves on this device.</div>
+        <div className="row center gap10 soft bg-bg small muted"><Icon name="User" size={18} style={{ flex: 'none' }} /><span>Just looking? <button type="button" className="label" style={{ border: 0, background: 'none', color: 'var(--primary)', padding: 0 }} onClick={() => { a.set({ name: 'Guest' }); nav('/onboarding/1'); }}>Continue as guest</button> — progress saves on this device.</span></div>
       </form>
     </div>
   );

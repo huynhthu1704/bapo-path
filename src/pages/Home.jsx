@@ -37,11 +37,11 @@ export default function Home() {
         <p className="body muted">You are {/^[AEIOU]/.test(r.name) ? 'an' : 'a'} {r.name}{r.next ? ` — ${r.toNext.toLocaleString()} XP until your next rank.` : '.'} Finish today’s quests to get there faster.</p>
       </div>
 
-      <div className="row stretch stack-sm gap24">
-        <div className="panel-primary grow">
+      <div className="home-split">
+        <div className="panel-primary">
           <span className="overline">Career rank</span>
           <div className="h1">{r.name}</div>
-          <Progress value={r.pct} h={10} color="var(--accent-bright)" track="#fff" />
+          <Progress value={r.pct} h={10} color="var(--accent-bright)" track="rgba(255,255,255,.28)" />
           <div className="row center label"><span className="grow">{s.xp.toLocaleString()} / {(r.next || s.xp).toLocaleString()} XP</span>{r.nextName && <span>Next: {r.nextName}</span>}</div>
           <div className="row wrap gap8" style={{ paddingTop: 6 }}>
             {r.names.map((n, i) => (
@@ -51,7 +51,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        <div className="card p24" style={{ width: 380, maxWidth: '100%', gap: 14 }}>
+        <div className="card p24" style={{ gap: 14 }}>
           <div className="row center gap10"><Icon name="Flame" size={28} color="#D97706" /><span className="h1">{s.streak.count}-day streak</span></div>
           <div className="row gap8">
             {week.map((d) => { const on = !!s.activity[d]; return (
@@ -67,8 +67,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="row stretch stack-sm gap24">
-        <div className="card p24 grow" style={{ gap: 4 }}>
+      <div className="home-split">
+        <div className="card p24" style={{ gap: 4 }}>
           <div className="row center" style={{ paddingBottom: 8 }}><span className="h3 grow">Daily quests</span><span className="caption faint">Resets at midnight</span></div>
           {q.map((x) => { const done = x.cur >= x.tot; return (
             <Link to={x.to} key={x.title} className="row center" style={{ gap: 14, padding: '12px 0' }}>
@@ -76,13 +76,13 @@ export default function Home() {
               <div className="col grow gap6"><div className="row"><span className={`label grow ${done ? 'faint' : ''}`}>{x.title}</span><span className="caption faint">{x.cur} / {x.tot}</span></div><Progress value={(x.cur / x.tot) * 100} h={6} color={done ? 'var(--success)' : 'var(--primary)'} /></div>
               <Tag tone={done ? 'success' : 'accent'}>+{x.xp} XP</Tag>
             </Link>); })}
-          <div className="row center soft bg-accent-soft" style={{ gap: 12, marginTop: 8 }}>
+          <div className="row center soft bg-accent-soft wrap" style={{ gap: 12, marginTop: 8 }}>
             <Icon name="Gift" size={22} color="#D97706" />
-            <span className="small grow">{s.daily.chest ? 'Bonus chest opened today. See you tomorrow!' : 'Finish all 3 quests to open the bonus chest: +50 XP'}</span>
+            <span className="small grow" style={{ minWidth: 200 }}>{s.daily.chest ? 'Bonus chest opened today. See you tomorrow!' : 'Finish all 3 quests to open the bonus chest: +50 XP'}</span>
             {!s.daily.chest && <button className="btn btn-primary" style={{ padding: '8px 14px' }} disabled={!allDone} onClick={a.claimChest}>Open chest</button>}
           </div>
         </div>
-        <div className="card p24" style={{ width: 380, maxWidth: '100%' }}>
+        <div className="card p24">
           <span className="overline c-primary">Continue learning</span>
           {next ? <>
             <div className="h2">{next.title}</div>

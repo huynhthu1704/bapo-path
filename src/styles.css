@@ -167,3 +167,12 @@ h1, h2, h3, p { margin: 0; }
   .display { font-size: 34px; line-height: 40px; }
   .tree-row { grid-template-columns: repeat(2, 1fr); } .tree-node::after { display: none; }
 }
+
+.hero-title { font-size: clamp(36px, 4.4vw, 56px); line-height: 1.14; max-width: 620px; }
+.hero-mock { flex: 0 1 480px; min-width: 320px; }
+.tag-white { background: #fff; }
+@media (max-width: 1100px) { .hero { gap: 40px; padding: 56px 40px; } .section { padding-left: 40px; padding-right: 40px; } .landing-nav { padding-left: 40px; padding-right: 40px; } }
+@media (max-width: 900px) { .hero-mock { flex: none; width: 100%; min-width: 0; } .hero { padding: 40px 20px; } .section, .landing-nav { padding-left: 20px; padding-right: 20px; } }
+
+.home-split { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: stretch; }
+@media (max-width: 1200px) { .home-split { grid-template-columns: minmax(0, 1fr); } }
