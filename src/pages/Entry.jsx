@@ -5,6 +5,8 @@ import { useStore } from '../store.jsx';
 import { DOMAINS } from '../data/domains.js';
 import { TERMS } from '../data/terms.js';
 import { SKILLS } from '../data/skills.js';
+import { enabled, signInWithGoogle, loadProgress } from '../firebase.js';
+import { GoogleG } from './Account.jsx';
 
 const Logo = ({ light }) => (
   <div className="row center gap10">
@@ -102,9 +104,14 @@ export function SignUp() {
       </div>
       <form className="col grow" style={{ padding: '48px clamp(20px, 8vw, 120px)', justifyContent: 'center', gap: 20, maxWidth: 840 }} onSubmit={go}>
         <h1 className="h1">Create your free account</h1>
-        <p className="body muted">Save your progress and pick up where you left off.</p>
-        <button type="button" className="btn btn-secondary block" onClick={() => setG(true)}>Continue with Google</button>
-        {g && <p className="caption c-accent">Google sign-in comes with accounts in v2. For now, enter your name below — your progress is saved in this browser.</p>}
+        <p className="body muted">Sign in with Google to save your progress on every device, or just enter your name.</p>
+        <button type="button" className="btn btn-secondary block" disabled={g === 'busy'} onClick={async () => {
+          if (!enabled) { setG('off'); return; }
+          try { setG('busy'); const u = await signInWithGoogle(); const c = await loadProgress(u.uid); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); }
+          catch (e) { setG(e.code === 'auth/popup-closed-by-user' ? false : 'fail'); }
+        }}><GoogleG />{g === 'busy' ? 'Signing in…' : 'Continue with Google'}</button>
+        {g === 'off' && <p className="caption c-accent">Google sign-in is not switched on for this site yet. Enter your name below — your progress is saved in this browser.</p>}
+        {g === 'fail' && <p className="caption c-danger">Google sign-in failed. Please try again, or continue below.</p>}
         <div className="row center gap10"><div className="grow" style={{ height: 1, background: 'var(--border)' }} /><span className="caption faint">or</span><div className="grow" style={{ height: 1, background: 'var(--border)' }} /></div>
         <label className="col gap6"><span className="label">Full name</span><input className="input" value={name} onChange={(e) => { setName(e.target.value); setErr(''); }} placeholder="Your name" /></label>
         {err && <span className="caption c-danger">{err}</span>}

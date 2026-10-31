@@ -9,6 +9,7 @@ import { General, Glossary, TermDetail, Domains, DomainDetail, Saved } from './p
 import { PracticeSetup, Flashcards, Quiz, Results } from './pages/Practice.jsx';
 import { Achievements, Collection, Story, Speed, Circle } from './pages/Game.jsx';
 import Profile from './pages/Profile.jsx';
+import { Jobs, Library, Admin } from './pages/Account.jsx';
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -49,6 +50,9 @@ export default function App() {
           <Route path="/story" element={inApp(<Story />)} />
           <Route path="/speed" element={focus(<Speed />)} />
           <Route path="/circle" element={inApp(<Circle />)} />
+          <Route path="/jobs" element={inApp(<Jobs />)} />
+          <Route path="/library" element={inApp(<Library />)} />
+          <Route path="/admin" element={inApp(<Admin />)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toasts />

@@ -2,6 +2,7 @@ import * as L from './icons.js';
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
+import { logSearch } from '../firebase.js';
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
 
@@ -56,11 +57,11 @@ export const PageHead = ({ title, sub, children }) => (
 const NAV = [
   ['LEARN', [['/home', 'Home', 'Home'], ['/roadmap', 'Skill Roadmap', 'Route'], ['/general', 'General Knowledge', 'Globe'], ['/domains', 'Domain Knowledge', 'Briefcase'], ['/practice', 'Practice', 'Zap'], ['/saved', 'Saved', 'Bookmark']]],
   ['PLAY', [['/story', 'Story Mode', 'BookOpen'], ['/speed', 'Speed Round', 'Timer'], ['/collection', 'Collection', 'Copy'], ['/circle', 'Study Circle', 'Users']]],
-  ['YOU', [['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User']]],
+  ['YOU', [['/jobs', 'My Job Search', 'ClipboardList'], ['/library', 'My Library', 'History'], ['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User']]],
 ];
 
 function Sidebar() {
-  const { s } = useStore();
+  const { s, admin } = useStore();
   const r = rankInfo(s.xp, s.track);
   return (
     <aside className="sidebar">
@@ -73,6 +74,7 @@ function Sidebar() {
           ))}
         </div>
       ))}
+      {admin && <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name="Database" size={20} />Knowledge admin</NavLink>}
       <Link to="/achievements" className="rank-card">
         <div className="row center gap8"><Icon name="Award" size={18} color="#4F46E5" /><span className="label grow" style={{ color: 'var(--primary-dark)' }}>{r.name}</span><span className="caption c-primary">Rank {r.index + 1}</span></div>
         <Progress value={r.pct} h={6} track="#fff" />
@@ -84,7 +86,9 @@ function Sidebar() {
 }
 
 function SearchBox() {
+  const { user } = useStore();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
+  const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
   useEffect(() => { const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, []);
   const ql = q.trim().toLowerCase();
@@ -96,10 +100,10 @@ function SearchBox() {
     <div className="search" ref={ref}>
       <Icon name="Search" size={18} color="#94A3B8" />
       <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Search terms, skills, domains…" aria-label="Search"
-        onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) { nav(results[0].to); setOpen(false); setQ(''); } }} />
+        onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) { record(results[0]); nav(results[0].to); setOpen(false); setQ(''); } }} />
       {open && results.length > 0 && (
         <div className="search-results">
-          {results.map((r) => <Link key={r.to} to={r.to} onClick={() => { setOpen(false); setQ(''); }}><span className="label">{r.label}</span><span className="caption faint">{r.meta}</span></Link>)}
+          {results.map((r) => <Link key={r.to} to={r.to} onClick={() => { record(r); setOpen(false); setQ(''); }}><span className="label">{r.label}</span><span className="caption faint">{r.meta}</span></Link>)}
         </div>
       )}
     </div>
@@ -107,7 +111,7 @@ function SearchBox() {
 }
 
 function TopBar() {
-  const { s } = useStore();
+  const { s, user } = useStore();
   return (
     <header className="topbar">
       <SearchBox />
@@ -115,7 +119,7 @@ function TopBar() {
       <Tag className="hide-sm">{s.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][s.startLevel - 1]}</Tag>
       <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} color="#D97706" />{s.streak.count}</span>
       <span className="pill bg-primary-soft c-primary hide-sm"><Icon name="Star" size={16} color="#4F46E5" />{s.xp.toLocaleString()} XP</span>
-      <Link to="/profile" className="mark" style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999 }}>{(s.name || 'You')[0].toUpperCase()}</Link>
+      <Link to="/profile" className="mark" title={user ? `Signed in as ${user.email}` : 'Not signed in'} style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999, overflow: 'hidden' }}>{user && user.photoURL ? <img src={user.photoURL} alt="" width="36" height="36" referrerPolicy="no-referrer" /> : (s.name || 'You')[0].toUpperCase()}</Link>
     </header>
   );
 }

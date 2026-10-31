@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { onUser, loadProgress, saveProgress, isAdmin } from './firebase.js';
 import { TERMS, TERM_BY_ID, CATEGORIES, termsIn } from './data/terms.js';
 import { SKILLS, TRACKS, RANK_XP, skillsFor } from './data/skills.js';
 
@@ -83,7 +84,36 @@ const Ctx = createContext(null);
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(load);
+  const [user, setUser] = useState(null); const [admin, setAdmin] = useState(false); const [sync, setSync] = useState('off');
+  const ready = useRef(false);
   useEffect(() => { const { toasts, ...rest } = state; localStorage.setItem(KEY, JSON.stringify(rest)); }, [state]);
+
+  // Google account: on sign-in, merge cloud progress with this browser, then keep the cloud copy up to date.
+  useEffect(() => onUser(async (u) => {
+    ready.current = false; setUser(u); setAdmin(false);
+    if (!u) { setSync('off'); return; }
+    setSync('loading');
+    try {
+      const [cloud, adm] = await Promise.all([loadProgress(u.uid), isAdmin(u.uid)]);
+      setAdmin(adm);
+      setState((local) => {
+        const c = cloud && cloud.progress;
+        const useCloud = c && (c.xp > local.xp || !local.onboarded);
+        const base = useCloud ? { ...fresh(), ...c, toasts: [] } : local;
+        return { ...base, name: base.name && base.name !== 'Guest' ? base.name : (u.displayName || base.name), email: u.email };
+      });
+      ready.current = true; setSync('saved');
+    } catch (e) { console.warn(e); setSync('error'); }
+  }), []);
+  useEffect(() => {
+    if (!user || !ready.current) return;
+    setSync('saving');
+    const t = setTimeout(() => {
+      const { toasts, lastResult, ...progress } = state;
+      saveProgress(user.uid, { name: state.name, email: user.email, photo: user.photoURL || null }, progress).then(() => setSync('saved')).catch(() => setSync('error'));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [state, user]);
 
   const update = useCallback((fn) => setState((prev) => {
     const s = structuredClone(prev);
@@ -178,7 +208,7 @@ export function StoreProvider({ children }) {
     }),
   }), [update]);
 
-  return <Ctx.Provider value={{ s: state, a: actions }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ s: state, a: actions, user, admin, sync }}>{children}</Ctx.Provider>;
 }
 
 export const useStore = () => useContext(Ctx);

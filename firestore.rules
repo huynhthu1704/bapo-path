@@ -1,0 +1,25 @@
+rules_version = '2';
+// Paste this into Firebase console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    // Public knowledge base: anyone can read, only admins can change it.
+    match /kb_terms/{id}      { allow read: if true; allow write: if isAdmin(); }
+    match /kb_skills/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /kb_domains/{id}    { allow read: if true; allow write: if isAdmin(); }
+    match /kb_challenges/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /kb_story/{id}      { allow read: if true; allow write: if isAdmin(); }
+    match /kb_meta/{id}       { allow read: if true; allow write: if isAdmin(); }
+
+    // Admin list: a signed-in user may check only their own entry. Create entries by hand in the console.
+    match /admins/{uid} { allow read: if signedIn() && request.auth.uid == uid; allow write: if false; }
+
+    // Private data: only the owner can read or write it.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+      match /{sub=**} { allow read, write: if signedIn() && request.auth.uid == uid; }
+    }
+  }
+}

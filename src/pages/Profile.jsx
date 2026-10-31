@@ -4,9 +4,11 @@ import { Icon, Tag, IconBox, Progress, Toggle, LevelTag } from '../components/ui
 import { useStore, rankInfo, dayStr, addDays } from '../store.jsx';
 import { LEVELS, TRACKS, skillsFor } from '../data/skills.js';
 import { CATEGORIES, termsIn } from '../data/terms.js';
+import { enabled, signInWithGoogle, logOut } from '../firebase.js';
+import { GoogleG } from './Account.jsx';
 
 export default function Profile() {
-  const { s, a } = useStore();
+  const { s, a, user, sync } = useStore();
   const r = rankInfo(s.xp, s.track);
   const [name, setName] = useState(s.name); const [edit, setEdit] = useState(false); const [confirm, setConfirm] = useState(false);
   const avg = s.attempts.length ? Math.round((s.attempts.reduce((t, x) => t + x.score / x.total, 0) / s.attempts.length) * 100) : 0;
@@ -24,6 +26,15 @@ export default function Profile() {
           <div className="row wrap gap8"><Tag>{TRACKS[s.track].name}</Tag><LevelTag level={s.startLevel} /><Tag tone="ink">{r.name}</Tag></div>
         </div>
         {!edit && <button className="btn btn-secondary" onClick={() => setEdit(true)}>Edit profile</button>}
+      </div>
+      <div className="card row center stack-sm" style={{ flexDirection: 'row', gap: 16 }}>
+        <IconBox name={user ? 'Cloud' : 'CloudOff'} tone={user ? 'success' : 'ink'} />
+        <div className="col grow gap4" style={{ gap: 2 }}>
+          <span className="label">{user ? `Signed in with Google · ${user.email}` : 'Not signed in'}</span>
+          <span className="caption muted">{user ? ({ loading: 'Loading your cloud progress…', saving: 'Saving…', saved: 'Progress, job search and search history are synced to your account.', error: 'Could not reach the server — changes are kept on this device.' }[sync] || '') : enabled ? 'Sign in to sync your progress across devices and unlock your private job tracker and library.' : 'Google sign-in is not switched on for this site yet — progress is saved in this browser.'}</span>
+        </div>
+        {user ? <button className="btn btn-secondary" onClick={logOut}><Icon name="LogOut" size={16} />Sign out</button>
+          : enabled && <button className="btn btn-primary" onClick={() => signInWithGoogle().catch(() => {})}><GoogleG />Continue with Google</button>}
       </div>
       <div className="grid g4">
         {[['Flame', 'accent', `${s.streak.count} days`, 'Current streak'], ['Route', 'primary', `${doneTotal} / ${allTrack}`, 'Skills completed'], ['BookOpen', 'po', s.learned.length, 'Terms learned'], ['Target', 'success', `${avg}%`, 'Average score']].map(([i, t, n, l]) => (
@@ -54,7 +65,7 @@ export default function Profile() {
           <Row label="Vietnamese hints"><Toggle on={s.viHints} onChange={(v) => a.set({ viHints: v })} label="Vietnamese hints" /></Row>
           <Row label="Show me in study circles"><Toggle on={s.circleOptIn} onChange={(v) => a.set({ circleOptIn: v })} label="Study circles" /></Row>
           <div className="col gap8" style={{ paddingTop: 12 }}>
-            <span className="caption faint">Your progress is saved in this browser only. Accounts and sync come in v2.</span>
+            <span className="caption faint">{user ? 'Your progress is saved to your Google account and this browser.' : 'Your progress is saved in this browser only. Sign in with Google to sync it.'}</span>
             <div className="row gap8 wrap">
               <button className="btn btn-secondary" onClick={a.loadDemo}>Load demo progress</button>
               {!confirm ? <button className="btn btn-danger" onClick={() => setConfirm(true)}>Reset progress</button> : <button className="btn btn-danger" onClick={() => { a.reset(); setConfirm(false); }}>Yes, delete everything</button>}
