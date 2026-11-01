@@ -1,5 +1,7 @@
 // Glossary content. Each term: category, sub-category, level (1 Beginner, 2 Intermediate, 3 Advanced),
 // term, full name, plain-English definition, workplace example, Vietnamese hint.
+import { ROWS_SE_QA } from './terms_se_qa.js';
+import { ROWS_BABOK_PMBOK } from './terms_babok_pmbok.js';
 
 export const CATEGORIES = [
   { id: 'it', type: 'general', name: 'IT Industry Glossary', short: 'IT glossary', icon: 'Globe', color: 'primary',
@@ -8,6 +10,14 @@ export const CATEGORIES = [
     desc: 'Scrum roles, events, artefacts and how work moves across a team.' },
   { id: 'corp', type: 'general', name: 'Corporate Language', short: 'Corporate language', icon: 'MessageSquare', color: 'accent',
     desc: 'Phrases for meetings, emails, status updates and polite disagreement.' },
+  { id: 'se', type: 'general', name: 'Software Engineering', short: 'Software engineering', icon: 'Cpu', color: 'advanced',
+    desc: 'Process models, requirements engineering, UML use case and activity diagrams, design and configuration management.', refs: ['sommerville', 'tdc-se', 'acm-ethics'] },
+  { id: 'qa', type: 'general', name: 'Software Testing (ISTQB)', short: 'Testing', icon: 'Bug', color: 'success',
+    desc: 'Testing principles, test levels and types, reviews, test design techniques and test management.', refs: ['istqb', 'tdc-qa'] },
+  { id: 'babok', type: 'framework', name: 'BABOK® Guide v3', short: 'BABOK', icon: 'Compass', color: 'po',
+    desc: 'IIBA’s body of knowledge for business analysis: core concepts, requirement types, knowledge areas and techniques.', refs: ['babok'] },
+  { id: 'pmbok', type: 'framework', name: 'PMBOK® Guide 7th ed.', short: 'PMBOK', icon: 'ListChecks', color: 'accent',
+    desc: 'PMI’s guide to project management: principles, performance domains, development approaches and tools.', refs: ['pmbok'] },
   { id: 'banking', type: 'domain', name: 'Banking & Fintech', short: 'Banking', icon: 'Landmark', color: 'primary' },
   { id: 'ecommerce', type: 'domain', name: 'E-commerce & Retail', short: 'E-commerce', icon: 'ShoppingCart', color: 'po' },
   { id: 'healthcare', type: 'domain', name: 'Healthcare', short: 'Healthcare', icon: 'HeartPulse', color: 'danger' },
@@ -155,9 +165,15 @@ const raw = [
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-export const TERMS = raw.map(([cat, sub, level, term, full, def, example, vi]) => ({
-  id: `${cat}-${slug(term)}`, cat, sub, level, term, full, def, example, vi,
-}));
+const extra = [...ROWS_SE_QA, ...ROWS_BABOK_PMBOK];
+
+export const TERMS = [
+  ...raw.map(([cat, sub, level, term, full, def, example, vi]) => ({ id: `${cat}-${slug(term)}`, cat, sub, level, term, full, def, example, vi })),
+  ...extra.map(([cat, sub, level, term, full, def, example, tr]) => ({ id: `${cat}-${slug(term)}`, cat, sub, level, term, full, def, example, vi: tr.vi[0] })),
+];
+
+// Translations bundled with the newer glossary sets, keyed by term id: { vi: [term, def, example], ko, fr }.
+export const EXTRA_TR = Object.fromEntries(extra.map(([cat, , , term, , , , tr]) => [`${cat}-${slug(term)}`, tr]));
 
 export const TERM_BY_ID = Object.fromEntries(TERMS.map((t) => [t.id, t]));
 export const CAT_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));

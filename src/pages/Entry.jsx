@@ -1,6 +1,7 @@
+import { LangPicker } from '../components/Translations.jsx';
 import { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Toggle, GoogleButton } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, GoogleButton, Spinner } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { DOMAINS } from '../data/domains.js';
 import { TERMS } from '../data/terms.js';
@@ -159,7 +160,7 @@ export function Onboarding1() {
 
 export function Onboarding2() {
   const { s, a } = useStore(); const nav = useNavigate();
-  const [doms, setDoms] = useState(s.domains); const [goal, setGoal] = useState(s.dailyGoal); const [vi, setVi] = useState(s.viHints);
+  const [doms, setDoms] = useState(s.domains); const [goal, setGoal] = useState(s.dailyGoal); const [langs, setLangs] = useState(s.langs || ['vi']);
   const [err, setErr] = useState('');
   const tog = (id) => { setErr(''); setDoms((d) => (d.includes(id) ? d.filter((x) => x !== id) : [...d, id])); };
   return (
@@ -180,13 +181,13 @@ export function Onboarding2() {
           ))}
         </div>
       </div>
-      <div className="row center soft bg-bg" style={{ gap: 14, padding: 16 }}>
-        <div className="col grow gap4" style={{ gap: 2 }}><span className="label">Show Vietnamese hints</span><span className="caption muted">Add a short Vietnamese translation under each term (Gợi ý tiếng Việt).</span></div>
-        <Toggle on={vi} onChange={setVi} label="Vietnamese hints" />
+      <div className="col soft bg-bg" style={{ gap: 10, padding: 16 }}>
+        <div className="col gap4" style={{ gap: 2 }}><span className="label">Show translations</span><span className="caption muted">Add translations under each term and definition. Pick one, several or none — you can change this later in your profile.</span></div>
+        <LangPicker value={langs} onChange={setLangs} />
       </div>
       <div className="row center" style={{ justifyContent: 'space-between' }}>
         <button className="btn btn-ghost" onClick={() => nav('/onboarding/1')}>Back</button>
-        <button className="btn btn-primary" onClick={() => { if (!doms.length) { setErr('Choose at least one domain.'); return; } a.finishOnboarding({ domains: doms, dailyGoal: goal, viHints: vi }); nav('/home'); }}>Start learning</button>
+        <button className="btn btn-primary" onClick={() => { if (!doms.length) { setErr('Choose at least one domain.'); return; } a.finishOnboarding({ domains: doms, dailyGoal: goal, langs }); nav('/home'); }}>Start learning</button>
       </div>
     </OnbFrame>
   );
@@ -194,7 +195,7 @@ export function Onboarding2() {
 
 export function RequireOnboarding({ children }) {
   const { s, user, sync } = useStore();
-  if (!s.onboarded && user && sync === 'loading') return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', color: '#94A3B8' }}>Loading your progress…</div>;
+  if (!s.onboarded && user && sync === 'loading') return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body muted"><Spinner size={22} color="#4F46E5" label="Loading your progress…" /></span></div>;
   if (!s.onboarded) return <Navigate to="/signup" replace />;
   return children;
 }

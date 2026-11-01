@@ -5,6 +5,8 @@ import { useStore } from '../store.jsx';
 import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID, termsIn } from '../data/terms.js';
 import { DOMAINS, DOMAIN_BY_ID } from '../data/domains.js';
 import { SKILLS } from '../data/skills.js';
+import { Translations } from '../components/Translations.jsx';
+import { SourceNote } from './Frameworks.jsx';
 
 const speak = (text) => { try { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* not supported */ } };
 
@@ -13,23 +15,39 @@ export function SaveBtn({ id, size = 20 }) {
   return <button className="icon-btn" style={{ background: 'transparent' }} aria-label={on ? 'Remove from saved' : 'Save term'} onClick={(e) => { e.preventDefault(); e.stopPropagation(); a.toggleSave(id); }}><Icon name="Bookmark" size={size} color={on ? '#4F46E5' : '#CBD5E1'} fill={on ? '#4F46E5' : 'none'} /></button>;
 }
 
-export function General() {
+function CatCard({ c }) {
   const { s } = useStore();
-  const gen = CATEGORIES.filter((c) => c.type === 'general');
-  const popular = ['team-definition-of-done', 'it-scope-creep', 'corp-take-this-offline', 'team-stakeholder', 'team-blocker'].map((id) => TERM_BY_ID[id]).filter(Boolean);
+  const all = termsIn(c.id); const got = all.filter((t) => s.learned.includes(t.id)).length; const pct = all.length ? Math.round((got / all.length) * 100) : 0;
+  return (
+    <Link to={`/glossary/${c.id}`} className="card p24 hover" style={{ gap: 14 }}>
+      <div className="row center"><IconBox name={c.icon} tone={c.color} size={48} /><div className="grow" /><Tag tone={c.color === 'advanced' ? 'advanced' : c.color}>{all.length} terms</Tag></div>
+      <div className="h2">{c.name}</div><p className="small muted grow">{c.desc}</p>
+      <div className="row wrap gap6">{all.slice(0, 4).map((t) => <Tag key={t.id} tone="ink">{t.term}</Tag>)}</div>
+      <Progress value={pct} h={6} color={`var(--${c.color})`} />
+      <div className="row center"><span className="caption faint grow">{pct}% learned</span><span className="label c-primary row center gap6">Open <Icon name="ArrowRight" size={16} /></span></div>
+    </Link>
+  );
+}
+
+export function General() {
+  const groups = [
+    ['Workplace basics', 'Everyday language of an IT company.', ['it', 'team', 'corp']],
+    ['Software engineering & testing', 'From the courses “Nhập môn Công nghệ Phần mềm” and “Lý thuyết Kiểm thử Phần mềm” (ISTQB Foundation).', ['se', 'qa']],
+  ];
+  const popular = ['team-definition-of-done', 'it-scope-creep', 'qa-boundary-value-analysis', 'babok-baccm', 'se-use-case', 'pmbok-raci-matrix'].map((id) => TERM_BY_ID[id]).filter(Boolean);
   return (
     <>
       <PageHead title="General Knowledge" sub="The words you hear every day in an IT company — explained in plain English with real workplace examples." />
-      <div className="grid g3">
-        {gen.map((c) => { const all = termsIn(c.id); const got = all.filter((t) => s.learned.includes(t.id)).length; const pct = Math.round((got / all.length) * 100); return (
-          <Link key={c.id} to={`/glossary/${c.id}`} className="card p24 hover" style={{ gap: 14 }}>
-            <div className="row center"><IconBox name={c.icon} tone={c.color} size={48} /><div className="grow" /><Tag tone={c.color}>{all.length} terms</Tag></div>
-            <div className="h2">{c.name}</div><p className="small muted">{c.desc}</p>
-            <div className="row wrap gap6">{all.slice(0, 5).map((t) => <Tag key={t.id} tone="ink">{t.term}</Tag>)}</div>
-            <Progress value={pct} h={6} color={`var(--${c.color})`} />
-            <div className="row center"><span className="caption faint grow">{pct}% learned</span><span className="label c-primary row center gap6">Open <Icon name="ArrowRight" size={16} /></span></div>
-          </Link>); })}
-      </div>
+      {groups.map(([title, sub, ids]) => (
+        <section key={title} className="col" style={{ gap: 14 }}>
+          <div className="col gap4"><h2 className="h2">{title}</h2><span className="small muted">{sub}</span></div>
+          <div className="grid g3">{ids.map((id) => CAT_BY_ID[id]).filter(Boolean).map((c) => <CatCard key={c.id} c={c} />)}</div>
+        </section>
+      ))}
+      <section className="col" style={{ gap: 14 }}>
+        <div className="row end stack-sm"><div className="col grow gap4"><h2 className="h2">Bodies of knowledge</h2><span className="small muted">The two standards every BA, PO and PM should know — summarised, with their own glossaries.</span></div><Link to="/frameworks" className="btn btn-secondary">BABOK & PMBOK overview</Link></div>
+        <div className="grid g2">{['babok', 'pmbok'].map((id) => CAT_BY_ID[id]).map((c) => <CatCard key={c.id} c={c} />)}</div>
+      </section>
       <div className="row stretch stack-sm gap24">
         <div className="card p24 grow"><h3 className="h3">Browse A – Z</h3>
           <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.term[0].toUpperCase() === ch); return (
@@ -40,7 +58,8 @@ export function General() {
           {popular.map((t) => <Link key={t.id} to={`/term/${t.id}`} className="row center gap8" style={{ padding: '10px 0' }}><span className="label grow">{t.term}</span><span className="caption faint">{CAT_BY_ID[t.cat].short}</span><Icon name="ChevronRight" size={16} color="#94A3B8" /></Link>)}
         </div>
       </div>
-      <div className="row center soft bg-accent-soft" style={{ gap: 14, padding: 20, borderRadius: 16 }}><Icon name="Copy" size={22} color="#D97706" /><span className="body">Tip: tap the bookmark on any term to save it. Saved terms appear in your flashcards.</span></div>
+      <div className="row center soft bg-accent-soft" style={{ gap: 14, padding: 20, borderRadius: 16 }}><Icon name="Languages" size={22} color="#D97706" /><span className="body grow">Want translations under each term? Choose Vietnamese, Korean or French in your profile.</span><Link to="/profile#languages" className="label c-accent">Choose languages</Link></div>
+      <Link to="/references" className="row center small muted gap8"><Icon name="Library" size={16} />Where this content comes from: see References</Link>
     </>
   );
 }
@@ -57,7 +76,7 @@ export function Glossary() {
   const letter = params.get('letter');
   const list = base.filter((t) => (sub === 'All' || t.sub === sub) && (!lv || t.level === lv) && (!letter || t.term[0].toUpperCase() === letter) && (t.term + ' ' + t.full + ' ' + t.def).toLowerCase().includes(q.toLowerCase()));
   const title = cat === 'all' ? (letter ? `Terms starting with “${letter}”` : 'All terms') : c?.name;
-  const parent = c?.type === 'domain' ? ['Domain Knowledge', '/domains'] : ['General Knowledge', '/general'];
+  const parent = c?.type === 'domain' ? ['Domain Knowledge', '/domains'] : c?.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['General Knowledge', '/general'];
   return (
     <>
       <Crumbs items={[parent, [title]]} />
@@ -73,13 +92,14 @@ export function Glossary() {
         {list.length === 0 && <p className="body muted" style={{ padding: 24 }}>No terms match. Try another filter.</p>}
         {list.map((t) => (
           <Link key={t.id} to={`/term/${t.id}`} className="list-row stack-sm">
-            <div className="col gap4" style={{ width: 260, gap: 2 }}><span className="h3">{t.term}</span>{t.full && <span className="caption faint">{t.full}</span>}{s.viHints && <span className="caption c-accent">{t.vi}</span>}</div>
+            <div className="col gap4" style={{ width: 260, gap: 2 }}><span className="h3">{t.term}</span>{t.full && <span className="caption faint">{t.full}</span>}<Translations id={t.id} mode="term" /></div>
             <p className="body muted grow">{t.def}</p>
             <div className="row center gap6 hide-sm">{s.learned.includes(t.id) && <Tag tone="success">Learned</Tag>}<Tag tone="ink">{t.sub}</Tag><LevelTag level={t.level} /></div>
             <SaveBtn id={t.id} />
           </Link>
         ))}
       </div>
+      {cat !== 'all' && <SourceNote cat={cat} />}
     </>
   );
 }
@@ -98,7 +118,7 @@ export function TermDetail() {
   const learned = s.learned.includes(id); const inCards = !!s.cards[id];
   return (
     <>
-      <Crumbs items={[[c.type === 'domain' ? 'Domain Knowledge' : 'General Knowledge', c.type === 'domain' ? '/domains' : '/general'], [c.name, `/glossary/${c.id}`], [t.term]]} />
+      <Crumbs items={[c.type === 'domain' ? ['Domain Knowledge', '/domains'] : c.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['General Knowledge', '/general'], [c.name, `/glossary/${c.id}`], [t.term]]} />
       <div className="row stack-sm gap24">
         <div className="col grow" style={{ gap: 16 }}>
           <div className="card p28">
@@ -113,7 +133,7 @@ export function TermDetail() {
           </div>
           <div className="card p24 bg-primary-soft" style={{ borderColor: 'var(--primary-soft)' }}><span className="overline faint">At work</span><p className="body">“{t.example}”</p>
             <button className="row center gap6 label c-primary" style={{ border: 0, background: 'none', padding: 0 }} onClick={() => speak(t.example)}><Icon name="Volume2" size={16} />Hear the sentence</button></div>
-          {s.viHints && <div className="card p24 bg-accent-soft" style={{ borderColor: 'var(--accent-soft)' }}><span className="overline faint">Gợi ý tiếng Việt</span><p className="body">{t.vi}</p></div>}
+          <Translations id={id} mode="full" className="card p24" />
           <div className="row gap10 wrap">
             {!learned ? <button className="btn btn-primary" onClick={() => a.learnTerm(id)}>I know this term · +5 XP</button> : <span className="btn btn-secondary c-success"><Icon name="Check" size={16} />Learned</span>}
             <button className="btn btn-secondary" disabled={inCards} onClick={() => a.addCards([id])}>{inCards ? 'In your flashcards' : 'Add to flashcards'}</button>
@@ -127,6 +147,7 @@ export function TermDetail() {
             {prev && <Link to={`/term/${prev.id}`} className="btn btn-secondary grow">← {prev.term}</Link>}
             {next && <Link to={`/term/${next.id}`} className="btn btn-secondary grow">{next.term} →</Link>}
           </div>
+          <SourceNote cat={t.cat} compact />
         </div>
       </div>
     </>
@@ -138,7 +159,7 @@ export function Domains() {
   return (
     <>
       <PageHead title="Domain Knowledge" sub="A BA or PO must speak the language of the business. Each domain explains how the industry works, its key processes, and its glossary." />
-      <div className="grid g4">
+      <div className="grid g4 text">
         {DOMAINS.map((d) => { const all = termsIn(d.id); const got = all.filter((t) => s.learned.includes(t.id)).length; return (
           <Link key={d.id} to={`/domain/${d.id}`} className="card hover">
             <div className="row center"><IconBox name={d.icon} tone={d.color} size={44} /><div className="grow" />{s.domains.includes(d.id) && <Tag>Your domain</Tag>}</div>
@@ -204,7 +225,7 @@ export function Saved() {
       {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><Link to="/general" className="btn btn-primary">Browse the glossary</Link></div> : <>
         <div className="row wrap gap10"><button className={`chip ${f === 'all' ? 'on' : ''}`} onClick={() => setF('all')}>All ({items.length})</button>{cats.map((c) => <button key={c} className={`chip ${f === c ? 'on' : ''}`} onClick={() => setF(c)}>{CAT_BY_ID[c].short} ({items.filter((t) => t.cat === c).length})</button>)}</div>
         <div className="grid g3">{list.map((t) => (
-          <Link key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></Link>))}</div>
+          <Link key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><Translations id={t.id} mode="term" /><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></Link>))}</div>
       </>}
     </>
   );

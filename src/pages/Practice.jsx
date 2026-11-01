@@ -1,3 +1,4 @@
+import { Translations } from '../components/Translations.jsx';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Icon, Tag, IconBox, Progress, PageHead, FocusLayout, Check, LevelTag } from '../components/ui.jsx';
@@ -29,7 +30,7 @@ export function PracticeSetup() {
     const q = `cats=${cats.join(',')}&n=${n}&src=${src}`;
     nav(mode === 'flashcards' ? `/flashcards?${q}` : `/quiz?mode=${mode}&${q}`);
   };
-  const groups = [['General knowledge', CATEGORIES.filter((c) => c.type === 'general')], ['Domains', CATEGORIES.filter((c) => c.type === 'domain')]];
+  const groups = [['General knowledge', CATEGORIES.filter((c) => c.type === 'general')], ['BABOK & PMBOK', CATEGORIES.filter((c) => c.type === 'framework')], ['Domains', CATEGORIES.filter((c) => c.type === 'domain')]];
   const last = [...s.attempts].reverse().slice(0, 3);
   return (
     <>
@@ -119,7 +120,7 @@ export function Flashcards() {
         {flip && <div className="col" style={{ borderTop: '1px solid var(--border)', padding: 40, gap: 14 }}>
           <span className="overline faint">Answer</span><p className="h3">{t.def}</p>
           <div className="soft bg-bg small muted">“{t.example}”</div>
-          {s.viHints && <div className="row center gap8"><Tag tone="accent">VI</Tag><span className="small muted">{t.vi}</span></div>}
+          <Translations id={t.id} mode="full" />
         </div>}
       </div>
       {flip ? <div className="col w760" style={{ alignItems: 'center', gap: 12 }}>
@@ -184,7 +185,7 @@ export function Quiz() {
           return <button key={o.id} className={`option ${cls}`} disabled={checked} onClick={() => { setSel(o.id); setErr(''); }}><span className="letter">{'ABCD'[n]}</span><span className="grow">{o.text}</span>{checked && o.id === q.answer && <Icon name="Check" color="#16A34A" />}{checked && o.id === sel && o.id !== q.answer && <Icon name="X" color="#DC2626" />}</button>;
         })}
         {err && <span className="caption c-danger">{err}</span>}
-        {checked && <div className="card row" style={{ gap: 14 }}><IconBox name="Lightbulb" tone={sel === q.answer ? 'success' : 'danger'} size={36} /><div className="col grow gap4"><span className={`label ${sel === q.answer ? 'c-success' : 'c-danger'}`}>{sel === q.answer ? 'Correct!' : 'Not quite.'} {q.term.term}{q.term.full ? ` (${q.term.full})` : ''}</span><span className="small muted">{q.term.def}</span></div></div>}
+        {checked && <div className="card row" style={{ gap: 14 }}><IconBox name="Lightbulb" tone={sel === q.answer ? 'success' : 'danger'} size={36} /><div className="col grow gap4"><span className={`label ${sel === q.answer ? 'c-success' : 'c-danger'}`}>{sel === q.answer ? 'Correct!' : 'Not quite.'} {q.term.term}{q.term.full ? ` (${q.term.full})` : ''}</span><span className="small muted">{q.term.def}</span><Translations id={q.term.id} mode="brief" /></div></div>}
         <div className="row center"><Link to={`/term/${q.term.id}`} className="label c-primary" style={{ visibility: checked ? 'visible' : 'hidden' }}>Learn more: {q.term.term} →</Link><div className="grow" />
           {!checked ? <button className="btn btn-primary" onClick={check}>Check answer</button> : <button className="btn btn-primary" onClick={next}>{i + 1 < qs.length ? 'Next question' : 'See results'}</button>}</div>
       </div>
@@ -248,6 +249,7 @@ export function Results() {
             <span className={`badge-ic ${x.ok ? 'bg-success-soft' : 'bg-danger-soft'}`} style={{ width: 28, height: 28, borderRadius: 99 }}><Icon name={x.ok ? 'Check' : 'X'} size={14} color={x.ok ? '#16A34A' : '#DC2626'} /></span>
             <div className="col grow gap4"><span className="label">{x.prompt}</span>
               {x.ok ? <span className="small muted">{x.right}</span> : <><span className="small c-danger">Your answer: {x.your}</span><span className="small c-success">Correct: {x.right}</span></>}
+              {x.termId && <Translations id={x.termId} mode="term" />}
             </div>
             <Link to={`/term/${x.termId}`} className="caption c-primary">Open term</Link>
           </div>))}

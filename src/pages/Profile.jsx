@@ -1,6 +1,7 @@
+import { LangPicker } from '../components/Translations.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, Toggle, LevelTag } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, Toggle, LevelTag, Spinner } from '../components/ui.jsx';
 import { useStore, rankInfo, dayStr, addDays } from '../store.jsx';
 import { LEVELS, TRACKS, skillsFor } from '../data/skills.js';
 import { CATEGORIES, termsIn } from '../data/terms.js';
@@ -31,7 +32,7 @@ export default function Profile() {
         <IconBox name={user ? 'Cloud' : 'CloudOff'} tone={user ? 'success' : 'ink'} />
         <div className="col grow gap4" style={{ gap: 2 }}>
           <span className="label">{user ? `Signed in with Google · ${user.email}` : 'Not signed in'}</span>
-          <span className="caption muted">{user ? ({ loading: 'Loading your cloud progress…', saving: 'Saving…', saved: 'Progress, job search and search history are synced to your account.', error: 'Could not reach the server — changes are kept on this device.' }[sync] || '') : enabled ? 'Sign in to sync your progress across devices and unlock your private job tracker and library.' : 'Google sign-in is not switched on for this site yet — progress is saved in this browser.'}</span>
+          <span className="caption muted">{user && (sync === 'loading' || sync === 'saving') && <Spinner size={12} />} {user ? ({ loading: 'Loading your cloud progress…', saving: 'Saving…', saved: 'Progress, job search and search history are synced to your account.', error: 'Could not reach the server — changes are kept on this device.' }[sync] || '') : enabled ? 'Sign in to sync your progress across devices and unlock your private job tracker and library.' : 'Google sign-in is not switched on for this site yet — progress is saved in this browser.'}</span>
         </div>
         {user ? <button className="btn btn-secondary" onClick={logOut}><Icon name="LogOut" size={16} />Sign out</button>
           : <GoogleButton primary label="Sign in with Google" />}
@@ -62,7 +63,11 @@ export default function Profile() {
         <div className="card p24" style={{ width: 440, maxWidth: '100%', gap: 4 }}><h3 className="h3" style={{ paddingBottom: 8 }}>Settings</h3>
           <Row label="Learning track"><div className="seg">{Object.values(TRACKS).map((t) => <button key={t.id} className={s.track === t.id ? 'on' : ''} onClick={() => a.set({ track: t.id })}>{t.id}</button>)}</div></Row>
           <Row label="Daily goal"><select className="chip" value={s.dailyGoal} onChange={(e) => a.set({ dailyGoal: Number(e.target.value) })}><option value={10}>Casual · 10 cards</option><option value={20}>Regular · 20 cards</option><option value={40}>Serious · 40 cards</option></select></Row>
-          <Row label="Vietnamese hints"><Toggle on={s.viHints} onChange={(v) => a.set({ viHints: v })} label="Vietnamese hints" /></Row>
+          <div id="languages" className="col" style={{ padding: '12px 0', gap: 8, borderBottom: '1px solid var(--border)' }}>
+            <span className="small">Translation languages</span>
+            <span className="caption faint">Shown under every term, definition, example, flashcard and quiz answer. Choose any.</span>
+            <LangPicker value={s.langs || []} onChange={(v) => a.set({ langs: v })} />
+          </div>
           <Row label="Show me in study circles"><Toggle on={s.circleOptIn} onChange={(v) => a.set({ circleOptIn: v })} label="Study circles" /></Row>
           <div className="col gap8" style={{ paddingTop: 12 }}>
             <span className="caption faint">{user ? 'Your progress is saved to your Google account and this browser.' : 'Your progress is saved in this browser only. Sign in with Google to sync it.'}</span>

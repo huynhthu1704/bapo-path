@@ -1,7 +1,7 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { StoreProvider } from './store.jsx';
-import { Layout, Toasts } from './components/ui.jsx';
+import { Layout, Toasts, TopLoader } from './components/ui.jsx';
 import { Landing, SignUp, Onboarding1, Onboarding2, RequireOnboarding } from './pages/Entry.jsx';
 import Home from './pages/Home.jsx';
 import { Roadmap, SkillDetail, Challenge } from './pages/Roadmap.jsx';
@@ -9,6 +9,7 @@ import { General, Glossary, TermDetail, Domains, DomainDetail, Saved } from './p
 import { PracticeSetup, Flashcards, Quiz, Results } from './pages/Practice.jsx';
 import { Achievements, Collection, Story, Speed, Circle } from './pages/Game.jsx';
 import Profile from './pages/Profile.jsx';
+import { Frameworks, FrameworkDetail, References } from './pages/Frameworks.jsx';
 import { Jobs, Library, Admin } from './pages/Account.jsx';
 
 function ScrollTop() {
@@ -25,6 +26,7 @@ export default function App({ kbVersion = 0 }) {
     <StoreProvider>
       <HashRouter>
         <ScrollTop />
+        <TopLoader />
         <Routes key={kbVersion}>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
@@ -37,6 +39,9 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/general" element={inApp(<General />)} />
           <Route path="/glossary/:cat" element={inApp(<Glossary />)} />
           <Route path="/term/:id" element={inApp(<TermDetail />)} />
+          <Route path="/frameworks" element={inApp(<Frameworks />)} />
+          <Route path="/framework/:id" element={inApp(<FrameworkDetail />)} />
+          <Route path="/references" element={<Layout><References /></Layout>} />
           <Route path="/domains" element={inApp(<Domains />)} />
           <Route path="/domain/:id" element={inApp(<DomainDetail />)} />
           <Route path="/saved" element={inApp(<Saved />)} />

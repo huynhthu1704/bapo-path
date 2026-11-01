@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import { initKnowledge, KB_SOURCE } from './knowledge.js';
 import { finishRedirectSignIn } from './firebase.js';
+import { track } from './busy.js';
 import './styles.css';
 
 // Show the site straight away with the bundled content. When the cloud knowledge base arrives,
@@ -10,8 +11,8 @@ import './styles.css';
 function Root() {
   const [kbVersion, setKbVersion] = useState(0);
   useEffect(() => {
-    initKnowledge().then(() => { if (KB_SOURCE.value === 'cloud') setKbVersion((v) => v + 1); });
-    finishRedirectSignIn(); // completes a Google sign-in that used the redirect fallback
+    track(initKnowledge()).then(() => { if (KB_SOURCE.value === 'cloud') setKbVersion((v) => v + 1); });
+    track(finishRedirectSignIn()); // completes a Google sign-in that used the redirect fallback
   }, []);
   return <App kbVersion={kbVersion} />;
 }

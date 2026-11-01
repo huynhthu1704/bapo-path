@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { onUser, loadProgress, saveProgress, isAdmin } from './firebase.js';
+import { track } from './busy.js';
 import { TERMS, TERM_BY_ID, CATEGORIES, termsIn } from './data/terms.js';
 import { SKILLS, TRACKS, RANK_XP, skillsFor } from './data/skills.js';
 
@@ -18,7 +19,7 @@ export const weekKey = (d = new Date()) => {
 
 const fresh = () => ({
   onboarded: false, name: '', email: '', track: 'BA', startLevel: 1, domains: ['banking', 'ecommerce'],
-  dailyGoal: 20, viHints: true, circleOptIn: true, circleJoined: false,
+  dailyGoal: 20, langs: ['vi'], circleOptIn: true, circleJoined: false,
   xp: 0, streak: { count: 0, best: 0, last: null, freezes: 0 },
   completedSkills: [], selfChecks: {}, saved: [], learned: [], cards: {}, totalReviews: 0,
   attempts: [], challengesPassed: [], speedBest: 0, storyDone: [], storyBest: {},
@@ -26,8 +27,14 @@ const fresh = () => ({
   weekly: { week: weekKey(), xp: 0, cards: 0 }, activity: {}, badgesEarned: {}, toasts: [], lastResult: null,
 });
 
+// Older saves stored a single Vietnamese on/off switch; convert it to the language list.
+const migrate = (s) => {
+  if (!Array.isArray(s.langs)) s.langs = s.viHints === false ? [] : ['vi'];
+  delete s.viHints; return s;
+};
+
 const load = () => {
-  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return { ...fresh(), ...s, toasts: [] }; } catch (e) { /* ignore */ }
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return { ...fresh(), ...migrate(s), toasts: [] }; } catch (e) { /* ignore */ }
   return fresh();
 };
 
@@ -94,12 +101,12 @@ export function StoreProvider({ children }) {
     if (!u) { setSync('off'); return; }
     setSync('loading');
     try {
-      const [cloud, adm] = await Promise.all([loadProgress(u.uid), isAdmin(u.uid)]);
+      const [cloud, adm] = await track(Promise.all([loadProgress(u.uid), isAdmin(u.uid)]));
       setAdmin(adm);
       setState((local) => {
         const c = cloud && cloud.progress;
         const useCloud = c && (c.xp > local.xp || !local.onboarded);
-        const base = useCloud ? { ...fresh(), ...c, toasts: [] } : local;
+        const base = useCloud ? { ...fresh(), ...migrate({ ...c }), toasts: [] } : local;
         return { ...base, name: base.name && base.name !== 'Guest' ? base.name : (u.displayName || base.name), email: u.email };
       });
       ready.current = true; setSync('saved');

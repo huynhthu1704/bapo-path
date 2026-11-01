@@ -4,6 +4,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
 import { logSearch, enabled as authEnabled, signInWithGoogle, signInErrorText } from '../firebase.js';
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
+import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
 
 export const Icon = ({ name, size = 20, color, ...p }) => {
@@ -20,6 +21,23 @@ export const COLOR = {
   advanced: { hex: '#8B5CF6', soft: 'bg-primary-soft', tag: 't-advanced' },
   ink: { hex: '#475569', soft: 'bg-bg', tag: 't-ink' },
 };
+
+// ---------- loading indicators ----------
+export const Spinner = ({ size = 16, color = 'currentColor', label }) => (
+  <span className="row center gap8" role="status" style={{ display: 'inline-flex' }}><Icon name="Loader2" size={size} color={color} className="spin" aria-hidden="true" />{label ? <span>{label}</span> : <span className="sr-only">Loading</span>}</span>
+);
+export const Loading = ({ label = 'Loading…', rows = 3, pad = 24 }) => (
+  <div className="col" style={{ padding: pad, gap: 12 }} aria-busy="true">
+    <span className="small muted"><Spinner size={18} color="#4F46E5" label={label} /></span>
+    {Array.from({ length: rows }).map((_, i) => <div key={i} className="skeleton" style={{ width: `${92 - i * 14}%` }} />)}
+  </div>
+);
+export function TopLoader() {
+  const [n, setN] = useState(0);
+  useEffect(() => subscribe(setN), []);
+  return <div className={`top-loader ${n > 0 ? 'on' : ''}`} role="progressbar" aria-hidden={n === 0} aria-label="Loading" />;
+}
+export { track };
 
 export const Tag = ({ children, tone = 'primary', className = '' }) => <span className={`tag t-${tone} ${className}`}>{children}</span>;
 export const LevelTag = ({ level }) => {
@@ -55,17 +73,17 @@ export const PageHead = ({ title, sub, children }) => (
 );
 
 const NAV = [
-  ['LEARN', [['/home', 'Home', 'Home'], ['/roadmap', 'Skill Roadmap', 'Route'], ['/general', 'General Knowledge', 'Globe'], ['/domains', 'Domain Knowledge', 'Briefcase'], ['/practice', 'Practice', 'Zap'], ['/saved', 'Saved', 'Bookmark']]],
+  ['LEARN', [['/home', 'Home', 'Home'], ['/roadmap', 'Skill Roadmap', 'Route'], ['/general', 'General Knowledge', 'Globe'], ['/frameworks', 'BABOK & PMBOK', 'Compass'], ['/domains', 'Domain Knowledge', 'Briefcase'], ['/practice', 'Practice', 'Zap'], ['/saved', 'Saved', 'Bookmark']]],
   ['PLAY', [['/story', 'Story Mode', 'BookOpen'], ['/speed', 'Speed Round', 'Timer'], ['/collection', 'Collection', 'Copy'], ['/circle', 'Study Circle', 'Users']]],
-  ['YOU', [['/jobs', 'My Job Search', 'ClipboardList'], ['/library', 'My Library', 'History'], ['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User']]],
+  ['YOU', [['/jobs', 'My Job Search', 'ClipboardList'], ['/library', 'My Library', 'History'], ['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User'], ['/references', 'References', 'Library']]],
 ];
 
-function Sidebar() {
+function Sidebar({ open, onClose }) {
   const { s, admin } = useStore();
   const r = rankInfo(s.xp, s.track);
   return (
-    <aside className="sidebar">
-      <Link to="/home" className="logo"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">BA & PO learning</div></div></Link>
+    <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
+      <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">BA & PO learning</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
       {NAV.map(([sec, items]) => (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
@@ -110,10 +128,11 @@ function SearchBox() {
   );
 }
 
-function TopBar() {
+function TopBar({ onMenu }) {
   const { s, user } = useStore();
   return (
     <header className="topbar">
+      <button className="icon-btn menu-btn" aria-label="Open menu" onClick={onMenu}><Icon name="Menu" size={20} /></button>
       <SearchBox />
       <div className="grow" />
       <Tag className="hide-sm">{s.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][s.startLevel - 1]}</Tag>
@@ -155,10 +174,13 @@ export function Toasts() {
 }
 
 export function Layout({ children }) {
+  const [menu, setMenu] = useState(false);
+  useEffect(() => { if (!menu) return; const k = (e) => e.key === 'Escape' && setMenu(false); document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k); }, [menu]);
   return (
     <div className="app">
-      <Sidebar />
-      <div className="main"><TopBar /><main className="content">{children}</main></div>
+      <Sidebar open={menu} onClose={() => setMenu(false)} />
+      <div className={`scrim ${menu ? 'open' : ''}`} onClick={() => setMenu(false)} />
+      <div className="main"><TopBar onMenu={() => setMenu(true)} /><main className="content">{children}</main></div>
       <MobileNav />
     </div>
   );
@@ -193,13 +215,13 @@ export function GoogleButton({ label = 'Sign in with Google', primary = false, b
   if (!authEnabled) return null;
   const go = async () => {
     setErr(''); setBusy(true);
-    try { const u = await signInWithGoogle(); if (u && onDone) await onDone(u); } catch (e) { setErr(signInErrorText(e)); }
+    try { const u = await track(signInWithGoogle()); if (u && onDone) await onDone(u); } catch (e) { setErr(signInErrorText(e)); }
     setBusy(false);
   };
   return (
     <span className="col" style={{ gap: 6, alignItems: block ? 'stretch' : 'flex-start', width: block ? '100%' : undefined }}>
       <button type="button" className={`btn ${primary ? 'btn-primary' : 'btn-secondary'} ${block ? 'block' : ''}`} style={small ? { padding: '8px 14px' } : undefined} disabled={busy} onClick={go}>
-        <span style={{ background: '#fff', borderRadius: 4, display: 'grid', placeItems: 'center', padding: primary ? 2 : 0 }}><GoogleG /></span>{busy ? 'Signing in…' : label}
+        <span style={{ background: '#fff', borderRadius: 4, display: 'grid', placeItems: 'center', padding: primary ? 2 : 0 }}>{busy ? <Spinner size={16} /> : <GoogleG />}</span>{busy ? 'Signing in…' : label}
       </button>
       {err && <span className="caption c-danger" role="alert">{err}</span>}
     </span>
