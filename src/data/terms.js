@@ -4,7 +4,7 @@ import { ROWS_SE_QA } from './terms_se_qa.js';
 import { ROWS_BABOK_PMBOK } from './terms_babok_pmbok.js';
 
 export const CATEGORIES = [
-  { id: 'it', type: 'general', name: 'IT Industry Glossary', short: 'IT glossary', icon: 'Globe', color: 'primary',
+  { id: 'it', type: 'moved', movedTo: 'learn-it-vocab', name: 'IT Industry Glossary', short: 'IT glossary', icon: 'Globe', color: 'primary',
     desc: 'SDLC, architecture, data, testing, DevOps and security terms.' },
   { id: 'team', type: 'general', name: 'Team Collaboration', short: 'Team', icon: 'Users', color: 'po',
     desc: 'Scrum roles, events, artefacts and how work moves across a team.' },

@@ -17,7 +17,7 @@ export default function Profile() {
   const max = Math.max(50, ...week.map((d) => s.activity[d] || 0));
   const doneTotal = s.completedSkills.filter((id) => id.startsWith(s.track.toLowerCase())).length;
   const allTrack = LEVELS.reduce((t, l) => t + skillsFor(s.track, l.n).length, 0);
-  const strengths = CATEGORIES.map((c) => { const all = termsIn(c.id); return [c, Math.round((all.filter((t) => s.learned.includes(t.id)).length / all.length) * 100)]; }).sort((x, y) => y[1] - x[1]);
+  const strengths = CATEGORIES.filter((c) => c.type !== 'moved').map((c) => { const all = termsIn(c.id); return [c, Math.round((all.filter((t) => s.learned.includes(t.id)).length / all.length) * 100)]; }).sort((x, y) => y[1] - x[1]);
   return (
     <>
       <div className="card p28 row center stack-sm" style={{ flexDirection: 'row', gap: 20 }}>

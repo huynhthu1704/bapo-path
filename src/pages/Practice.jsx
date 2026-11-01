@@ -19,7 +19,7 @@ export function PracticeSetup() {
   const { s } = useStore();
   const nav = useNavigate();
   const [mode, setMode] = useState('mixed');
-  const [cats, setCats] = useState(['it', 'team', ...s.domains.slice(0, 1)]);
+  const [cats, setCats] = useState(['team', 'se', ...s.domains.slice(0, 1)]);
   const [n, setN] = useState(10); const [src, setSrc] = useState('all'); const [err, setErr] = useState('');
   const pool = TERMS.filter((t) => cats.includes(t.cat) && (src !== 'saved' || s.saved.includes(t.id)) && (src !== 'weak' || (s.cards[t.id] && s.cards[t.id].box <= 2)));
   const due = dueCards(s).length;

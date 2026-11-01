@@ -7,6 +7,7 @@ import { DOMAINS, DOMAIN_BY_ID } from '../data/domains.js';
 import { SKILLS } from '../data/skills.js';
 import { Translations } from '../components/Translations.jsx';
 import { SourceNote } from './Frameworks.jsx';
+import { LEARN_IT_VOCAB } from '../data/links.js';
 
 const speak = (text) => { try { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* not supported */ } };
 
@@ -29,19 +30,37 @@ function CatCard({ c }) {
   );
 }
 
+// The IT Industry Glossary moved to the Learn IT Vocab site, which opens on its BA / PO / PM words.
+export function VocabCard({ compact }) {
+  if (compact) return (
+    <a href={LEARN_IT_VOCAB} target="_blank" rel="noreferrer" className="card row center hover" style={{ flexDirection: 'row', gap: 14 }}>
+      <IconBox name="Globe" tone="primary" /><div className="col grow" style={{ gap: 2 }}><span className="label">IT terms now live on Learn IT Vocab</span><span className="caption muted">1,000+ IT words for BA / PO / PM with pronunciation, Vietnamese and Korean meanings.</span></div><Icon name="ExternalLink" size={18} color="#4F46E5" />
+    </a>
+  );
+  return (
+    <a href={LEARN_IT_VOCAB} target="_blank" rel="noreferrer" className="card p24 hover" style={{ gap: 14 }}>
+      <div className="row center"><IconBox name="Globe" tone="primary" size={48} /><div className="grow" /><Tag>Learn IT Vocab</Tag></div>
+      <div className="h2">IT Industry Glossary</div>
+      <p className="small muted grow">SDLC, requirements, testing, releases, data and security — now on our sister site Learn IT Vocab, filtered to the words BAs, POs and PMs need. With pronunciation, examples, Vietnamese and Korean.</p>
+      <div className="row wrap gap6">{['SDLC', 'UAT', 'API', 'Scope creep'].map((x) => <Tag key={x} tone="ink">{x}</Tag>)}</div>
+      <div className="row center"><span className="caption faint grow">Opens in a new tab</span><span className="label c-primary row center gap6">Open Learn IT Vocab <Icon name="ExternalLink" size={16} /></span></div>
+    </a>
+  );
+}
+
 export function General() {
   const groups = [
-    ['Workplace basics', 'Everyday language of an IT company.', ['it', 'team', 'corp']],
+    ['Workplace basics', 'Everyday language of an IT company.', ['team', 'corp']],
     ['Software engineering & testing', 'From the courses “Nhập môn Công nghệ Phần mềm” and “Lý thuyết Kiểm thử Phần mềm” (ISTQB Foundation).', ['se', 'qa']],
   ];
-  const popular = ['team-definition-of-done', 'it-scope-creep', 'qa-boundary-value-analysis', 'babok-baccm', 'se-use-case', 'pmbok-raci-matrix'].map((id) => TERM_BY_ID[id]).filter(Boolean);
+  const popular = ['team-definition-of-done', 'team-blocker', 'qa-boundary-value-analysis', 'babok-baccm', 'se-use-case', 'pmbok-raci-matrix'].map((id) => TERM_BY_ID[id]).filter(Boolean);
   return (
     <>
       <PageHead title="General Knowledge" sub="The words you hear every day in an IT company — explained in plain English with real workplace examples." />
       {groups.map(([title, sub, ids]) => (
         <section key={title} className="col" style={{ gap: 14 }}>
           <div className="col gap4"><h2 className="h2">{title}</h2><span className="small muted">{sub}</span></div>
-          <div className="grid g3">{ids.map((id) => CAT_BY_ID[id]).filter(Boolean).map((c) => <CatCard key={c.id} c={c} />)}</div>
+          <div className="grid g3">{ids.includes('team') && <VocabCard />}{ids.map((id) => CAT_BY_ID[id]).filter(Boolean).map((c) => <CatCard key={c.id} c={c} />)}</div>
         </section>
       ))}
       <section className="col" style={{ gap: 14 }}>
@@ -50,7 +69,7 @@ export function General() {
       </section>
       <div className="row stretch stack-sm gap24">
         <div className="card p24 grow"><h3 className="h3">Browse A – Z</h3>
-          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.term[0].toUpperCase() === ch); return (
+          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.cat !== 'it' && t.term[0].toUpperCase() === ch); return (
             <Link key={ch} to={has ? `/glossary/all?letter=${ch}` : '#'} className="mark" style={{ background: has ? 'var(--bg)' : 'transparent', color: has ? 'var(--ink-2)' : 'var(--border)', fontWeight: 600, pointerEvents: has ? 'auto' : 'none' }}>{ch}</Link>); })}</div>
         </div>
         <div className="card p24" style={{ width: 460, maxWidth: '100%', gap: 4 }}>
@@ -83,6 +102,7 @@ export function Glossary() {
       <PageHead title={title} sub={`${base.length} terms · ${base.filter((t) => s.learned.includes(t.id)).length} learned · ${base.filter((t) => s.saved.includes(t.id)).length} saved`}>
         <button className="btn btn-primary" onClick={() => nav(`/quiz?mode=mixed&terms=${list.map((t) => t.id).join(',')}&n=${Math.min(10, list.length)}`)} disabled={list.length < 4}>Practise these terms</button>
       </PageHead>
+      {cat === 'it' && <VocabCard compact />}
       <div className="row center wrap gap10">
         <div className="search" style={{ width: 320, background: '#fff', border: '1px solid var(--border)' }}><Icon name="Search" size={18} color="#94A3B8" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search in this glossary" /></div>
         {subs.map((x) => <button key={x} className={`chip ${sub === x ? 'on' : ''}`} onClick={() => setSub(x)}>{x}</button>)}
@@ -143,6 +163,7 @@ export function TermDetail() {
           {related.length > 0 && <div className="card"><span className="label">Related terms</span><div className="row wrap gap6">{related.map((r) => <Link key={r.id} to={`/term/${r.id}`}><Tag tone="po">{r.term}</Tag></Link>)}</div></div>}
           {usedIn.length > 0 && <div className="card" style={{ gap: 4 }}><span className="label">Used in skills</span>{usedIn.map((k) => (
             <Link key={k.id} to={`/skill/${k.id}`} className="row center gap10" style={{ padding: '10px 0' }}><IconBox name="Route" size={32} iconSize={16} /><div className="col grow" style={{ gap: 0 }}><span className="small">{k.title}</span><span className="caption faint">{k.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][k.level - 1]}</span></div><Icon name="ChevronRight" size={16} color="#94A3B8" /></Link>))}</div>}
+          {t.cat === 'it' && <VocabCard compact />}
           <div className="row gap8">
             {prev && <Link to={`/term/${prev.id}`} className="btn btn-secondary grow">← {prev.term}</Link>}
             {next && <Link to={`/term/${next.id}`} className="btn btn-secondary grow">{next.term} →</Link>}

@@ -180,7 +180,7 @@ export function Library() {
 }
 
 // ---------- Knowledge base admin ----------
-const emptyTerm = () => ({ id: '', cat: 'it', sub: '', level: 1, term: '', full: '', def: '', example: '', vi: '' });
+const emptyTerm = () => ({ id: '', cat: 'team', sub: '', level: 1, term: '', full: '', def: '', example: '', vi: '' });
 export function Admin() {
   const { user, admin } = useStore();
   const [info, setInfo] = useState(null); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(''); const [err, setErr] = useState('');

@@ -60,7 +60,7 @@ export function Landing() {
       <section id="modules" className="section" style={{ background: 'var(--bg)' }}>
         <h2 className="h1">Everything a starter needs, in one place</h2>
         <div className="grid g4">
-          {[['Route', 'primary', 'Skill Roadmap', 'Every BA and PO skill, ordered Beginner → Expert, with examples and self-checks.'], ['Globe', 'po', 'General Knowledge', 'IT glossary, team collaboration and corporate language explained simply.'], ['Briefcase', 'accent', 'Domain Knowledge', 'Banking, e-commerce, healthcare and more — key processes and terms.'], ['Zap', 'success', 'Practice & Tests', 'Flashcards, multiple choice and mixed tests with instant explanations.']].map(([i, t, h, d]) => (
+          {[['Route', 'primary', 'Skill Roadmap', 'Every BA and PO skill, ordered Beginner → Expert, with examples and self-checks.'], ['Globe', 'po', 'General Knowledge', 'Team collaboration, corporate language, software engineering, testing and BABOK & PMBOK — explained simply.'], ['Briefcase', 'accent', 'Domain Knowledge', 'Banking, e-commerce, healthcare and more — key processes and terms.'], ['Zap', 'success', 'Practice & Tests', 'Flashcards, multiple choice and mixed tests with instant explanations.']].map(([i, t, h, d]) => (
             <div key={h} className="card p24"><IconBox name={i} tone={t} size={44} /><div className="h3">{h}</div><p className="small muted">{d}</p></div>
           ))}
         </div>
