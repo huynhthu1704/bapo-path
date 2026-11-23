@@ -333,3 +333,10 @@ textarea.input { height: auto; padding: 12px 14px; line-height: 22px; resize: ve
   .pw-select { flex: 1; }
   .prompt-pre { padding: 14px; font-size: 13px; }
 }
+
+/* landing page in-page links (buttons, because of hash routing) */
+.link-btn { background: none; border: 0; padding: 0; cursor: pointer; }
+.link-btn:hover { color: var(--primary); }
+.link-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+.spot-flash { animation: spot 1.6s ease; }
+@keyframes spot { 0%, 40% { box-shadow: 0 0 0 3px var(--primary); } 100% { box-shadow: 0 0 0 3px rgba(79,70,229,0); } }
