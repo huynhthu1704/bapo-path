@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy } from 'react';
 import { StoreProvider } from './store.jsx';
 import { Layout, Toasts, TopLoader } from './components/ui.jsx';
 import { Landing, SignUp, Onboarding1, Onboarding2, RequireOnboarding } from './pages/Entry.jsx';
@@ -11,6 +11,12 @@ import { Achievements, Collection, Story, Speed, Circle } from './pages/Game.jsx
 import Profile from './pages/Profile.jsx';
 import { Frameworks, FrameworkDetail, References } from './pages/Frameworks.jsx';
 import { Jobs, Library, Admin } from './pages/Account.jsx';
+import { FlagGate } from './pages/PromptGate.jsx';
+
+// Prompt Workbench pages load as their own chunk.
+const pwPage = (name) => lazy(() => import('./pages/Prompts.jsx').then((m) => ({ default: m[name] })));
+const PromptLibrary = pwPage('PromptLibrary'); const PromptDetail = pwPage('PromptDetail'); const Workbench = pwPage('Workbench');
+const Collections = pwPage('Collections'); const CollectionRun = pwPage('CollectionRun'); const MyPrompts = pwPage('MyPrompts');
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -19,6 +25,8 @@ function ScrollTop() {
 }
 
 const inApp = (el) => <RequireOnboarding><Layout>{el}</Layout></RequireOnboarding>;
+// Prompt Workbench: public (no sign-in or onboarding needed), behind the `prompts` feature flag.
+const pw = (el) => <Layout><FlagGate>{el}</FlagGate></Layout>;
 const focus = (el) => <RequireOnboarding>{el}</RequireOnboarding>;
 
 export default function App({ kbVersion = 0 }) {
@@ -58,6 +66,12 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/jobs" element={inApp(<Jobs />)} />
           <Route path="/library" element={inApp(<Library />)} />
           <Route path="/admin" element={inApp(<Admin />)} />
+          <Route path="/prompts" element={pw(<PromptLibrary />)} />
+          <Route path="/prompts/:id" element={pw(<PromptDetail />)} />
+          <Route path="/workbench" element={pw(<Workbench />)} />
+          <Route path="/collections" element={pw(<Collections />)} />
+          <Route path="/collections/:id" element={pw(<CollectionRun />)} />
+          <Route path="/my-prompts" element={pw(<MyPrompts />)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toasts />

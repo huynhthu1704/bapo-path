@@ -25,6 +25,8 @@ const fresh = () => ({
   attempts: [], challengesPassed: [], speedBest: 0, storyDone: [], storyBest: {},
   daily: { date: dayStr(), cards: 0, terms: 0, quizPassed: 0, chest: false },
   weekly: { week: weekKey(), xp: 0, cards: 0 }, activity: {}, badgesEarned: {}, toasts: [], lastResult: null,
+  // Prompt Workbench: favourite prompt ids and recently used prompts (newest first, max 20).
+  promptFavs: [], promptRecent: [], promptUsed: [],
 });
 
 // Older saves stored a single Vietnamese on/off switch; convert it to the language list.
@@ -199,6 +201,8 @@ export function StoreProvider({ children }) {
     storyChoice: (q) => update((s) => gain(s, q === 'best' ? 40 : q === 'ok' ? 15 : 5)),
     storyDone: (n, score) => update((s) => { if (!s.storyDone.includes(n)) { s.storyDone.push(n); gain(s, 100); } s.storyBest[n] = Math.max(s.storyBest[n] || 0, score); }),
     joinCircle: () => update((s) => { s.circleJoined = true; s.circleOptIn = true; }),
+    togglePromptFav: (id) => update((s) => { s.promptFavs = s.promptFavs.includes(id) ? s.promptFavs.filter((x) => x !== id) : [id, ...s.promptFavs]; }),
+    usePrompt: (id) => update((s) => { if (!s.promptUsed.includes(id)) s.promptUsed.push(id); s.promptRecent = [{ id, at: new Date().toISOString() }, ...s.promptRecent.filter((r) => r.id !== id)].slice(0, 20); }),
     reset: () => setState(fresh()),
     loadDemo: () => update((s) => {
       const t = s.track;

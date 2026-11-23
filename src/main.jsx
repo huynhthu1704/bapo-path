@@ -4,7 +4,12 @@ import App from './App.jsx';
 import { initKnowledge, KB_SOURCE } from './knowledge.js';
 import { finishRedirectSignIn } from './firebase.js';
 import { track } from './busy.js';
+import { capturePreview } from './data/flags.js';
 import './styles.css';
+
+capturePreview(); // remembers ?preview=<flag> for design review
+// Registered before the router's own listener, so menus see the preview on the same navigation.
+for (const ev of ['popstate', 'hashchange']) window.addEventListener(ev, () => capturePreview());
 
 // Show the site straight away with the bundled content. When the cloud knowledge base arrives,
 // the pages re-render with it (no waiting screen).
