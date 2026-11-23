@@ -15,6 +15,15 @@ const Logo = ({ light }) => (
   </div>
 );
 
+// The app uses hash routing (#/home), so in-page anchors like href="#modules" would be read as a
+// route and bounce back to "/". Scroll to the section instead and briefly highlight it.
+const scrollToSection = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('spot-flash'); void el.offsetWidth; el.classList.add('spot-flash');
+};
+
 export function Landing() {
   const { s, user } = useStore();
   const nav = useNavigate();
@@ -24,10 +33,9 @@ export function Landing() {
     <div style={{ background: '#fff' }}>
       <nav className="landing-nav">
         <Logo /><div className="grow" />
-        <a href="#modules" className="label muted hide-sm">Roadmap</a>
-        <a href="#modules" className="label muted hide-sm">Glossary</a>
-        <a href="#domains" className="label muted hide-sm">Domains</a>
-        <a href="#how" className="label muted hide-sm">Practice</a>
+        {[['mod-roadmap', 'Roadmap'], ['mod-knowledge', 'Glossary'], ['domains', 'Domains'], ['mod-practice', 'Practice']].map(([id, l]) => (
+          <button key={id} type="button" className="link-btn label muted hide-sm" onClick={() => scrollToSection(id)}>{l}</button>
+        ))}
         {user || !enabled ? <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
           : <GoogleButton label="Sign in with Google" small onDone={afterSignIn} />}
       </nav>
@@ -60,8 +68,8 @@ export function Landing() {
       <section id="modules" className="section" style={{ background: 'var(--bg)' }}>
         <h2 className="h1">Everything a starter needs, in one place</h2>
         <div className="grid g4">
-          {[['Route', 'primary', 'Skill Roadmap', 'Every BA and PO skill, ordered Beginner → Expert, with examples and self-checks.'], ['Globe', 'po', 'General Knowledge', 'Team collaboration, corporate language, software engineering, testing and BABOK & PMBOK — explained simply.'], ['Briefcase', 'accent', 'Domain Knowledge', 'Banking, e-commerce, healthcare and more — key processes and terms.'], ['Zap', 'success', 'Practice & Tests', 'Flashcards, multiple choice and mixed tests with instant explanations.']].map(([i, t, h, d]) => (
-            <div key={h} className="card p24"><IconBox name={i} tone={t} size={44} /><div className="h3">{h}</div><p className="small muted">{d}</p></div>
+          {[['mod-roadmap', 'Route', 'primary', 'Skill Roadmap', 'Every BA and PO skill, ordered Beginner → Expert, with examples and self-checks.'], ['mod-knowledge', 'Globe', 'po', 'General Knowledge', 'Team collaboration, corporate language, software engineering, testing and BABOK & PMBOK — explained simply.'], ['mod-domains', 'Briefcase', 'accent', 'Domain Knowledge', 'Banking, e-commerce, healthcare and more — key processes and terms.'], ['mod-practice', 'Zap', 'success', 'Practice & Tests', 'Flashcards, multiple choice and mixed tests with instant explanations.']].map(([id, i, t, h, d]) => (
+            <div key={h} id={id} className="card p24"><IconBox name={i} tone={t} size={44} /><div className="h3">{h}</div><p className="small muted">{d}</p></div>
           ))}
         </div>
       </section>
