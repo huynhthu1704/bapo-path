@@ -18,6 +18,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run check:prompts
       - run: npm run build
       - name: Publish dist to the gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

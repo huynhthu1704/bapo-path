@@ -1,11 +1,12 @@
 import * as L from './icons.js';
 import { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
 import { logSearch, enabled as authEnabled, signInWithGoogle, signInErrorText } from '../firebase.js';
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
+import { can } from '../data/flags.js';
 
 export const Icon = ({ name, size = 20, color, ...p }) => {
   const C = L[name] || L.Circle;
@@ -78,7 +79,10 @@ const NAV = [
   ['YOU', [['/jobs', 'My Job Search', 'ClipboardList'], ['/library', 'My Library', 'History'], ['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User'], ['/references', 'References', 'Library']]],
 ];
 
+const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
+
 function Sidebar({ open, onClose }) {
+  useLocation(); // re-render on navigation so the Prompt Workbench item highlights on its sub-pages
   const { s, admin } = useStore();
   const r = rankInfo(s.xp, s.track);
   return (
@@ -87,8 +91,8 @@ function Sidebar({ open, onClose }) {
       {NAV.map(([sec, items]) => (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
-          {items.map(([to, label, icon]) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
+          {(sec === 'LEARN' && can('prompts', { admin }) ? [...items.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...items.slice(5)] : items).map(([to, label, icon]) => (
+            <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
           ))}
         </div>
       ))}
@@ -104,20 +108,24 @@ function Sidebar({ open, onClose }) {
 }
 
 function SearchBox() {
-  const { user } = useStore();
+  const { user, admin } = useStore();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
   useEffect(() => { const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, []);
   const ql = q.trim().toLowerCase();
+  // Prompts are searched only when the Workbench is on; their data loads on first search.
+  const pwOn = can('prompts', { admin }); const [prompts, setPrompts] = useState(null);
+  useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/prompts/index.js').then((m) => setPrompts(m.PROMPTS)); }, [pwOn, ql, prompts]);
   const results = ql.length < 2 ? [] : [
     ...TERMS.filter((t) => (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
     ...SKILLS.filter((k) => k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
+    ...(pwOn && prompts ? prompts.filter((p) => (p.title + ' ' + p.tags.join(' ')).toLowerCase().includes(ql)).slice(0, 4).map((p) => ({ to: `/prompts/${p.id}`, label: p.title, meta: 'Prompt' })) : []),
   ];
   return (
     <div className="search" ref={ref}>
       <Icon name="Search" size={18} color="#94A3B8" />
-      <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Search terms, skills, domains…" aria-label="Search"
+      <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder={pwOn ? 'Search terms, skills, prompts…' : 'Search terms, skills, domains…'} aria-label="Search"
         onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) { record(results[0]); nav(results[0].to); setOpen(false); setQ(''); } }} />
       {open && results.length > 0 && (
         <div className="search-results">
