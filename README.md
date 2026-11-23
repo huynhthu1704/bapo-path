@@ -74,6 +74,32 @@ The rules are in `firestore.rules`. The app loads the knowledge base from Firest
 8. On **Knowledge admin**, click **Publish to Firestore** once. From now on you can add or edit terms there without touching code.
 9. Go to **My Job Search → Import CSV / JSON** and import your jobs (the Pipeline tab of the Job Search Tracker downloaded as CSV works too).
 
+## Prompt Workbench (BA/PO/PM prompt library)
+
+Learners browse, fill in and copy prompts at `#/prompts`; staff manage them at `#/pw-admin`.
+It is behind the `prompts` feature flag (`src/data/flags.js`). The Owner changes who sees it in
+**Prompt admin → Insights → Features** (Owner and staff only / beta testers / everyone).
+
+**Roles**
+- **Owner**: has an `admins/{uid}` document (created by hand in the console). Everything, including taxonomy, staff, insights and features.
+- **Reviewer**: `staff/{uid}.role = 'reviewer'`. Edits, publishes, returns, unpublishes, archives, and reads feedback. Can't publish their own submission.
+- **Editor**: `staff/{uid}.role = 'editor'`. Creates and edits drafts, then submits them for review.
+
+The Owner assigns roles on the **Staff** page. People appear there after they sign in once.
+
+**Workflow:** Draft → In review → Published (or returned to Draft with a comment). Each save is a new version
+(`prompts/{id}/versions/{n}`). Restoring an old version creates a new draft. Learners read one document,
+`prompt_bundles/published`, which is rebuilt on every publish or take-down. Until the Owner clicks **Import the launch prompts**,
+the library shows the prompts bundled in `src/data/prompts/`.
+
+The full Firestore layout and access rules are at the top of `src/data/promptApi.js` and in `firestore.rules`.
+
+**Demo mode:** `VITE_LOCAL_MODE=1 npm run dev` runs without Firebase. Data stays in the browser, and a bar at the top of the admin area lets you act as the Owner, a Reviewer, an Editor or a learner.
+
+**Checks**
+- `npm run check:prompts` validates the bundled prompts (it also runs before each deploy).
+- `npm run test:rules` tests `firestore.rules` and needs the Firestore emulator: `npx firebase-tools emulators:exec --only firestore --project demo-bapo "npm run test:rules"`. CI runs it on every pull request.
+
 ## Tech
 
 React 18 + Vite, React Router (hash routing so it works on any static host), lucide icons, Firebase (Auth + Firestore).

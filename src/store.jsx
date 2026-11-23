@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { onUser, loadProgress, saveProgress, isAdmin } from './firebase.js';
+import { onUser, loadProgress, saveProgress, isAdmin, LOCAL_MODE } from './firebase.js';
+import { getStaffRole, touchDirectory } from './data/promptApi.js';
 import { track } from './busy.js';
 import { TERMS, TERM_BY_ID, CATEGORIES, termsIn } from './data/terms.js';
 import { SKILLS, TRACKS, RANK_XP, skillsFor } from './data/skills.js';
@@ -88,23 +89,37 @@ export const BADGES = [
 const INTERVALS = [0, 1, 3, 7, 14, 30];
 export const dueCards = (s) => Object.entries(s.cards).filter(([, c]) => c.due <= dayStr()).map(([id]) => id).filter((id) => TERM_BY_ID[id]);
 
+// ---------- staff identity ----------
+// Live site: Owner = admins/{uid}; Editor / Reviewer = staff/{uid}.role.
+// Local (demo) mode has no sign-in, so the admin area lets you act as one of these demo people.
+export const DEMO_PEOPLE = [
+  { uid: 'demo-owner', name: 'Christine (Owner)', email: 'owner@demo.local', role: 'owner' },
+  { uid: 'demo-reviewer', name: 'Minh (Reviewer)', email: 'minh@demo.local', role: 'reviewer' },
+  { uid: 'demo-editor', name: 'Lan (Editor)', email: 'lan@demo.local', role: 'editor' },
+  { uid: 'demo-learner', name: 'Hoa (Learner)', email: 'hoa@demo.local', role: null },
+];
+const DEMO_KEY = 'bapo-path-demo-identity';
+const readDemo = () => { try { return DEMO_PEOPLE.find((p) => p.uid === localStorage.getItem(DEMO_KEY)) || DEMO_PEOPLE[0]; } catch (e) { return DEMO_PEOPLE[0]; } };
+
 // ---------- context ----------
 const Ctx = createContext(null);
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(load);
   const [user, setUser] = useState(null); const [admin, setAdmin] = useState(false); const [sync, setSync] = useState('off');
+  const [staffRole, setStaffRole] = useState(null); const [demo, setDemo] = useState(readDemo);
   const ready = useRef(false);
   useEffect(() => { const { toasts, ...rest } = state; localStorage.setItem(KEY, JSON.stringify(rest)); }, [state]);
 
   // Google account: on sign-in, merge cloud progress with this browser, then keep the cloud copy up to date.
   useEffect(() => onUser(async (u) => {
-    ready.current = false; setUser(u); setAdmin(false);
+    ready.current = false; setUser(u); setAdmin(false); setStaffRole(null);
     if (!u) { setSync('off'); return; }
     setSync('loading');
+    touchDirectory(u).catch(() => {}); // lets the Owner find this person on the Staff page
     try {
-      const [cloud, adm] = await track(Promise.all([loadProgress(u.uid), isAdmin(u.uid)]));
-      setAdmin(adm);
+      const [cloud, adm, role] = await track(Promise.all([loadProgress(u.uid), isAdmin(u.uid), getStaffRole(u.uid)]));
+      setAdmin(adm); setStaffRole(role);
       setState((local) => {
         const c = cloud && cloud.progress;
         const useCloud = c && (c.xp > local.xp || !local.onboarded);
@@ -219,7 +234,11 @@ export function StoreProvider({ children }) {
     }),
   }), [update]);
 
-  return <Ctx.Provider value={{ s: state, a: actions, user, admin, sync }}>{children}</Ctx.Provider>;
+  // role: 'owner' | 'reviewer' | 'editor' | null; me: who is acting (signed-in user, or the demo person).
+  const role = LOCAL_MODE ? demo.role : admin ? 'owner' : staffRole;
+  const me = LOCAL_MODE ? demo : user ? { uid: user.uid, name: user.displayName || state.name || user.email, email: user.email } : null;
+  const setDemoPerson = useCallback((uid) => { try { localStorage.setItem(DEMO_KEY, uid); } catch (e) { /* ignore */ } setDemo(DEMO_PEOPLE.find((p) => p.uid === uid) || DEMO_PEOPLE[0]); }, []);
+  return <Ctx.Provider value={{ s: state, a: actions, user, admin: LOCAL_MODE ? role === 'owner' : admin, sync, role, me, setDemoPerson }}>{children}</Ctx.Provider>;
 }
 
 export const useStore = () => useContext(Ctx);

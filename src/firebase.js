@@ -11,6 +11,7 @@
 //   users/{uid}                     private profile + learning progress (owner only)
 //   users/{uid}/jobs/{jobId}        private job search tracker (owner only)
 //   users/{uid}/searches/{id}       private search history (owner only)
+//   Prompt Workbench collections are listed in src/data/promptApi.js.
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -18,9 +19,13 @@ import {
 } from 'firebase/firestore';
 import { firebaseConfig } from './firebase-config.js';
 
-export const enabled = Boolean(firebaseConfig.apiKey);
+// Local (demo) mode: no Firebase. Used when there is no config, or for review/test builds
+// made with VITE_LOCAL_MODE=1. Data then stays in this browser.
+export const LOCAL_MODE = !firebaseConfig.apiKey || import.meta.env.VITE_LOCAL_MODE === '1';
+export const enabled = !LOCAL_MODE;
 let auth = null; let db = null;
 if (enabled) { const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); }
+export const getDb = () => db;
 
 // ---------- auth ----------
 const googleProvider = () => { const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); return p; };
