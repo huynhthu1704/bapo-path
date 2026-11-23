@@ -56,8 +56,8 @@ export function parts(body, values = {}) {
   return out;
 }
 
-/** A prompt counts as "new" for 30 days if it was added after launch. */
+/** A prompt counts as "new" for 30 days after it is first published (launch prompts have no date). */
 export function isNew(p, now = Date.now()) {
-  if (!p.added || p.added <= LAUNCH_DATE) return false;
+  if (!p.added || p.added < LAUNCH_DATE) return false;
   return now - Date.parse(p.added) < 30 * 864e5;
 }

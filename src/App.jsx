@@ -11,12 +11,20 @@ import { Achievements, Collection, Story, Speed, Circle } from './pages/Game.jsx
 import Profile from './pages/Profile.jsx';
 import { Frameworks, FrameworkDetail, References } from './pages/Frameworks.jsx';
 import { Jobs, Library, Admin } from './pages/Account.jsx';
-import { FlagGate } from './pages/PromptGate.jsx';
+import { FlagGate, StaffGate } from './pages/PromptGate.jsx';
 
 // Prompt Workbench pages load as their own chunk.
 const pwPage = (name) => lazy(() => import('./pages/Prompts.jsx').then((m) => ({ default: m[name] })));
 const PromptLibrary = pwPage('PromptLibrary'); const PromptDetail = pwPage('PromptDetail'); const Workbench = pwPage('Workbench');
 const Collections = pwPage('Collections'); const CollectionRun = pwPage('CollectionRun'); const MyPrompts = pwPage('MyPrompts');
+// Prompt admin pages (staff only) load as another chunk.
+const adm = (name) => lazy(() => import('./pages/PromptAdmin.jsx').then((m) => ({ default: m[name] })));
+const ADMIN_ROUTES = [
+  ['/pw-admin', adm('AdminPrompts')], ['/pw-admin/new', adm('PromptEditor')], ['/pw-admin/edit/:id', adm('PromptEditor')],
+  ['/pw-admin/preview/:id', adm('PromptPreview')], ['/pw-admin/review', adm('ReviewQueue')], ['/pw-admin/review/:id', adm('ReviewPrompt')],
+  ['/pw-admin/history/:id', adm('VersionHistory')], ['/pw-admin/taxonomy', adm('Taxonomy')], ['/pw-admin/staff', adm('Staff')],
+  ['/pw-admin/feedback', adm('FeedbackInbox')], ['/pw-admin/insights', adm('Insights')],
+];
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -72,6 +80,7 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/collections" element={pw(<Collections />)} />
           <Route path="/collections/:id" element={pw(<CollectionRun />)} />
           <Route path="/my-prompts" element={pw(<MyPrompts />)} />
+          {ADMIN_ROUTES.map(([path, C]) => <Route key={path} path={path} element={<Layout><StaffGate><C /></StaffGate></Layout>} />)}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toasts />

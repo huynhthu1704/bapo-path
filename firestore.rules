@@ -1,9 +1,21 @@
 rules_version = '2';
 // Paste this into Firebase console → Firestore Database → Rules → Publish.
+// Tests: tests/rules.test.mjs (run in CI against the Firestore emulator).
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function me() { return request.auth.uid; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(me())); }
+
+    // Prompt Workbench roles: Owner = admins/{uid}; Editor / Reviewer = staff/{uid}.role.
+    function staffRole() {
+      let p = /databases/$(database)/documents/staff/$(me());
+      return exists(p) ? get(p).data.role : '';
+    }
+    function isEditor() { return isAdmin() || (signedIn() && staffRole() in ['editor', 'reviewer']); }
+    function isReviewer() { return isAdmin() || (signedIn() && staffRole() == 'reviewer'); }
+    function isMe(m) { return m is map && m.uid == me(); }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
 
     // Public knowledge base: anyone can read, only admins can change it.
     match /kb_terms/{id}      { allow read: if true; allow write: if isAdmin(); }
@@ -20,6 +32,108 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
       match /{sub=**} { allow read, write: if signedIn() && request.auth.uid == uid; }
+    }
+
+    // ---------- Prompt Workbench ----------
+
+    // Working copies: staff only. Learners read the published bundle instead.
+    match /prompts/{id} {
+      allow read: if isEditor();
+      // New prompts start as drafts written by their author. The Owner may also import published prompts.
+      allow create: if isAdmin() || (isEditor()
+        && request.resource.data.status == 'draft' && request.resource.data.live == false && request.resource.data.published == null
+        && isMe(request.resource.data.createdBy) && isMe(request.resource.data.updatedBy));
+      allow update: if editorUpdate() || reviewerUpdate();
+      allow delete: if false;
+
+      // Editors (and Reviewers) save drafts and submit them; they can't change what is live.
+      function editorUpdate() {
+        let d = request.resource.data;
+        return isEditor() && isMe(d.updatedBy)
+          && !changed().hasAny(['live', 'published', 'createdBy'])
+          && (d.status == 'draft' || (d.status == 'review' && resource.data.status == 'draft' && isMe(d.submittedBy)));
+      }
+      // Reviewers publish, unpublish and archive. Only the Owner may publish their own submission.
+      function reviewerUpdate() {
+        let d = request.resource.data;
+        let publishing = changed().hasAny(['published']) && d.live == true;
+        return isReviewer() && isMe(d.updatedBy) && !changed().hasAny(['createdBy'])
+          && (!publishing || (
+            resource.data.status == 'review' && d.status == 'published'
+            && (isAdmin() || !isMe(resource.data.submittedBy))
+            && d.published.title is string && d.published.title.size() > 0
+            && d.published.body is string && d.published.body.size() > 0
+            && d.published.output is string && d.published.output.size() > 0));
+      }
+
+      match /versions/{v} {
+        allow read: if isEditor();
+        allow create: if isEditor() && isMe(request.resource.data.by);
+        allow update, delete: if false;
+      }
+    }
+
+    match /prompt_bundles/{doc}  { allow read: if true; allow write: if isReviewer(); }
+    match /prompt_taxonomy/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /settings/{doc}        { allow read: if true; allow write: if isAdmin(); }
+
+    // Usage counters. Anyone may add 1 copy; signed-in learners may move the rating totals by one rating.
+    match /prompt_stats/{pid} {
+      allow read: if true;
+      allow create: if (request.resource.data.keys().hasOnly(['copies']) && request.resource.data.copies == 1)
+        || (signedIn() && request.resource.data.keys().hasOnly(['ratingSum', 'ratingCount'])
+            && request.resource.data.ratingCount == 1 && request.resource.data.ratingSum >= 1 && request.resource.data.ratingSum <= 5);
+      allow update: if (changed().hasOnly(['copies']) && request.resource.data.copies == resource.data.get('copies', 0) + 1)
+        || (signedIn() && changed().hasOnly(['ratingSum', 'ratingCount'])
+            && request.resource.data.ratingCount - resource.data.get('ratingCount', 0) in [0, 1]
+            && request.resource.data.ratingSum - resource.data.get('ratingSum', 0) >= -4
+            && request.resource.data.ratingSum - resource.data.get('ratingSum', 0) <= 5);
+      allow delete: if false;
+    }
+    match /prompt_month/{key} {
+      allow read: if isEditor();
+      allow create: if request.resource.data.keys().hasOnly(['promptId', 'month', 'copies']) && request.resource.data.copies == 1
+        && key == request.resource.data.promptId + '_' + request.resource.data.month;
+      allow update: if changed().hasOnly(['copies']) && request.resource.data.copies == resource.data.copies + 1;
+      allow delete: if false;
+    }
+
+    // One rating per learner per prompt; id = {promptId}_{uid}.
+    match /prompt_ratings/{rid} {
+      allow read: if signedIn() && rid.split('_')[1] == me();
+      allow create, update: if signedIn() && request.resource.data.uid == me()
+        && rid == request.resource.data.promptId + '_' + me()
+        && request.resource.data.keys().hasOnly(['promptId', 'uid', 'stars', 'at'])
+        && request.resource.data.stars is int && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+      allow delete: if false;
+    }
+
+    // Private suggestions: learners write, Reviewers and the Owner read.
+    match /prompt_feedback/{id} {
+      allow create: if signedIn() && request.resource.data.uid == me() && request.resource.data.status == 'new'
+        && request.resource.data.keys().hasOnly(['promptId', 'title', 'uid', 'name', 'email', 'text', 'at', 'status'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000;
+      allow read: if isReviewer();
+      allow update: if isReviewer() && changed().hasOnly(['status']);
+      allow delete: if false;
+    }
+
+    // Staff roles: the Owner assigns them; people can read their own.
+    match /staff/{uid} {
+      allow read: if isAdmin() || (signedIn() && me() == uid);
+      allow write: if isAdmin();
+    }
+    // People who signed in (for the Staff page): each person writes their own entry, only the Owner reads.
+    match /directory/{uid} {
+      allow read: if isAdmin();
+      allow create, update: if signedIn() && me() == uid && request.resource.data.keys().hasOnly(['name', 'email', 'photo', 'lastSeen']);
+      allow delete: if false;
+    }
+    // Audit log: staff append, only the Owner reads, nobody edits.
+    match /admin_logs/{id} {
+      allow create: if isEditor() && request.resource.data.uid == me();
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
   }
 }

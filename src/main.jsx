@@ -4,7 +4,8 @@ import App from './App.jsx';
 import { initKnowledge, KB_SOURCE } from './knowledge.js';
 import { finishRedirectSignIn } from './firebase.js';
 import { track } from './busy.js';
-import { capturePreview } from './data/flags.js';
+import { capturePreview, setRemoteFlags } from './data/flags.js';
+import { getSettings } from './data/promptApi.js';
 import './styles.css';
 
 capturePreview(); // remembers ?preview=<flag> for design review
@@ -18,6 +19,7 @@ function Root() {
   useEffect(() => {
     track(initKnowledge()).then(() => { if (KB_SOURCE.value === 'cloud') setKbVersion((v) => v + 1); });
     track(finishRedirectSignIn()); // completes a Google sign-in that used the redirect fallback
+    getSettings().then((st) => setRemoteFlags(st && st.flags)).catch(() => {}); // feature flags from settings/site
   }, []);
   return <App kbVersion={kbVersion} />;
 }

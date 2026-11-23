@@ -6,7 +6,7 @@ import { logSearch, enabled as authEnabled, signInWithGoogle, signInErrorText } 
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
-import { can } from '../data/flags.js';
+import { can, useFlags } from '../data/flags.js';
 
 export const Icon = ({ name, size = 20, color, ...p }) => {
   const C = L[name] || L.Circle;
@@ -83,7 +83,9 @@ const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
 
 function Sidebar({ open, onClose }) {
   useLocation(); // re-render on navigation so the Prompt Workbench item highlights on its sub-pages
-  const { s, admin } = useStore();
+  useFlags();
+  const { s, admin, role, me } = useStore();
+  const pwOn = can('prompts', { role, uid: me && me.uid });
   const r = rankInfo(s.xp, s.track);
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
@@ -91,11 +93,12 @@ function Sidebar({ open, onClose }) {
       {NAV.map(([sec, items]) => (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
-          {(sec === 'LEARN' && can('prompts', { admin }) ? [...items.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...items.slice(5)] : items).map(([to, label, icon]) => (
+          {(sec === 'LEARN' && pwOn ? [...items.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...items.slice(5)] : items).map(([to, label, icon]) => (
             <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
           ))}
         </div>
       ))}
+ {role && <NavLink to="/pw-admin" className={({ isActive }) => `nav-item ${isActive || /^#\/pw-admin/.test(location.hash) ? 'active' : ''}`}><Icon name="ClipboardList" size={20} />Prompt admin</NavLink>}
       {admin && <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name="Database" size={20} />Knowledge admin</NavLink>}
       <Link to="/achievements" className="rank-card">
         <div className="row center gap8"><Icon name="Award" size={18} color="#4F46E5" /><span className="label grow" style={{ color: 'var(--primary-dark)' }}>{r.name}</span><span className="caption c-primary">Rank {r.index + 1}</span></div>
@@ -108,15 +111,16 @@ function Sidebar({ open, onClose }) {
 }
 
 function SearchBox() {
-  const { user, admin } = useStore();
+  useFlags();
+  const { user, role, me } = useStore();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
   useEffect(() => { const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, []);
   const ql = q.trim().toLowerCase();
   // Prompts are searched only when the Workbench is on; their data loads on first search.
-  const pwOn = can('prompts', { admin }); const [prompts, setPrompts] = useState(null);
-  useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/prompts/index.js').then((m) => setPrompts(m.PROMPTS)); }, [pwOn, ql, prompts]);
+  const pwOn = can('prompts', { role, uid: me && me.uid }); const [prompts, setPrompts] = useState(null);
+  useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/promptStore.js').then((m) => { setPrompts(m.promptData().prompts); m.loadPromptData().then(() => setPrompts(m.promptData().prompts)); }); }, [pwOn, ql, prompts]);
   const results = ql.length < 2 ? [] : [
     ...TERMS.filter((t) => (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
     ...SKILLS.filter((k) => k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),

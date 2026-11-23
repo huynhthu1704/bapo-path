@@ -4,17 +4,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store.jsx';
-import { Icon, Tag, Crumbs, PageHead, Progress } from '../components/ui.jsx';
+import { Icon, Tag, Crumbs, PageHead, Progress, GoogleButton } from '../components/ui.jsx';
 import { activeLangs } from '../i18n.js';
-import {
-  PROMPTS, PROMPT_BY_ID, PHASES, PHASE_BY_ID, CATEGORIES, CATEGORY_BY_ID, COLLECTIONS, COLLECTION_BY_ID, ROLES,
-  fill, parts, isNew,
-} from '../data/prompts/index.js';
+import { ROLES, fill, parts, isNew } from '../data/prompts/index.js';
+import { usePromptData, loadPromptData } from '../data/promptStore.js';
+import { recordCopy, getStats, getMyRating, ratePrompt, sendFeedback } from '../data/promptApi.js';
+
+loadPromptData(); // switch to the published prompts as soon as this chunk loads
 
 // ---------- helpers ----------
-const WORK_PHASES = PHASES.filter((p) => p.id !== 'every');
-const inPhase = (phase) => PROMPTS.filter((p) => p.phase === phase);
-const PHASE_COUNT = Object.fromEntries(PHASES.map((ph) => [ph.id, inPhase(ph.id).length]));
+const workPhases = (D) => D.phases.filter((p) => p.id !== 'every');
+const inPhase = (D, phase) => D.prompts.filter((p) => p.phase === phase);
+// Marks a prompt as used (favourites/recent/ticks) and counts the copy for Insights.
+export const useCopied = () => { const { a } = useStore(); return (id) => { a.usePrompt(id); recordCopy(id); }; };
 
 export const ago = (iso) => {
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -53,7 +55,7 @@ export function usePhValues() {
 
 // ---------- small components ----------
 export function PhaseChip({ phase, label }) {
-  const ph = PHASE_BY_ID[phase];
+  const ph = usePromptData().phaseById[phase] || { name: phase, color: '#475569', soft: '#F1F5F9' };
   return (
     <span className="tag phase-chip" style={{ background: ph.soft, color: ph.color }}>
       <span className="dot" style={{ background: ph.color }} aria-hidden="true" />{label || ph.name}
@@ -130,7 +132,7 @@ export function CopyButton({ text, onCopied, label = 'Copy', variant = 'soft', c
 
 // Card used in the library grid (Figma component PW/PromptCard).
 export function PromptCard({ p }) {
-  const { a } = useStore();
+  const copied = useCopied();
   const { values } = usePhValues();
   return (
     <article className="card prompt-card">
@@ -149,7 +151,7 @@ export function PromptCard({ p }) {
       <div className="push" />
       <div className="row center card-foot">
         <span className="caption faint grow">{p.ph.length} placeholder{p.ph.length === 1 ? '' : 's'}</span>
-        <CopyButton text={() => fill(p.body, values)} onCopied={() => a.usePrompt(p.id)} />
+        <CopyButton text={() => fill(p.body, values)} onCopied={() => copied(p.id)} />
       </div>
     </article>
   );
@@ -167,13 +169,15 @@ const searchScore = (p, q) => {
 };
 
 export function PromptLibrary() {
+  const D = usePromptData();
+  const { prompts: PROMPTS, phases: PHASES, categories: CATEGORIES } = D;
   const [sp, setSp] = useSearchParams();
   const q = sp.get('q') || ''; const role = sp.get('role') || ''; const phase = sp.get('phase') || ''; const cat = sp.get('cat') || '';
   const setParam = (k, v) => { const n = new URLSearchParams(sp); if (v) n.set(k, v); else n.delete(k); n.delete('preview'); setSp(n, { replace: true }); };
   const ql = q.trim().toLowerCase();
 
-  const base = useMemo(() => PROMPTS.filter((p) => (!role || p.roles.includes(role)) && (!cat || p.cat === cat)), [role, cat]);
-  const counts = useMemo(() => Object.fromEntries(PHASES.map((ph) => [ph.id, base.filter((p) => p.phase === ph.id).length])), [base]);
+  const base = useMemo(() => PROMPTS.filter((p) => (!role || p.roles.includes(role)) && (!cat || p.cat === cat)), [PROMPTS, role, cat]);
+  const counts = useMemo(() => Object.fromEntries(PHASES.map((ph) => [ph.id, base.filter((p) => p.phase === ph.id).length])), [PHASES, base]);
   const list = useMemo(() => {
     let l = base.filter((p) => !phase || p.phase === phase);
     if (ql) l = l.map((p) => [p, searchScore(p, ql)]).filter(([, sc]) => sc > 0).sort((x, y) => y[1] - x[1]).map(([p]) => p);
@@ -220,7 +224,7 @@ export function PromptLibrary() {
           {list.length ? <Grid items={list} /> : <Empty text="No prompts match. Try another word, or clear the filters." onClear={() => setSp({}, { replace: true })} />}
         </Section>
       ) : phase ? (
-        <PhaseGroups phase={phase} list={list} />
+        <PhaseGroups D={D} phase={phase} list={list} />
       ) : (
         <>
           {!filtered && fresh.length > 0 && (
@@ -244,9 +248,9 @@ export function PromptLibrary() {
 }
 
 // One phase, grouped by category, with counts.
-function PhaseGroups({ phase, list }) {
-  const ph = PHASE_BY_ID[phase];
-  const groups = CATEGORIES.map((c) => [c, list.filter((p) => p.cat === c.id)]).filter(([, l]) => l.length);
+function PhaseGroups({ D, phase, list }) {
+  const ph = D.phaseById[phase] || { name: phase, sub: '' };
+  const groups = D.categories.map((c) => [c, list.filter((p) => p.cat === c.id)]).filter(([, l]) => l.length);
   return (
     <>
       <div className="col gap4"><h2 className="h2">{ph.name} · {list.length} prompt{list.length === 1 ? '' : 's'}</h2><p className="small muted">{ph.sub}</p></div>
@@ -273,8 +277,8 @@ const Empty = ({ text, onClear }) => (
 );
 
 // ---------- fill-in form + live preview (L2, L5) ----------
-export function PromptWorkspace({ p, onCopied }) {
-  const { a } = useStore();
+export function PromptWorkspace({ p, onCopied, preview = false }) {
+  const copied = useCopied();
   const { values, set, clear } = usePhValues();
   const [view, setView] = useState('filled');
   const names = p.ph.map((x) => x[0]);
@@ -319,7 +323,7 @@ export function PromptWorkspace({ p, onCopied }) {
             <button type="button" className={view === 'filled' ? 'on' : ''} aria-pressed={view === 'filled'} onClick={() => setView('filled')}>Filled</button>
             <button type="button" className={view === 'template' ? 'on' : ''} aria-pressed={view === 'template'} onClick={() => setView('template')}>Template</button>
           </div>
-          <CopyButton text={() => fill(p.body, values)} label="Copy prompt" variant="primary" onCopied={() => { a.usePrompt(p.id); onCopied && onCopied(); }} />
+          <CopyButton text={() => fill(p.body, values)} label="Copy prompt" variant="primary" onCopied={() => { if (!preview) copied(p.id); onCopied && onCopied(); }} />
         </div>
         <pre className="prompt-pre" aria-label="Prompt preview">
           {segs.map((sg, i) => (sg.name ? <mark key={i} className={sg.filled ? 'ph-val' : 'ph-empty'}>{sg.text}</mark> : <span key={i}>{sg.text}</span>))}
@@ -342,46 +346,57 @@ const TIPS = [
 
 export function PromptDetail() {
   const { id } = useParams();
-  const p = PROMPT_BY_ID[id];
+  const D = usePromptData();
+  const p = D.byId[id];
+  if (!p) {
+    return <div className="card p28"><h1 className="h2">{D.source === 'bundled' ? 'Prompt not found' : 'This prompt is no longer available'}</h1><p className="body muted">It may have been unpublished or archived by the editors.</p><Link to="/prompts" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Back to the library</Link></div>;
+  }
+  return <PromptDetailView p={p} />;
+}
+
+// The learner detail page. preview=true is used by the admin Preview (no ratings, no usage tracking).
+export function PromptDetailView({ p, preview = false }) {
+  const D = usePromptData();
   const [copied, setCopied] = useState(false);
   const nextRef = useRef();
-  if (!p) {
-    return <div className="card p28"><h1 className="h2">Prompt not found</h1><Link to="/prompts" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Back to the library</Link></div>;
-  }
-  const ph = PHASE_BY_ID[p.phase];
-  const stepLabel = p.phase === 'every' ? `Every phase · ${p.step} of ${PHASE_COUNT.every}` : `${ph.name} · step ${p.step} of ${PHASE_COUNT[p.phase]}`;
-  const inCols = COLLECTIONS.map((c) => [c, c.steps.indexOf(p.id)]).filter(([, i]) => i >= 0);
+  const ph = D.phaseById[p.phase] || { name: p.phase };
+  const cat = D.categoryById[p.cat] || { id: p.cat, name: '' };
+  const total = (D.phaseCount[p.phase] || 0) + (D.byId[p.id] && D.byId[p.id].phase === p.phase ? 0 : 1); // a draft is not counted yet
+  const stepLabel = p.phase === 'every' ? `Every phase · ${p.step} of ${total}` : `${ph.name} · step ${p.step} of ${total}`;
+  const nextList = (p.next || []).map((n) => D.byId[n]).filter(Boolean).slice(0, 3);
+  const inCols = D.collections.map((c) => [c, c.steps.indexOf(p.id)]).filter(([, i]) => i >= 0);
   const onCopied = () => { setCopied(true); if (window.matchMedia('(max-width: 900px)').matches) setTimeout(() => nextRef.current && nextRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150); };
 
   return (
     <>
-      <Crumbs items={[['Prompt Workbench', '/prompts'], [ph.name, `/prompts?phase=${p.phase}`], [p.title]]} />
+      {!preview && <Crumbs items={[['Prompt Workbench', '/prompts'], [ph.name, `/prompts?phase=${p.phase}`], [p.title]]} />}
       <div className="detail-split">
         <div className="col gap24" style={{ gap: 20 }}>
           <section className="card p28">
             <div className="row center wrap gap8">
               <PhaseChip phase={p.phase} label={stepLabel} /><RoleTags roles={p.roles} /><span className="caption faint grow">{catLine(p)}</span>
-              <FavButton id={p.id} withLabel />
+              {!preview && <FavButton id={p.id} withLabel />}
             </div>
             <h1 className="h1">{p.title}</h1>
             <PromptTr p={p} mode="full" />
             <p className="body muted">{p.desc}</p>
-            <span className="caption faint">{CATEGORY_BY_ID[p.cat].id} · {CATEGORY_BY_ID[p.cat].name} · {p.ph.length} placeholders</span>
+            <span className="caption faint">{!preview && <RatingSummary id={p.id} />}{cat.id} · {cat.name} · {p.ph.length} placeholders</span>
           </section>
           <div className="grid g3 info3">
             <InfoCard title="When to use"><ul className="bullets">{p.when.map((w) => <li key={w}>{w}</li>)}</ul></InfoCard>
             <InfoCard title="Prepare first"><ul className="bullets">{p.prepare.split(/,\s*/).map((w) => <li key={w}>{w}</li>)}</ul></InfoCard>
             <InfoCard title="Expected output"><p className="small muted">{p.output}</p></InfoCard>
           </div>
-          <PromptWorkspace p={p} onCopied={onCopied} />
+          <PromptWorkspace p={p} onCopied={onCopied} preview={preview} />
         </div>
 
         <aside className="col gap24" style={{ gap: 20 }}>
           <section className={`card p24 ${copied ? 'next-flash' : ''}`} ref={nextRef} aria-labelledby="next-h">
             <h2 className="h3" id="next-h">Next step</h2>
             <p className="small muted">{copied ? 'Copied. When you have the answer, continue with:' : 'After this prompt, most people continue with:'}</p>
-            {p.next.slice(0, 3).map((n, i) => {
-              const q = PROMPT_BY_ID[n];
+            {!nextList.length && <p className="small faint">No next step set for this prompt.</p>}
+            {nextList.map((q, i) => {
+              const n = q.id;
               return (
                 <Link key={n} to={`/prompts/${n}`} className={`next-item ${i === 0 ? 'rec' : ''}`}>
                   <span className="row center gap8 wrap"><PhaseChip phase={q.phase} />{i === 0 && <span className="caption c-accent">Recommended</span>}</span>
@@ -390,6 +405,7 @@ export function PromptDetail() {
               );
             })}
           </section>
+          {!preview && <RateCard p={p} />}
           <section className="card p24">
             <h2 className="h3">Tips</h2>
             <ul className="bullets">{TIPS.map((t) => <li key={t}>{t}</li>)}</ul>
@@ -409,17 +425,20 @@ const InfoCard = ({ title, children }) => <section className="card"><h2 classNam
 
 // ---------- L3 Workbench ----------
 export function Workbench() {
-  const { s, a } = useStore();
+  const { s } = useStore();
+  const D = usePromptData();
+  const copied = useCopied();
   const { values } = usePhValues();
   const [sp, setSp] = useSearchParams();
   const role = sp.get('role') || '';
   const used = new Set(s.promptUsed);
   const lastUsed = Object.fromEntries(s.promptRecent.map((r) => [r.id, r.at]));
-  const steps = (ph) => inPhase(ph).filter((p) => !role || p.roles.includes(role));
+  const steps = (ph) => inPhase(D, ph).filter((p) => !role || p.roles.includes(role));
+  const WORK_PHASES = workPhases(D);
   const firstOpen = WORK_PHASES.find((ph) => steps(ph.id).some((p) => !used.has(p.id)));
   const phase = sp.get('phase') || (firstOpen ? firstOpen.id : 'discover');
-  const ph = PHASE_BY_ID[phase];
-  const list = steps(phase);
+  const ph = D.phaseById[phase] || WORK_PHASES[0];
+  const list = steps(ph.id);
   const rec = list.find((p) => !used.has(p.id));
   const setParam = (k, v) => { const n = new URLSearchParams(sp); if (v) n.set(k, v); else n.delete(k); setSp(n, { replace: true }); };
   const playbook = () => list.map((p, i) => `### Step ${i + 1}: ${p.title}\n\n${fill(p.body, values)}`).join('\n\n---\n\n');
@@ -462,7 +481,7 @@ export function Workbench() {
                   <span className="caption faint">{catLine(p)} · {p.roles.join(', ')}</span>
                 </div>
                 <span className={`caption hide-sm ${isRec ? 'c-accent' : 'faint'}`}>{done && lastUsed[p.id] ? `Used ${ago(lastUsed[p.id])}` : done ? 'Used' : isRec ? 'Recommended next' : ''}</span>
-                <CopyButton text={() => fill(p.body, values)} onCopied={() => a.usePrompt(p.id)} />
+                <CopyButton text={() => fill(p.body, values)} onCopied={() => copied(p.id)} />
                 <Link to={`/prompts/${p.id}`} className="icon-btn" aria-label={`Open ${p.title}`}><Icon name="ChevronRight" size={18} /></Link>
               </div>
             );
@@ -483,7 +502,7 @@ export function Workbench() {
           )}
           <section className="card p24">
             <div className="row center"><h2 className="h3 grow">Collections</h2><Link to="/collections" className="small c-primary">See all</Link></div>
-            {COLLECTIONS.slice(0, 3).map((c) => {
+            {D.collections.slice(0, 3).map((c) => {
               const u = c.steps.filter((n) => used.has(n)).length;
               return (
                 <Link key={c.id} to={`/collections/${c.id}`} className="col gap6">
@@ -495,8 +514,8 @@ export function Workbench() {
           </section>
           <section className="card p24">
             <h2 className="h3">Useful in every phase</h2>
-            <p className="small muted">F · Project and team management ({PROMPTS.filter((p) => p.cat === 'F').length}) and I · AI productivity ({PROMPTS.filter((p) => p.cat === 'I').length}): stand-ups, status reports, stakeholder emails, summaries.</p>
-            <Link to="/prompts?phase=every" className="label c-primary">Browse {PHASE_COUNT.every} prompts</Link>
+            <p className="small muted">Project and team management and AI productivity prompts: stand-ups, status reports, stakeholder emails, summaries.</p>
+            <Link to="/prompts?phase=every" className="label c-primary">Browse {D.phaseCount.every || 0} prompts</Link>
           </section>
         </aside>
       </div>
@@ -507,6 +526,7 @@ export function Workbench() {
 // ---------- L4 Collections ----------
 export function Collections() {
   const { s } = useStore();
+  const { collections: COLLECTIONS, byId: PROMPT_BY_ID } = usePromptData();
   const used = new Set(s.promptUsed);
   const started = COLLECTIONS.find((c) => { const u = c.steps.filter((n) => used.has(n)).length; return u > 0 && u < c.steps.length; });
   return (
@@ -539,6 +559,7 @@ export function Collections() {
 export function CollectionRun() {
   const { id } = useParams();
   const { s } = useStore();
+  const { collectionById: COLLECTION_BY_ID, byId: PROMPT_BY_ID } = usePromptData();
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
   const c = COLLECTION_BY_ID[id];
@@ -590,12 +611,14 @@ export function CollectionRun() {
 // ---------- L6 My prompts ----------
 export function MyPrompts() {
   const { s, a, user } = useStore();
+  const { byId: PROMPT_BY_ID } = usePromptData();
+  const copied = useCopied();
   const { values, clear } = usePhValues();
   const [tab, setTab] = useState(s.promptFavs.length || !s.promptRecent.length ? 'fav' : 'recent');
   const stored = Object.keys(values).length;
   const rows = tab === 'fav'
-    ? s.promptFavs.map((id) => [PROMPT_BY_ID[id], null]).filter(([p]) => p)
-    : s.promptRecent.map((r) => [PROMPT_BY_ID[r.id], r.at]).filter(([p]) => p);
+    ? s.promptFavs.map((id) => [PROMPT_BY_ID[id] || { id, gone: true }, null])
+    : s.promptRecent.map((r) => [PROMPT_BY_ID[r.id] || { id: r.id, gone: true }, r.at]);
 
   return (
     <>
@@ -607,7 +630,12 @@ export function MyPrompts() {
         <button type="button" role="tab" aria-selected={tab === 'recent'} className={tab === 'recent' ? 'on' : ''} onClick={() => setTab('recent')}>Recently used · {s.promptRecent.length}</button>
       </div>
       <section className="card p0">
-        {rows.map(([p, at]) => (
+        {rows.map(([p, at]) => (p.gone ? (
+          <div key={p.id} className="list-row step-row">
+            <div className="col grow" style={{ gap: 2 }}><span className="label faint">No longer available</span><span className="caption faint">This prompt was unpublished or archived ({p.id}).</span></div>
+            {tab === 'fav' && <button type="button" className="btn btn-secondary" onClick={() => a.togglePromptFav(p.id)}>Remove</button>}
+          </div>
+        ) : (
           <div key={p.id} className="list-row step-row">
             <PhaseChip phase={p.phase} />
             <div className="col grow" style={{ gap: 2 }}>
@@ -615,9 +643,9 @@ export function MyPrompts() {
               <span className="caption faint">{catLine(p)}{at ? ` · used ${ago(at)}` : ''}</span>
             </div>
             <FavButton id={p.id} />
-            <CopyButton text={() => fill(p.body, values)} onCopied={() => a.usePrompt(p.id)} />
+            <CopyButton text={() => fill(p.body, values)} onCopied={() => copied(p.id)} />
           </div>
-        ))}
+        )))}
         {!rows.length && (
           <div className="col center-text" style={{ padding: 32 }}>
             <Icon name={tab === 'fav' ? 'Star' : 'History'} size={28} color="#94A3B8" style={{ alignSelf: 'center' }} />
@@ -632,5 +660,57 @@ export function MyPrompts() {
         </div>
       </section>
     </>
+  );
+}
+
+// ---------- ratings and private feedback (REQ-014) ----------
+function RatingSummary({ id }) {
+  const [st, setSt] = useState(null);
+  useEffect(() => { let on = true; getStats(id).then((x) => on && setSt(x)).catch(() => {}); const h = (e) => { if (e.detail === id) getStats(id).then((x) => on && setSt(x)).catch(() => {}); }; window.addEventListener('pw-rated', h); return () => { on = false; window.removeEventListener('pw-rated', h); }; }, [id]);
+  if (!st || !st.ratingCount) return null;
+  return <span className="c-accent">★ {(st.ratingSum / st.ratingCount).toFixed(1)} ({st.ratingCount} rating{st.ratingCount === 1 ? '' : 's'}) · </span>;
+}
+
+function RateCard({ p }) {
+  const { me, user } = useStore();
+  const [mine, setMine] = useState(0); const [hover, setHover] = useState(0);
+  const [text, setText] = useState(''); const [msg, setMsg] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  useEffect(() => { setMine(0); setMsg(''); setErr(''); if (me) getMyRating(p.id, me.uid).then((r) => setMine(r ? r.stars : 0)).catch(() => {}); }, [p.id, me && me.uid]); // eslint-disable-line
+  const rate = async (n) => {
+    setErr(''); setBusy(true);
+    try { await ratePrompt(p.id, me, n); setMine(n); setMsg(`Thanks — you rated it ${n} star${n === 1 ? '' : 's'}. You can change it any time.`); window.dispatchEvent(new CustomEvent('pw-rated', { detail: p.id })); } catch (e) { setErr(e.message || 'Could not save your rating. Try again.'); }
+    setBusy(false);
+  };
+  const send = async () => {
+    setErr(''); setBusy(true);
+    try { await sendFeedback(p, me, text); setText(''); setMsg('Thanks — your suggestion went privately to the editors.'); } catch (e) { setErr(e.message || 'Could not send. Try again.'); }
+    setBusy(false);
+  };
+  return (
+    <section className="card p24" aria-labelledby={`rate-${p.id}`}>
+      <h2 className="h3" id={`rate-${p.id}`}>Rate this prompt</h2>
+      {!me ? (
+        <>
+          <p className="small muted">Sign in to rate prompts and send private suggestions to the editors.</p>
+          {!user && <GoogleButton label="Sign in with Google" small />}
+        </>
+      ) : (
+        <>
+          <div className="stars" role="radiogroup" aria-label="Your rating" onMouseLeave={() => setHover(0)}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} type="button" role="radio" aria-checked={mine === n} aria-label={`${n} star${n === 1 ? '' : 's'}`} disabled={busy}
+                className={(hover || mine) >= n ? 'on' : ''} onMouseEnter={() => setHover(n)} onClick={() => rate(n)}>
+                <Icon name="Star" size={26} fill={(hover || mine) >= n ? 'currentColor' : 'none'} />
+              </button>
+            ))}
+          </div>
+          <label htmlFor={`fb-${p.id}`} className="sr-only">Suggest an improvement</label>
+          <textarea id={`fb-${p.id}`} className="input textarea" rows={3} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Suggest an improvement (private to the editors)" />
+          <button type="button" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }} disabled={busy || !text.trim()} onClick={send}>Send feedback</button>
+        </>
+      )}
+      <span className="caption c-success" aria-live="polite">{msg}</span>
+      {err && <span className="caption c-danger" role="alert">{err}</span>}
+    </section>
   );
 }
