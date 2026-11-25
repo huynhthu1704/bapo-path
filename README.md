@@ -97,8 +97,18 @@ The full Firestore layout and access rules are at the top of `src/data/promptApi
 **Demo mode:** `VITE_LOCAL_MODE=1 npm run dev` runs without Firebase. Data stays in the browser, and a bar at the top of the admin area lets you act as the Owner, a Reviewer, an Editor or a learner.
 
 **Checks**
-- `npm run check:prompts` validates the bundled prompts (it also runs before each deploy).
-- `npm run test:rules` tests `firestore.rules` and needs the Firestore emulator: `npx firebase-tools emulators:exec --only firestore --project demo-bapo "npm run test:rules"`. CI runs it on every pull request.
+- `npm run verify` runs the prompt check, the production build and the end-to-end tests. Run it before every PR. CI (`ci.yml`) runs it on every pull request.
+- `npm run test:e2e` runs the Playwright tests in `tests/e2e/` against a demo-mode build, with no Firebase needed. Test titles start with their requirement's TC id, e.g. `npx playwright test -g TC-018`.
+- `npm run test:rules:emulator` tests `firestore.rules` against the Firestore emulator (needs Java 21). CI runs it on every pull request (`rules-test.yml`), and `deploy-rules.yml` re-runs it before publishing the rules.
+
+## How we work
+
+The project follows an AI-native workflow: requirements as issues with Given/When/Then criteria, tests named after them,
+AI agents doing the build and first review, and people approving every merge and release.
+
+- **[docs/WORKFLOW.md](docs/WORKFLOW.md)**: the working flow for one engineer and for a team, the gates, and the one-time GitHub setup
+- **[CLAUDE.md](CLAUDE.md)**: instructions every AI agent session follows
+- **[docs/requirements/](docs/requirements/)**: requirements and the REQ → test traceability matrix
 
 ## Tech
 
