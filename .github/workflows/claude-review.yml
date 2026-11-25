@@ -1,0 +1,44 @@
+name: AI code review
+
+# Claude reviews every pull request and leaves comments. It does not approve or merge:
+# a person still reviews and merges (see docs/WORKFLOW.md → "Review").
+#
+# Opt-in: add the repository secret ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions),
+# or install the Claude GitHub App by running /install-github-app in Claude Code.
+# Without the secret the job is skipped.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Skip when no API key is set
+        if: env.HAS_KEY != 'true'
+        run: echo "::notice::ANTHROPIC_API_KEY is not set; AI review skipped."
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        if: env.HAS_KEY == 'true'
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this pull request for BAPO Path. Read CLAUDE.md first and hold the change to it.
+            Focus on, in this order:
+            1. Security: any change to firestore.rules, src/data/promptApi.js, src/firebase.js or role checks.
+               UI-only permission checks are a bug; the rule must be in firestore.rules with a test in tests/rules.test.mjs.
+            2. Correctness bugs and regressions, with a concrete failing scenario for each.
+            3. Missing tests: every acceptance criterion closed by the PR needs a TC-xxx test in tests/e2e/.
+            4. New features not behind a flag in src/data/flags.js.
+            Leave inline comments for specific lines and one summary comment. Skip style nits.
