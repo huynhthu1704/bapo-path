@@ -23,7 +23,7 @@ Status: **Covered** = every criterion has an automated test · **Partial** = som
 | REQ | Title | Pri | Sprint | Issue | TC → test | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | REQ-001 | Browse prompts by phase or category | Must | 1 | #1 | TC-001 → `prompt-library.spec.js` | Covered |
-| REQ-002 | Keyword search | Must | 1 | #2 | TC-002 → `prompt-library.spec.js` | Partial (no 300 ms timing check) |
+| REQ-002 | Keyword search | Must | 1 | #2 | TC-002 → `prompt-library.spec.js` | Partial (title-first order tested; no 300 ms timing check) |
 | REQ-003 | Filter by role, phase and category | Must | 1 | #3 | TC-003 → `prompt-library.spec.js` | Covered |
 | REQ-004 | Show newly published prompts | Should | 1 | #4 | — | Manual (no prompt is "new" yet) |
 | REQ-005 | Prompt detail page | Must | 1 | #5 | TC-005 → `prompt-library.spec.js` | Covered |
@@ -34,7 +34,7 @@ Status: **Covered** = every criterion has an automated test · **Partial** = som
 | REQ-010 | Next prompt suggestion | Must | 1 | #10 | TC-010 → `prompt-library.spec.js` | Covered |
 | REQ-011 | Workflow collections | Must | 1 | #11 | TC-011 → `prompt-library.spec.js` | Partial (step-through not tested) |
 | REQ-012 | Favorite prompts | Must | 1 | #12 | TC-012 → `prompt-library.spec.js` | Partial (cross-device needs live Firebase) |
-| REQ-013 | Recently used prompts | Must | 1 | #13 | TC-013 → `prompt-library.spec.js` | Partial (order of 3+ not tested) |
+| REQ-013 | Recently used prompts | Must | 1 | #13 | TC-013 → `prompt-library.spec.js` | Covered |
 | REQ-014 | Rate a prompt and send private feedback | Should | 3 | #14 | rules: `tests/rules.test.mjs` | Partial (rules only, no e2e) |
 | REQ-015 | Create and edit prompts | Must | 2 | #15 | TC-015 → `prompt-admin.spec.js` | Covered |
 | REQ-016 | Preview before publishing | Must | 2 | #16 | TC-016 → `prompt-admin.spec.js` | Covered |

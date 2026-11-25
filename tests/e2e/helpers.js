@@ -14,12 +14,6 @@ export async function actAs(page, who) {
   }, `demo-${who}`);
 }
 
-/** Switches identity on an already-open page with the demo bar in Prompt admin. */
-export async function switchTo(page, who) {
-  await page.goto('#/pw-admin');
-  await page.getByLabel('Act as').selectOption(`demo-${who}`);
-}
-
 /** Asserts the page does not scroll sideways (mobile layout). */
 export async function expectNoHorizontalOverflow(page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

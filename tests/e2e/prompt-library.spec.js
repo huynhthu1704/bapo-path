@@ -36,7 +36,13 @@ test.describe('library', () => {
     await page.goto('#/prompts');
     await page.getByRole('searchbox', { name: 'Search prompts' }).fill('gherkin');
     await expect(page).toHaveURL(/q=gherkin/);
-    await expect(page.locator('main article').first()).toContainText(/gherkin/i);
+    const titles = page.locator('main article h3');
+    await expect(titles.first()).toBeVisible();
+    const inTitle = (await titles.allInnerTexts()).map((t) => /gherkin/i.test(t));
+    expect(inTitle[0], 'the first result has "gherkin" in its title').toBe(true);
+    // Every title match comes before every result that matches only in the description, tags or body.
+    const firstOther = inTitle.indexOf(false);
+    if (firstOther >= 0) expect(inTitle.slice(firstOther)).not.toContain(true);
   });
 
   test('TC-003 role and phase filters combine and survive a reload', async ({ page }) => {
@@ -100,7 +106,8 @@ test.describe('prompt detail', () => {
 
   test('TC-008 filled values are remembered for the same placeholder', async ({ page }) => {
     const [a, b] = PROMPTS.filter((p) => p.ph.some((x) => x[0] === 'Business Context')).slice(0, 2);
-    test.skip(!b, 'needs two prompts that share [Business Context]');
+    // Fail loudly (never skip) if a content edit leaves fewer than two prompts to test with.
+    expect(b, 'two bundled prompts must share the [Business Context] placeholder').toBeTruthy();
     await page.goto(`#/prompts/${a.id}`);
     await page.getByRole('textbox', { name: /^\[Business Context\]/ }).fill('Retail bank, 2M customers');
     await page.goto(`#/prompts/${b.id}`);
@@ -115,14 +122,34 @@ test.describe('prompt detail', () => {
     await expect(next.getByRole('link').first()).toContainText('Recommended');
   });
 
-  test('TC-012/TC-013 favourites and recently used show in My prompts', async ({ page }) => {
-    await page.goto('#/prompts/P-A01');
-    await page.getByRole('button', { name: 'Save' }).click();
-    await page.getByRole('button', { name: 'Copy prompt' }).click();
+  test('TC-012 a starred prompt shows under Favourites', async ({ page }) => {
+    const [fav, other] = ['P-A01', 'P-A02'].map((id) => PROMPTS.find((x) => x.id === id));
+    await page.goto(`#/prompts/${fav.id}`);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.goto(`#/prompts/${other.id}`);
+    await page.getByRole('button', { name: 'Copy prompt' }).click(); // used, not starred
     await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
     await page.goto('#/my-prompts');
-    const title = PROMPTS.find((x) => x.id === 'P-A01').title;
-    await expect(page.getByRole('main')).toContainText(title);
+    await page.getByRole('tab', { name: /^Favourites/ }).click();
+    await expect(page.getByRole('tab', { name: /^Favourites/ })).toHaveText('Favourites · 1');
+    await expect(page.getByRole('main')).toContainText(fav.title);
+    await expect(page.getByRole('main')).not.toContainText(other.title);
+  });
+
+  test('TC-013 recently used prompts show newest first', async ({ page }) => {
+    const used = ['P-A01', 'P-A02', 'P-A03'].map((id) => PROMPTS.find((x) => x.id === id));
+    for (const p of used) {
+      await page.goto(`#/prompts/${p.id}`);
+      await page.getByRole('button', { name: 'Copy prompt' }).click();
+      await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+    }
+    await page.goto('#/my-prompts');
+    await page.getByRole('tab', { name: /^Recently used/ }).click();
+    await expect(page.getByRole('tab', { name: /^Recently used/ })).toHaveText('Recently used · 3');
+    const text = await page.getByRole('main').innerText();
+    const at = [...used].reverse().map((p) => text.indexOf(p.title));
+    expect(at.every((i) => i >= 0), 'all three titles listed').toBe(true);
+    expect([...at].sort((x, y) => x - y), 'newest first').toEqual(at);
   });
 });
 

@@ -60,7 +60,8 @@ For Christine working alone with Claude Code. The agent writes and checks the co
    - Read the whole diff of `firestore.rules`, `promptApi.js` and `firebase.js`. For the rest, skim for anything surprising.
    - Big PR? Ask the agent to split it. A good size is one you can read in about 15 minutes.
    - Mark it ready, then **Squash and merge**.
-6. **Release:** the site deploys on merge. If the rules changed, approve the **production** deploy in Actions.
+6. **Release:** the site deploys on merge. If the rules changed, approve the **production** deploy in Actions straight away:
+   the site is already live, and until the rules are, anything that needs them fails. This is one more reason new features start behind a flag.
    Do any "After merging" steps from the PR.
 7. **Roll out** from the flag audience `owner` to `beta` to `everyone` once you are happy. Close the REQ issue.
 
@@ -121,10 +122,13 @@ These settings live in GitHub, not in the code, so an agent can't set them for y
    - Require a pull request before merging (approvals: 0 solo, 1 for a team; *Require review from Code Owners* for a team)
    - Require status checks: **Content, build and end-to-end tests** and **rules** (they show up after the first PR runs them)
    - Require branches to be up to date; block force pushes
-2. **Settings → Environments → New environment `production`** → Required reviewers: yourself.
+2. **Settings → Environments → New environment `production`** → Required reviewers: yourself. Do this **before** step 3: the rules deploy refuses to run without a required reviewer.
 3. **Rules deploy key (optional, removes the manual console step):** create a Firebase service account with only the *Firebase Rules Admin* role, and save its JSON as the secret `FIREBASE_SERVICE_ACCOUNT`.
    Until then `deploy-rules.yml` tests the rules and asks you to publish them in the console.
-4. **AI review on PRs (optional):** add the secret `ANTHROPIC_API_KEY`, or run `/install-github-app` in Claude Code.
+4. **AI review on PRs (optional), no API key needed:** on your computer run `claude setup-token` (needs a Claude Pro or Max plan),
+   then save the token as the repository secret `CLAUDE_CODE_OAUTH_TOKEN`. Running `/install-github-app` in Claude Code does this for you.
+   Reviews then count against your subscription, not paid API usage. A pay-as-you-go `ANTHROPIC_API_KEY` secret also works.
+   Draft PRs are skipped: the review starts when you mark a PR "Ready for review".
 5. **Settings → Code security:** switch on Dependabot alerts and secret scanning.
 
 ## Where things are

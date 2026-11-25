@@ -15,7 +15,10 @@
     ],
     "deny": [
       "Bash(git push --force*)",
+      "Bash(git push -f*)",
       "Bash(git push origin main*)",
+      "Bash(git push * HEAD:main*)",
+      "Bash(git push *:main*)",
       "Bash(npx firebase-tools* deploy*)",
       "Read(./**/*service-account*.json)"
     ]
