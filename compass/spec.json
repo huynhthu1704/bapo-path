@@ -1,0 +1,962 @@
+{
+  "version": 2,
+  "project": "BAPO Path",
+  "stack": "React 18 + Vite, Firebase (Google sign-in, Firestore), Playwright e2e tests in demo mode, node:test process tests, GitHub Pages",
+  "designTool": "https://www.figma.com/design/JswcODuAH6xx2QPipDHAca",
+  "features": [
+    {
+      "id": "F-001",
+      "name": "Prompt Workbench",
+      "idea": {
+        "intent": "A library of 90 ready-to-use AI prompts for BAs, POs and PMs, with an admin to write, review and publish them",
+        "users": [
+          "learner",
+          "Editor",
+          "Reviewer",
+          "Owner"
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "ADR-001",
+      "date": "2026-11-23",
+      "title": "Static site on GitHub Pages with Firebase as the only backend",
+      "status": "Accepted",
+      "context": "BAPO Path is a free learning site run by one person. Decided before Compass; recorded in the 2026-11-26 back-fill.",
+      "decision": "Host the React/Vite build on GitHub Pages and use Firebase (Google sign-in + Firestore). No server code.",
+      "consequences": "Anything needing a server needs another free option. Access control must live in firestore.rules.",
+      "reqIds": []
+    },
+    {
+      "id": "ADR-002",
+      "date": "2026-11-23",
+      "title": "New user-facing features ship behind default-off feature flags",
+      "status": "Accepted",
+      "context": "Changes reach learners as soon as they merge; the Owner wants to try them first. Recorded from CLAUDE.md.",
+      "decision": "Every new user-facing feature gets a flag in src/data/flags.js, off by default with audience owner, then moves owner → beta → everyone.",
+      "consequences": "Every feature PR adds a flag; the Owner moves audiences in Prompt admin → Insights → Features.",
+      "reqIds": [
+        "REQ-026"
+      ]
+    },
+    {
+      "id": "ADR-003",
+      "date": "2026-11-23",
+      "title": "Security lives in firestore.rules, with a test for every rule change",
+      "status": "Accepted",
+      "context": "Hiding something in the UI is not access control. Recorded from CLAUDE.md.",
+      "decision": "Every permission is enforced in firestore.rules and tested in tests/rules.test.mjs; a rule is never weakened to make a feature work.",
+      "consequences": "Rules changes need the Owner to approve (compass/REVIEW.md) and the production deploy approval.",
+      "reqIds": [
+        "REQ-022"
+      ]
+    },
+    {
+      "id": "ADR-004",
+      "date": "2026-11-24",
+      "title": "Hash routing, so no in-page #anchors",
+      "status": "Accepted",
+      "context": "Bug #27: landing page links like href=\"#roadmap\" were read as routes and bounced to the top.",
+      "decision": "Keep hash routing (#/path) for GitHub Pages; scroll to sections with JavaScript instead of #section anchors.",
+      "consequences": "Reviewers flag any href=\"#…\" that is not a route.",
+      "reqIds": []
+    },
+    {
+      "id": "ADR-005",
+      "date": "2026-11-26",
+      "title": "Adopt the Compass Framework, as used in travel-map",
+      "status": "Accepted",
+      "context": "The Owner asked to make the AI-native SDLC of this repo similar to travel-map, which uses Compass: intent, requirements, design, plan, enforced guardrails, independent review and an always-current handover.",
+      "decision": "Add compass/ (spec.json as source of truth, generated views, checks, guardrails, edit hook, plans, intents, designs, REVIEW.md) and AGENTS.md, adapted to BAPO Path: Playwright TC titles, the prompts check, firestore.rules tests and the existing CI jobs.",
+      "consequences": "Requirements move from docs/requirements/ to compass/spec.json. From REQ-026 on, every requirement needs an approved intent and design, and every code PR a plan file and an independent review.",
+      "reqIds": [
+        "REQ-026",
+        "REQ-027",
+        "REQ-028",
+        "REQ-029",
+        "REQ-030",
+        "REQ-031",
+        "REQ-032",
+        "REQ-033",
+        "REQ-034"
+      ]
+    },
+    {
+      "id": "ADR-006",
+      "date": "2026-11-26",
+      "title": "The Owner still merges; agents open draft PRs",
+      "status": "Proposed",
+      "context": "travel-map lets the agent auto-merge once CI is green and the independent review says APPROVE. BAPO Path so far had the Owner read and merge every PR.",
+      "decision": "Keep the current rule: agents open draft PRs and the Owner merges. compass/merge-pr.mjs is available as a safe merge (it refuses without green CI and an APPROVE review) for when the Owner asks an agent to merge.",
+      "consequences": "If the Owner wants travel-map style auto-merge, change this ADR to Accepted with the new rule and update CLAUDE.md and agent-knowledge.md.",
+      "reqIds": [
+        "REQ-028"
+      ]
+    },
+    {
+      "id": "ADR-007",
+      "date": "2026-11-26",
+      "title": "Compass checks run as a separate CI workflow; existing job names stay",
+      "status": "Proposed",
+      "context": "Branch protection may already require the checks \"Content, build and end-to-end tests\" and \"rules\"; renaming them would block every PR.",
+      "decision": "Add .github/workflows/compass.yml with a job named \"Compass checks\" (spec, guardrails, plan, test-first, process tests) and leave ci.yml and rules-test.yml as they are.",
+      "consequences": "The Owner adds \"Compass checks\" to the required checks in branch protection. merge-pr requires all three.",
+      "reqIds": [
+        "REQ-026",
+        "REQ-027"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "title": "Browse prompts by phase or category",
+      "featureId": "F-001",
+      "area": "Browse (F-01)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 1,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #1",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given the library, when I pick \"Define\", then only Define prompts show, grouped by subcategory, with a count."
+      ],
+      "description": "As built: grouped by category A–I, because every prompt has its own subcategory (agreed in PR #26)."
+    },
+    {
+      "id": "REQ-002",
+      "title": "Keyword search",
+      "featureId": "F-001",
+      "area": "Browse (F-01)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 2,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #2",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given the query \"gherkin\", when I search, then prompts matching title, description, tags or body show, title matches first, in under 300 ms."
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "title": "Filter by role, phase and category",
+      "featureId": "F-001",
+      "area": "Browse (F-01)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 3,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #3",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given role PO and phase Build, when both filters are on, then only matching prompts show and the filters stay in the URL."
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "title": "Show newly published prompts",
+      "featureId": "F-001",
+      "area": "Browse (F-01)",
+      "priority": "Should",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 4,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #4",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a prompt published in the last 30 days, when I open the library, then it has a \"New\" badge and appears in a \"New this month\" row."
+      ]
+    },
+    {
+      "id": "REQ-005",
+      "title": "Prompt detail page",
+      "featureId": "F-001",
+      "area": "Detail (F-02)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 5,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #5",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a prompt, when I open it, then I see title, category, roles, purpose, when to use, inputs to prepare, placeholders, body, expected output, tips and example."
+      ],
+      "description": "As built: the same three general tips on every prompt."
+    },
+    {
+      "id": "REQ-006",
+      "title": "One-click copy",
+      "featureId": "F-001",
+      "area": "Detail (F-02)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 6,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #6",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a prompt, when I click Copy, then the full prompt is on my clipboard and \"Copied\" shows for 2 s. Keyboard Enter does the same, and screen readers announce \"Copied\"."
+      ]
+    },
+    {
+      "id": "REQ-007",
+      "title": "Fill-in placeholders with live preview",
+      "featureId": "F-001",
+      "area": "Template (F-03)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 7,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #7",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given 3 placeholders, when I type values, then the preview updates live and Copy copies the filled prompt. An empty placeholder stays in [brackets] and is highlighted."
+      ]
+    },
+    {
+      "id": "REQ-008",
+      "title": "Remember filled placeholder values",
+      "featureId": "F-001",
+      "area": "Template (F-03)",
+      "priority": "Should",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 8,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #8",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given I filled [Business Context], when I open another prompt with the same placeholder, then it is prefilled. Values stay in this browser and can be cleared."
+      ]
+    },
+    {
+      "id": "REQ-009",
+      "title": "6-phase workflow view",
+      "featureId": "F-001",
+      "area": "Workbench (F-04)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 9,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #9",
+      "featureFlag": "prompts",
+      "ac": [
+        "The Workbench shows Discover → Define → Design → Build → Release → Monitor with ordered steps; prompts I used are ticked."
+      ]
+    },
+    {
+      "id": "REQ-010",
+      "title": "Next prompt suggestion",
+      "featureId": "F-001",
+      "area": "Workbench (F-04)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 10,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #10",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a prompt with next prompts, when I copy it, then a \"Next step\" panel shows 1–3 linked prompts, one marked Recommended."
+      ]
+    },
+    {
+      "id": "REQ-011",
+      "title": "Workflow collections",
+      "featureId": "F-001",
+      "area": "Workbench (F-04)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 11,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #11",
+      "featureFlag": "prompts",
+      "ac": [
+        "Launch collections: New Product Discovery, Feature Development, Sprint Management, UAT and Release, Project Kickoff, Post-launch Review — each with ordered prompts, progress and step-through."
+      ]
+    },
+    {
+      "id": "REQ-012",
+      "title": "Favorite prompts",
+      "featureId": "F-001",
+      "area": "Personal (F-05)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 12,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #12",
+      "featureFlag": "prompts",
+      "ac": [
+        "Tapping the star adds a prompt to My prompts → Favourites. Guests keep favourites in the browser; signed-in users across devices."
+      ]
+    },
+    {
+      "id": "REQ-013",
+      "title": "Recently used prompts",
+      "featureId": "F-001",
+      "area": "Personal (F-05)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 13,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #13",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given I copied 3 prompts, when I open My prompts, then the last 20 used show, newest first."
+      ]
+    },
+    {
+      "id": "REQ-014",
+      "title": "Rate a prompt and send private feedback",
+      "featureId": "F-001",
+      "area": "Feedback (F-06)",
+      "priority": "Should",
+      "status": "Done",
+      "sprint": 3,
+      "issue": 14,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #14",
+      "featureFlag": "prompts",
+      "ac": [
+        "Signed in, I give 1–5 stars and optional text: the public average updates and the text goes privately to the admin inbox. I can change my rating; there are no public comments."
+      ]
+    },
+    {
+      "id": "REQ-015",
+      "title": "Create and edit prompts",
+      "featureId": "F-001",
+      "area": "Editor (F-07)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 15,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #15",
+      "featureFlag": "prompts",
+      "ac": [
+        "Saving makes a draft with my name and time. Placeholders are detected from the body. VI, KO and FR title, description and when-to-use fields are available."
+      ]
+    },
+    {
+      "id": "REQ-016",
+      "title": "Preview before publishing",
+      "featureId": "F-001",
+      "area": "Editor (F-07)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 16,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #16",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a draft, Preview shows the learner detail page including the fill-in form."
+      ]
+    },
+    {
+      "id": "REQ-017",
+      "title": "Submit a draft for review",
+      "featureId": "F-001",
+      "area": "Publishing (F-08)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 17,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #17",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a complete draft, when I submit, then status = In review and reviewers see it in their queue."
+      ]
+    },
+    {
+      "id": "REQ-018",
+      "title": "Review checklist and publish",
+      "featureId": "F-001",
+      "area": "Publishing (F-08)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 18,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #18",
+      "featureFlag": "prompts",
+      "ac": [
+        "With completeness, clarity, placeholder match and a test run ticked, a reviewer can Publish or Return with a comment. Publish is blocked if a required field is empty. A reviewer cannot publish their own draft (the Owner can)."
+      ]
+    },
+    {
+      "id": "REQ-019",
+      "title": "Unpublish or archive",
+      "featureId": "F-001",
+      "area": "Publishing (F-08)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 19,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #19",
+      "featureFlag": "prompts",
+      "ac": [
+        "Given a published prompt, when I unpublish, then learners no longer see it and favourites show \"No longer available\"."
+      ]
+    },
+    {
+      "id": "REQ-020",
+      "title": "Version history and rollback",
+      "featureId": "F-001",
+      "area": "Versions (F-09)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 20,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #20",
+      "featureFlag": "prompts",
+      "ac": [
+        "History shows who changed what and when, and compares two versions. Restoring a version creates a new draft that goes through review."
+      ]
+    },
+    {
+      "id": "REQ-021",
+      "title": "Manage categories, phases and collections",
+      "featureId": "F-001",
+      "area": "Taxonomy (F-10)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 21,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #21",
+      "featureFlag": "prompts",
+      "ac": [
+        "Adding, renaming or reordering on the taxonomy page updates the library. A category with prompts can't be deleted, only hidden."
+      ]
+    },
+    {
+      "id": "REQ-022",
+      "title": "Assign Editor and Reviewer roles",
+      "featureId": "F-001",
+      "area": "Staff (F-11)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 2,
+      "issue": 22,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #22",
+      "featureFlag": "prompts",
+      "ac": [
+        "The Owner assigns Editor or Reviewer to a user who signed in once; permissions apply immediately and are enforced by Firestore rules, not only the UI."
+      ]
+    },
+    {
+      "id": "REQ-023",
+      "title": "Admin audit log",
+      "featureId": "F-001",
+      "area": "Staff (F-11)",
+      "priority": "Should",
+      "status": "Done",
+      "sprint": 3,
+      "issue": 23,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #23",
+      "featureFlag": "prompts",
+      "ac": [
+        "Every admin action logs who, what, which prompt and when, and the log is viewable."
+      ]
+    },
+    {
+      "id": "REQ-024",
+      "title": "Prompt insights",
+      "featureId": "F-001",
+      "area": "Insights (F-12)",
+      "priority": "Should",
+      "status": "Done",
+      "sprint": 3,
+      "issue": 24,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #24",
+      "featureFlag": "prompts",
+      "ac": [
+        "Insights shows copies per prompt, top 10 this month and average rating, with no personal data."
+      ]
+    },
+    {
+      "id": "REQ-025",
+      "title": "Prompt metadata in VI, KO and FR",
+      "featureId": "F-001",
+      "area": "Translations (F-13)",
+      "priority": "Must",
+      "status": "Done",
+      "sprint": 1,
+      "issue": 25,
+      "source": "Prompt Workbench baseline v0.1 (23 Nov 2026), GitHub issue #25",
+      "featureFlag": "prompts",
+      "ac": [
+        "With Korean chosen, the Korean title, description and when-to-use show under the English. The prompt text and Copy stay English. A missing translation falls back to English."
+      ]
+    },
+    {
+      "id": "REQ-026",
+      "title": "One source of truth for requirements, tests and handover",
+      "story": [
+        "Given compass/spec.json\nWhen I run node compass/check-spec.mjs\nThen it fails if a requirement (not Draft) has no test case, a test case points to an unknown requirement, or an automated test case's file does not carry its TC id",
+        "Given I changed compass/spec.json\nWhen I run node compass/build-views.mjs\nThen requirements.md, tests.md, decisions.md and handover.md are regenerated, and check-spec fails in CI while handover.md is stale"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want requirements, test cases and decisions in one file with generated views, so that any person or agent can see where the project stands."
+    },
+    {
+      "id": "REQ-027",
+      "title": "Enforce the guardrails automatically",
+      "story": [
+        "Given an agent in Claude Code\nWhen it edits a protected or forbidden path in compass/guardrails.json, or writes text that looks like a secret\nThen the edit hook blocks it until the Owner approves the path in chat",
+        "Given a pull request\nWhen it changes more than 12 files, a forbidden path, or (without the human-approved label) a protected path, a deletion or a dependency\nThen the CI guardrails check fails, using main's copy of the check and its rules"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want the agent rules enforced by machines, so that protected files, secrets and oversized changes cannot slip through."
+    },
+    {
+      "id": "REQ-028",
+      "title": "Independent review of every pull request",
+      "story": [
+        "Given a pull request\nWhen it is ready to merge\nThen a fresh reviewer has posted '## Independent review (Claude)' with a verdict and the reviewed commit, as described in compass/REVIEW.md",
+        "Given node compass/merge-pr.mjs <n>\nWhen CI is not green, the latest trusted review is not APPROVE for the head commit, or firestore.rules changed without human-approved\nThen it refuses to merge and says why"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want every PR reviewed by an agent that did not write it, so that the author never approves its own work."
+    },
+    {
+      "id": "REQ-029",
+      "title": "Capture the business need as an intent before requirements",
+      "story": [
+        "Given a requirement from REQ-026 on\nWhen check-spec runs\nThen it fails unless the requirement points to an Approved compass/intent/ file that lists it and keeps the Owner's words under '## Business need'"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want my request written down as a measurable intent that I approve, so that the reason behind every requirement stays next to the code."
+    },
+    {
+      "id": "REQ-030",
+      "title": "Approved design before any code",
+      "story": [
+        "Given a requirement from REQ-026 on that is not Draft\nWhen check-spec runs\nThen it fails unless the requirement has a design file in compass/design/ that mentions it, or 'none: <reason>'",
+        "Given a requirement In build or Done\nWhen its design file is not 'Status: Approved'\nThen check-spec fails (no code before the design is approved)"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want to approve how a change will look before it is built, so that misunderstandings are caught before coding."
+    },
+    {
+      "id": "REQ-031",
+      "title": "A written plan before code",
+      "story": [
+        "Given a change that touches code\nWhen node compass/plan-file.mjs or merge-pr runs\nThen it fails unless the change adds compass/plans/<REQ-ids>-<name>.md with real Files, Steps, Risks and Proof",
+        "Given a pull request that touches code\nWhen the CI guardrails check runs\nThen it fails unless the PR body has a '## Plan' with Files, Steps, Risks and Proof filled in"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want each code change to start from a short plan, so that the reviewer can check the diff against what was intended."
+    },
+    {
+      "id": "REQ-032",
+      "title": "Failing test committed before every bug fix",
+      "story": [
+        "Given a pull request with the bug label\nWhen compass/test-first.mjs runs in CI\nThen it fails unless the first commit only adds a test under tests/, later commits do not edit that test, and a node test from the first commit fails at that commit"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want each bug fix to start with a test that fails, so that we know the fix really fixes the bug."
+    },
+    {
+      "id": "REQ-033",
+      "title": "Record decisions as ADRs",
+      "story": [
+        "Given spec.json decisions\nWhen check-spec runs\nThen every ADR has id, date, title, status (Proposed, Accepted, Superseded or Rejected), context, decision and consequences, and links only to known requirements"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want decisions I make in chat recorded with their reasons, so that later sessions do not undo them."
+    },
+    {
+      "id": "REQ-034",
+      "title": "Shared memory for agents: lessons learned and working knowledge",
+      "story": [
+        "Given CLAUDE.md\nWhen the process tests run\nThen it has a 'Lessons learned' section, imports compass/agent-knowledge.md, and stays under one page",
+        "Given the repo skills in .claude/skills/\nWhen the process tests run\nThen each has a 'Use when' description and names the check that enforces it"
+      ],
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-26",
+      "intent": "compass/intent/2026-11-26-compass-framework.md",
+      "design": "none: process change, no UI",
+      "ac": "As the Owner I want agents to learn from repeated mistakes, so that I do not correct the same thing twice."
+    }
+  ],
+  "tests": [
+    {
+      "id": "TC-001",
+      "title": "Browse prompts by phase or category",
+      "reqIds": [
+        "REQ-001"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-002",
+      "title": "Keyword search",
+      "reqIds": [
+        "REQ-002"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing",
+      "note": "partial: title-first order tested; no 300 ms timing check"
+    },
+    {
+      "id": "TC-003",
+      "title": "Filter by role, phase and category",
+      "reqIds": [
+        "REQ-003"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-004",
+      "title": "Show newly published prompts",
+      "reqIds": [
+        "REQ-004"
+      ],
+      "type": "manual",
+      "status": "Manual",
+      "note": "no automated test yet"
+    },
+    {
+      "id": "TC-005",
+      "title": "Prompt detail page",
+      "reqIds": [
+        "REQ-005"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-006",
+      "title": "One-click copy",
+      "reqIds": [
+        "REQ-006"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-007",
+      "title": "Fill-in placeholders with live preview",
+      "reqIds": [
+        "REQ-007"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-008",
+      "title": "Remember filled placeholder values",
+      "reqIds": [
+        "REQ-008"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing",
+      "note": "partial: clear not tested"
+    },
+    {
+      "id": "TC-009",
+      "title": "6-phase workflow view",
+      "reqIds": [
+        "REQ-009"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-010",
+      "title": "Next prompt suggestion",
+      "reqIds": [
+        "REQ-010"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-011",
+      "title": "Workflow collections",
+      "reqIds": [
+        "REQ-011"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing",
+      "note": "partial: step-through not tested"
+    },
+    {
+      "id": "TC-012",
+      "title": "Favorite prompts",
+      "reqIds": [
+        "REQ-012"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing",
+      "note": "partial: cross-device needs live Firebase"
+    },
+    {
+      "id": "TC-013",
+      "title": "Recently used prompts",
+      "reqIds": [
+        "REQ-013"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-014",
+      "title": "Rate a prompt and send private feedback (Firestore rules)",
+      "reqIds": [
+        "REQ-014"
+      ],
+      "type": "automated",
+      "file": "tests/rules.test.mjs",
+      "status": "Passing",
+      "note": "partial: rules only, no e2e"
+    },
+    {
+      "id": "TC-015",
+      "title": "Create and edit prompts",
+      "reqIds": [
+        "REQ-015"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-016",
+      "title": "Preview before publishing",
+      "reqIds": [
+        "REQ-016"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-017",
+      "title": "Submit a draft for review",
+      "reqIds": [
+        "REQ-017"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-018",
+      "title": "Review checklist and publish",
+      "reqIds": [
+        "REQ-018"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js + tests/rules.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-019",
+      "title": "Unpublish or archive",
+      "reqIds": [
+        "REQ-019"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js",
+      "status": "Passing",
+      "note": "partial: archive not tested"
+    },
+    {
+      "id": "TC-020",
+      "title": "Version history and rollback",
+      "reqIds": [
+        "REQ-020"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-021",
+      "title": "Manage categories, phases and collections",
+      "reqIds": [
+        "REQ-021"
+      ],
+      "type": "manual",
+      "status": "Manual",
+      "note": "no automated test yet"
+    },
+    {
+      "id": "TC-022",
+      "title": "Assign Editor and Reviewer roles",
+      "reqIds": [
+        "REQ-022"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js + tests/rules.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-023",
+      "title": "Admin audit log",
+      "reqIds": [
+        "REQ-023"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-admin.spec.js + tests/rules.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-024",
+      "title": "Prompt insights",
+      "reqIds": [
+        "REQ-024"
+      ],
+      "type": "manual",
+      "status": "Manual",
+      "note": "no automated test yet"
+    },
+    {
+      "id": "TC-025",
+      "title": "Prompt metadata in VI, KO and FR",
+      "reqIds": [
+        "REQ-025"
+      ],
+      "type": "automated",
+      "file": "tests/e2e/prompt-library.spec.js",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-026",
+      "title": "One source of truth for requirements, tests and handover",
+      "reqIds": [
+        "REQ-026"
+      ],
+      "type": "automated",
+      "file": "tests/compass/spec.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-027",
+      "title": "Enforce the guardrails automatically",
+      "reqIds": [
+        "REQ-027"
+      ],
+      "type": "automated",
+      "file": "tests/compass/guardrails.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-028",
+      "title": "Independent review of every pull request",
+      "reqIds": [
+        "REQ-028"
+      ],
+      "type": "automated",
+      "file": "tests/compass/review.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-029",
+      "title": "Capture the business need as an intent before requirements",
+      "reqIds": [
+        "REQ-029"
+      ],
+      "type": "automated",
+      "file": "tests/compass/spec.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-030",
+      "title": "Approved design before any code",
+      "reqIds": [
+        "REQ-030"
+      ],
+      "type": "automated",
+      "file": "tests/compass/spec.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-031",
+      "title": "A written plan before code",
+      "reqIds": [
+        "REQ-031"
+      ],
+      "type": "automated",
+      "file": "tests/compass/plan.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-032",
+      "title": "Failing test committed before every bug fix",
+      "reqIds": [
+        "REQ-032"
+      ],
+      "type": "automated",
+      "file": "tests/compass/testFirst.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-033",
+      "title": "Record decisions as ADRs",
+      "reqIds": [
+        "REQ-033"
+      ],
+      "type": "automated",
+      "file": "tests/compass/spec.test.mjs",
+      "status": "Passing"
+    },
+    {
+      "id": "TC-034",
+      "title": "Shared memory for agents: lessons learned and working knowledge",
+      "reqIds": [
+        "REQ-034"
+      ],
+      "type": "automated",
+      "file": "tests/compass/memory.test.mjs",
+      "status": "Passing"
+    }
+  ]
+}
