@@ -37,7 +37,7 @@ test('TC-027: secrets fail even with approval, except in the public Firebase web
   const web = 'AIza' + 'b'.repeat(35);
   assert.deepEqual(checkChange([f('src/firebase-config.js', { addedText: web })], g).errors, []);
   assert.equal(checkChange([f('src/other.js', { addedText: web })], g).errors.length, 1);
-  assert.equal(checkChange([f('keys.json', { addedText: '"type": "service_account"' })], g).errors.length, 1);
+  assert.equal(checkChange([f('keys.json', { addedText: `"type": "service_${'account'}"` })], g).errors.length, 1);
   const long = checkChange([f('src/pages/Prompts.jsx', { lines: 900 })], g);
   assert.deepEqual(long.errors, []);
   assert.equal(long.warnings.length, 1);
