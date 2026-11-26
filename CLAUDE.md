@@ -1,60 +1,36 @@
 # BAPO Path — instructions for AI agents
 
-A free learning site for starter Business Analysts, Product Owners and PMs. React 18 + Vite, static hosting on
-GitHub Pages, Firebase (Google sign-in + Firestore) as the only backend. The Owner is Christine (GitHub `huynhthu1704`),
-a BA/PO, not a full-time developer: write PR descriptions and notes in plain English, no jargon.
+Follow **AGENTS.md**: it is the contract for every agent (Compass Framework). Every PR also gets an independent review
+per **compass/REVIEW.md**. Key files: `compass/spec.json`, `compass/handover.md`, `compass/guardrails.json`,
+`compass/decisions.md`. The Owner is Christine (`huynhthu1704`), a BA/PO: write PRs and notes in plain English.
 
-How we work (solo and team flows, gates, roles): **docs/WORKFLOW.md**. Read it before starting a feature.
+## Commands (each exits non-zero on failure)
+- `npm test`: process tests + failing-test-first check · `npm run verify`: prompt check, build, e2e (**before every PR**)
+- `npm run dev:demo`: run with no Firebase ("Act as" Owner / Reviewer / Editor / learner) · `npx playwright test -g TC-018`
+- `npm run test:rules:emulator`: Firestore rules tests (Java 21; CI always runs them)
+- `node compass/check-spec.mjs`: traceability, intent, design, ADRs, handover · `node compass/build-views.mjs`: regenerate views
+- `node compass/check-guardrails.mjs origin/main` · `node compass/plan-file.mjs origin/main`: the CI checks, locally
 
-## Commands
+## Definition of done (before opening a PR)
+- [ ] Intent and design approved (REQ-026 on); plan file committed first; TC tests written to fail first
+- [ ] `npm test` and `npm run verify` pass; rules tests in CI if rules changed; spec statuses + `build-views` updated
+- [ ] Behind a default-off flag if user-facing and new; 375 px with no horizontal scroll; real buttons, `aria-label`s
+- [ ] Draft PR from `.github/pull_request_template.md` (Plan, REQs covered, departures, **not tested**, after-merge steps)
+- [ ] Independent review posted (compass/REVIEW.md); `/security-review` too if rules, auth or `promptApi.js` changed
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev:demo` | Run locally with **no Firebase** (demo mode). The Prompt admin has an "Act as" bar: Owner / Reviewer / Editor / learner |
-| `npm run check:prompts` | Validate the bundled prompts (fields, placeholders, links, translations) |
-| `npm run build` | Production build |
-| `npm run test:e2e` | Playwright tests in `tests/e2e/`. They build in demo mode and need no network |
-| `npm run verify` | All three of the above. **Run before every PR.** |
-| `npm run test:rules:emulator` | Firestore rules tests (needs Java 21; downloads the emulator; CI always runs it) |
+## Lessons learned (REQ-034)
+When the same mistake (or review finding) happens twice, add one line here in the PR that fixes it — this is the single
+place for lessons. Keep this file under one page.
+- **Hash routing:** never use in-page `href="#section"` anchors; they are read as routes (bug #27). Scroll with JS.
+- **Hiding is not access control:** a permission checked only in the UI is a bug; put it in `firestore.rules` with a test.
+- **Piped checks hide failures:** `npm test | grep …` exits with grep's status. Use `set -o pipefail` or run checks alone.
+- **Never force push**, and never push to `main`: push to a new branch such as `-v2` and open a new PR.
+- **Never commit build output** (`dist/`, `dist-e2e/`, `playwright-report/`, `test-results/`) or edit `package-lock.json`
+  by hand; check `git status` before committing.
+- **Branch every PR from fresh `main`.** Chained branches conflict after squash merges (spec.json, generated views).
+- **Scripted text edits must assert the anchor exists**: a silent `str.replace` miss drops a change without an error.
+- **A flaky e2e test is a bug until proven otherwise.** Investigate before re-running; write the cause on the issue.
 
-Run one requirement's tests with `npx playwright test -g TC-018`.
+## Working knowledge (loaded automatically)
 
-## Map
-
-- `src/App.jsx`: routes. **Hash routing** (`#/path`): never use in-page `href="#section"` anchors, which are read as routes (bug #27). Scroll with JS instead.
-- `src/store.jsx`: app state, progress, demo identities (`DEMO_PEOPLE`), the role in effect (`owner` / `reviewer` / `editor` / `null`).
-- `src/firebase.js`: `LOCAL_MODE` (no config, or `VITE_LOCAL_MODE=1`) means everything stays in localStorage.
-- `src/data/`: **all learning content is plain data**. Follow the existing row format (see README). Content edits don't need code changes.
-- `src/data/prompts/`: the 90 prompts in files `a-…` to `i-…`, plus `meta.js` (phases, categories, collections). Checked by `scripts/check-prompts.mjs`.
-- `src/data/promptApi.js`: the Prompt Workbench data layer, with a Firestore layer and a local layer behind one API. The Firestore layout is at the top of the file.
-- `src/data/flags.js`: feature flags. **Every new user-facing feature ships behind a flag, off by default** (audience `owner`).
-- `src/i18n.js`, `src/data/i18n/`: VI / KO / FR translations for learning content. Menus and buttons stay English.
-- `firestore.rules`: the real access control. `tests/rules.test.mjs`: its tests.
-- `docs/requirements/`: requirements and the REQ → TC → test traceability matrix.
-
-## Rules
-
-1. **Requirements first.** Work starts from a REQ issue (or a bug issue) with Given/When/Then criteria. If there is none, write it first with the issue template and ask the Owner to confirm.
-2. **Tests prove the criteria.** Each acceptance criterion gets a Playwright test whose title starts with its `TC-0xx` id (bugs: `#<issue>`). Write it so it fails before the change. Update the matrix in `docs/requirements/`.
-3. **Security lives in `firestore.rules`.** Hiding something in the UI is not access control. Any rule change needs a test in `tests/rules.test.mjs`. Never weaken a rule to make a feature work; ask instead.
-4. **No secrets in the repo.** `src/firebase-config.js` is public by design (Firebase web config). Service-account keys and API keys go only in GitHub secrets.
-5. **Keep changes small.** One REQ or one bug per PR when possible, and never more than one sprint per PR. Keep commits small and focused.
-6. **Don't touch** `package-lock.json` by hand, the `gh-pages` branch, or `dist/`.
-7. **Mobile matters.** Check 375 px with no horizontal scroll (the e2e `@mobile` tests do this).
-8. **Accessible by default.** Use real buttons and links, `aria-label` on icon buttons, and `aria-live` for status changes. Tests select by role and label, so this also keeps the tests stable.
-9. **Never skip, delete or loosen a test or a CI check to get green.** Fix the cause or report it.
-
-## Definition of done (an agent's checklist before opening a PR)
-
-- [ ] `npm run verify` passes locally; rules tests pass in CI if rules changed
-- [ ] TC tests added or updated; traceability matrix updated
-- [ ] Behind a flag if user-facing and new
-- [ ] `/code-review` run on the diff (and `/security-review` if rules, auth or `promptApi.js` changed); findings fixed or explained
-- [ ] PR uses `.github/pull_request_template.md`: what, REQs covered, departures, tested / **not tested**, after-merge steps for the Owner
-- [ ] Draft PR unless the Owner asked for ready-for-review
-
-## Style
-
-- Plain JS + JSX (no TypeScript). Function components and hooks. Reuse `src/components/ui.jsx` (Icon, PageHead, Loading, Spinner…) and the CSS classes in `src/styles.css` before adding new ones.
-- Async UI: wrap long work in `track()` from `src/busy.js` so the top loading bar shows.
-- Copy: short, friendly, British-ish spelling as already used ("favourites").
+@compass/agent-knowledge.md

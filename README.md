@@ -108,7 +108,7 @@ AI agents doing the build and first review, and people approving every merge and
 
 - **[docs/WORKFLOW.md](docs/WORKFLOW.md)**: the working flow for one engineer and for a team, the gates, and the one-time GitHub setup
 - **[CLAUDE.md](CLAUDE.md)**: instructions every AI agent session follows
-- **[docs/requirements/](docs/requirements/)**: requirements and the REQ → test traceability matrix
+- **[AGENTS.md](AGENTS.md)** and **[compass/](compass/)**: the Compass delivery framework — requirements, tests and decisions in `compass/spec.json`, status in [compass/handover.md](compass/handover.md)
 
 ## Tech
 

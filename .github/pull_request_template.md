@@ -3,6 +3,20 @@
 <!-- One or two sentences. Link the requirement or bug. -->
 
 Closes #
+Requirements: REQ-0
+Test cases: TC-0
+Intent: compass/intent/
+Design: compass/design/   <!-- or none: <reason> -->
+
+## Plan
+<!-- Required when the PR changes code (src/ except content in src/data/, tests/, scripts/, compass/*.mjs, .claude/,
+     firestore.rules). Commit compass/plans/<REQ-ids>-<name>.md first and link it; keep the four lines filled in:
+     the CI guardrails check reads them. -->
+Plan file: compass/plans/
+- Files:
+- Steps:
+- Risks:
+- Proof (how we know it works):
 
 ## Requirements covered
 
@@ -10,15 +24,16 @@ Closes #
 | --- | --- | --- | --- |
 | REQ-0xx | | `tests/e2e/…` TC-0xx | ✅ / ⚠️ partial / ❌ |
 
-**Departures from the requirement:** <!-- anything built differently from the issue, and why — or "None" -->
+**Departures from the requirement or the plan:** <!-- anything built differently, and why — or "None" -->
 
 ## Checks
 
-- [ ] `npm run verify` passes (prompt check, build, e2e)
-- [ ] New or changed behaviour has an e2e test named after its TC id
+- [ ] `npm test` and `npm run verify` pass (process tests, prompt check, build, e2e)
+- [ ] New or changed behaviour has a test titled with its TC id; `compass/spec.json` statuses updated and `node compass/build-views.mjs` run
 - [ ] New user-facing feature is behind a flag in `src/data/flags.js`
-- [ ] If `firestore.rules` changed: a test in `tests/rules.test.mjs` covers it
-- [ ] Docs updated (README, `docs/requirements/`, CLAUDE.md) if the way things work changed
+- [ ] If `firestore.rules` changed: a test in `tests/rules.test.mjs` covers it, and the Owner approved (`human-approved`)
+- [ ] No secrets, no protected paths changed without approval (see `compass/guardrails.json`)
+- [ ] Bug fix: label `bug`, first commit only adds the failing test
 
 ## Tested
 
@@ -26,12 +41,11 @@ Closes #
 
 **Not tested:** <!-- Be explicit: real Google sign-in, live Firebase, Safari, … -->
 
+## Independent review
+
+- [ ] `## Independent review (Claude)` comment from a reviewer that did not write the code (see `compass/REVIEW.md`); verdict APPROVE for the head commit
+- [ ] `/security-review` run if rules, auth or `promptApi.js` changed
+
 ## After merging
 
-<!-- Manual steps for the Owner, or "Nothing". -->
-
-## AI involvement
-
-- [ ] Written with an AI agent (session link in the commit trailer)
-- [ ] AI review (`/code-review`, and `/security-review` if rules or auth changed) run and findings handled
-- [ ] A person read the diff before merging
+<!-- Manual steps for the Owner (flag audience, rules deploy approval…), or "Nothing". -->
