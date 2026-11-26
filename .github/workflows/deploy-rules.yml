@@ -1,0 +1,82 @@
+name: Deploy Firestore rules
+
+# Publishes firestore.rules to the live bapo-path project after the emulator tests pass,
+# so the rules in production are always the ones that were tested.
+#
+# One-time setup (see docs/WORKFLOW.md → "Release"):
+#   1. Firebase console → Project settings → Service accounts → Generate new private key.
+#      Give the account only the "Firebase Rules Admin" role in Google Cloud IAM.
+#   2. GitHub → Settings → Secrets and variables → Actions → New secret FIREBASE_SERVICE_ACCOUNT (paste the JSON).
+#   3. GitHub → Settings → Environments → New environment "production" → Required reviewers: the Owner.
+#      Do this BEFORE step 2. The deploy refuses to run if the environment has no required reviewer.
+# Until the secret exists, this workflow only runs the tests and skips the deploy.
+# The site (deploy.yml) goes live straight after merge, but the rules wait for approval.
+# Approve promptly, and keep features that need new rules behind a flag until the rules are live.
+on:
+  push:
+    branches: [main]
+    paths: ['firestore.rules', 'firebase.json']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read # lets the deploy job check the production environment's protection
+
+concurrency:
+  group: deploy-rules
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Rules tests against the Firestore emulator
+        run: npm run test:rules:emulator
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip when the deploy key is not set up
+        if: env.HAS_KEY != 'true'
+        run: echo "::notice::FIREBASE_SERVICE_ACCOUNT is not set, so the rules were tested but not deployed. Publish them in the Firebase console, or add the secret (see the top of this file)."
+      # GitHub creates a missing environment automatically with no protection, which would
+      # let the rules go live with nobody approving. Refuse to deploy unless a reviewer is required.
+      - name: Check that the production environment requires an approval
+        if: env.HAS_KEY == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh api "repos/${{ github.repository }}/environments/production" \
+            --jq '[.protection_rules[]? | select(.type == "required_reviewers")] | length' 2>/dev/null || echo 0)
+          if [ "${n:-0}" -lt 1 ]; then
+            echo "::error::The production environment has no required reviewers, so the rules were not deployed. Add yourself under Settings → Environments → production → Required reviewers, then re-run this workflow."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          node-version: 20
+      - name: Deploy firestore.rules
+        if: env.HAS_KEY == 'true'
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx -y firebase-tools@15 deploy --only firestore:rules --project bapo-path --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

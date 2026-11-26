@@ -1,0 +1,68 @@
+name: AI code review
+
+# Claude reviews every pull request and leaves comments. It does not approve or merge:
+# a person still reviews and merges (see docs/WORKFLOW.md → "Review").
+#
+# Opt-in. Add ONE of these repository secrets (Settings → Secrets and variables → Actions):
+#   CLAUDE_CODE_OAUTH_TOKEN  uses your Claude Pro/Max subscription, no API billing.
+#                            Create it on your computer with `claude setup-token`
+#                            (or run /install-github-app in Claude Code, which sets this up).
+#   ANTHROPIC_API_KEY        pay-as-you-go API key from console.anthropic.com.
+# If both are set, the subscription token is used. With neither, the job is skipped.
+# Draft PRs are not reviewed; mark the PR "Ready for review" to start a review.
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      HAS_OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      HAS_API_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      REVIEW_PROMPT: |
+        REPO: ${{ github.repository }}
+        PR NUMBER: ${{ github.event.pull_request.number }}
+
+        Review this pull request for BAPO Path. Read CLAUDE.md first and hold the change to it.
+        Get the diff with `gh pr diff ${{ github.event.pull_request.number }}`.
+        Focus on, in this order:
+        1. Security: any change to firestore.rules, src/data/promptApi.js, src/firebase.js or role checks.
+           UI-only permission checks are a bug; the rule must be in firestore.rules with a test in tests/rules.test.mjs.
+        2. Correctness bugs and regressions, with a concrete failing scenario for each.
+        3. Missing tests: every acceptance criterion closed by the PR needs a TC-xxx test in tests/e2e/.
+        4. New features not behind a flag in src/data/flags.js.
+        Leave inline comments on specific lines with mcp__github_inline_comment__create_inline_comment,
+        then one summary comment with `gh pr comment`. Write in plain English. Skip style nits.
+      ALLOWED_TOOLS: >-
+        --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,Glob,Grep"
+    steps:
+      - name: Skip when no Claude credential is set
+        if: env.HAS_OAUTH != 'true' && env.HAS_API_KEY != 'true'
+        run: echo "::notice::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set; AI review skipped."
+      - uses: actions/checkout@v4
+        if: env.HAS_OAUTH == 'true' || env.HAS_API_KEY == 'true'
+        with:
+          fetch-depth: 1
+
+      - name: Review with the Claude subscription
+        if: env.HAS_OAUTH == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: ${{ env.ALLOWED_TOOLS }}
+
+      - name: Review with the API key
+        if: env.HAS_OAUTH != 'true' && env.HAS_API_KEY == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: ${{ env.ALLOWED_TOOLS }}

@@ -1,0 +1,15 @@
+# Changes to these paths need the Owner's review once branch protection
+# has "Require review from Code Owners" switched on (see docs/WORKFLOW.md).
+# Add team members' GitHub handles next to the Owner as the team grows.
+
+# Security and access rules
+/firestore.rules            @huynhthu1704
+/tests/rules.test.mjs       @huynhthu1704
+/src/data/promptApi.js      @huynhthu1704
+/src/firebase.js            @huynhthu1704
+/src/firebase-config.js     @huynhthu1704
+
+# Release pipeline and agent instructions
+/.github/                   @huynhthu1704
+/CLAUDE.md                  @huynhthu1704
+/.claude/                   @huynhthu1704
