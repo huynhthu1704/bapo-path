@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "dev:demo": "VITE_LOCAL_MODE=1 vite",
     "check:prompts": "node scripts/check-prompts.mjs",
+    "test": "node --test tests/compass/*.test.mjs && node compass/test-first.mjs",
+    "check:spec": "node compass/check-spec.mjs",
     "test:rules": "node --test tests/rules.test.mjs",
     "test:rules:emulator": "npx -y firebase-tools@15 emulators:exec --only firestore --project demo-bapo \"npm run test:rules\"",
     "test:e2e": "playwright test",
