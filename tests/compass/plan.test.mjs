@@ -7,7 +7,7 @@ import { planProblems, extractPlan, CODE_PATH } from '../../compass/guardrails-l
 const full = '# Plan\n## Files\n- src/a.jsx — x\n## Steps\n1. do it\n## Risks\n- low\n## Proof\n- TC-035\n';
 
 test('TC-031: what counts as code', () => {
-  for (const p of ['src/App.jsx', 'src/data/promptApi.js', 'src/data/flags.js', 'tests/e2e/a.spec.js', 'scripts/check-prompts.mjs', 'compass/check-spec.mjs', 'firestore.rules', '.claude/skills/ship/SKILL.md'])
+  for (const p of ['src/App.jsx', 'src/data/promptApi.js', 'src/data/flags.js', 'tests/e2e/a.spec.js', 'scripts/check-prompts.mjs', 'compass/check-spec.mjs', 'firestore.rules', 'package.json', '.claude/skills/ship/SKILL.md'])
     assert.ok(CODE_PATH.test(p), p);
   for (const p of ['src/data/terms.js', 'src/data/prompts/a-discover.js', 'src/data/i18n/vi.js', 'README.md', 'compass/spec.json', 'docs/WORKFLOW.md'])
     assert.ok(!CODE_PATH.test(p), p);

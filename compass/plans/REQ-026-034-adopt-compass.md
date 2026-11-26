@@ -34,7 +34,8 @@ Intent: compass/intent/2026-11-26-compass-framework.md · Design: none: process 
 - Branch protection does not yet require `Compass checks`: until the Owner adds it, the checks advise but do not block.
 - Review of PR #40 (CHANGES NEEDED): `story`/`ac` were swapped on REQ-026…034 → fixed, and check-spec now rejects it;
   bug-fix commit 1 may hold the plan file with the failing test; the TC-id check reads test titles, not comments.
-  Protecting the remaining enforcement scripts touches protected files and waits for the Owner's approval.
+  The remaining check scripts are now protected and CI runs main's copies of the plan and test-first checks
+  (protected files, approved by the Owner in chat on 2026-11-26).
 - Agents now merge their own PRs (ADR-006, the Owner's decision). Guard: `merge-pr.mjs` refuses without green CI and an
   APPROVE for the head commit, and PRs touching protected paths, rules, deletions or dependencies still wait for the Owner.
   `merge-pr.mjs` needs an authenticated `gh` CLI; without it the agent checks the same conditions and merges pinned to the head.

@@ -17,6 +17,8 @@ test('TC-027: protected paths need the approval label; forbidden paths never pas
   assert.equal(checkChange([f('dist/index.html')], g, { labels: [APPROVAL_LABEL] }).errors.length, 1);
   assert.equal(checkChange([f('Firebase.JSON')], g).errors.length, 1, 'matching is case-insensitive');
   assert.deepEqual(checkChange([f('src/App.jsx'), f('firestore.rules')], g).errors, [], 'rules changes are decided at review and merge');
+  for (const p of ['compass/check-spec.mjs', 'compass/build-views.mjs', 'compass/plan-file.mjs', 'compass/test-first.mjs', 'compass/merge-pr.mjs', 'compass/guardrails-lib.mjs', 'compass/hooks/guard-edit.mjs'])
+    assert.equal(checkChange([f(p)], g).errors.length, 1, `${p}: a PR must not weaken the checks that judge it`);
 });
 
 test('TC-027: more than 12 files, deletions and dependency changes are caught', () => {
@@ -62,7 +64,8 @@ test('TC-027: the edit hook blocks protected paths until approved, and blocks se
 test('TC-027: the hook script exits 2 to block and fails closed on bad input', () => {
   const hook = fileURLToPath(new URL('../../compass/hooks/guard-edit.mjs', import.meta.url));
   const run = (input) => spawnSync(process.execPath, [hook], { input, encoding: 'utf8' });
-  const blocked = run(JSON.stringify(edit(`${repo}compass/guardrails.json`)));
+  // a forbidden path: blocked whatever the local approval file says
+  const blocked = run(JSON.stringify(edit(`${repo}.env.local`)));
   assert.equal(blocked.status, 2);
   assert.match(blocked.stderr, /Blocked by Compass guardrails/);
   assert.equal(run(JSON.stringify(edit(`${repo}src/a.js`))).status, 0);

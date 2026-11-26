@@ -108,7 +108,7 @@ export function decideEdit(input, g, approvedPaths, repoRoot) {
 
 // REQ-031: pull requests that change code must carry a plan in the PR body.
 // Content-only edits under src/data/ (prompts, glossary, translations) are not code; the data layer and flags are.
-export const CODE_PATH = /^src\/(?!data\/)|^src\/data\/(promptApi|flags)\.js$|^(tests|scripts)\/|^compass\/.*\.mjs$|^\.claude\/|^(index\.html|vite\.config\.js|playwright\.config\.js|firestore\.rules|firebase\.json)$/;
+export const CODE_PATH = /^src\/(?!data\/)|^src\/data\/(promptApi|flags)\.js$|^(tests|scripts)\/|^compass\/.*\.mjs$|^\.claude\/|^(index\.html|package\.json|vite\.config\.js|playwright\.config\.js|firestore\.rules|firebase\.json)$/;
 const PLAN_FIELDS = ['Files', 'Steps', 'Risks', 'Proof'];
 // values that only hold a place ("-", "TBD", "TODO", "n/a", "...") do not fill a Plan line
 const PLACEHOLDER = /^(?:[-–—_.…?]+|tbd|tba|todo|n\/?a|xxx|fill ?in|later)\.?$/i;

@@ -6,7 +6,7 @@ Before changing code, write **one plan file per change**: `compass/plans/<REQ-id
 If the approach changes during the work, update the plan in the same PR: it is the record of *how* and *why*.
 
 "Code" means `src/` (except content under `src/data/`, but including `promptApi.js` and `flags.js`), `tests/`,
-`scripts/`, `compass/*.mjs`, `.claude/`, `firestore.rules`, `firebase.json` and the root config files. Content-only edits
+`scripts/`, `compass/*.mjs`, `.claude/`, `firestore.rules`, `firebase.json`, `package.json` and the root config files. Content-only edits
 (prompts, glossary, translations) need no plan.
 
 `node compass/merge-pr.mjs` refuses to merge a code PR without a plan file that fills in **Files, Steps, Risks and

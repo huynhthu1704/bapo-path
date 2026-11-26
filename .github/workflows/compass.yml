@@ -36,16 +36,26 @@ jobs:
       - name: Guardrails check
         if: github.event_name == 'pull_request'
         run: |
-          git worktree add --detach "$RUNNER_TEMP/guardrails-base" HEAD^1
-          if [ -f "$RUNNER_TEMP/guardrails-base/compass/check-guardrails.mjs" ]; then
-            node "$RUNNER_TEMP/guardrails-base/compass/check-guardrails.mjs"
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD^1
+          if [ -f "$RUNNER_TEMP/base/compass/check-guardrails.mjs" ]; then
+            node "$RUNNER_TEMP/base/compass/check-guardrails.mjs"
           else
             echo "::notice::main has no compass/check-guardrails.mjs yet; the guardrails check starts with the next PR."
           fi
-      # REQ-031: a code change adds a plan file in compass/plans/
-      - name: Plan file check
+      # REQ-031: a code change adds a plan file in compass/plans/. REQ-032: on PRs labelled "bug", the failing test comes
+      # first. Like the guardrails, these run main's copy, so a PR cannot weaken the check that judges it; the PR's own
+      # copy only runs (with a notice) while main has none.
+      - name: Plan file and test-first checks
         if: github.event_name == 'pull_request'
-        run: node compass/plan-file.mjs HEAD^1
-      # Process tests (tests/compass/) and, on PRs labelled "bug", the failing-test-first check (REQ-032)
-      - name: Process tests and test-first check
-        run: npm test
+        run: |
+          for check in plan-file test-first; do
+            script="$RUNNER_TEMP/base/compass/$check.mjs"
+            if [ ! -f "$script" ]; then
+              echo "::notice::main has no compass/$check.mjs yet; running this PR's copy."
+              script="compass/$check.mjs"
+            fi
+            node "$script" HEAD^1
+          done
+      # Process tests (tests/compass/)
+      - name: Process tests
+        run: node --test tests/compass/*.test.mjs

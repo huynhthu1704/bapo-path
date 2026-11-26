@@ -45,7 +45,8 @@ the same PR. It is written by hand (not generated).
 - Branch `compass/REQ-0xx-short-name` (bugs: `compass/fix-<issue>-short-name`); **≤ 12 files per change**; never force
   push; squash merge.
 - **Protected paths — never change without explicit approval:** `.github/workflows/`, `.github/CODEOWNERS`,
-  `compass/guardrails.json`, `compass/check-guardrails.mjs`, `compass/guardrails-lib.mjs`, `compass/hooks/`,
+  `compass/guardrails.json`, the check scripts (`compass/check-guardrails.mjs`, `guardrails-lib.mjs`, `check-spec.mjs`,
+  `build-views.mjs`, `plan-file.mjs`, `test-first.mjs`, `merge-pr.mjs`), `compass/hooks/`,
   `.claude/settings.json`, `.claude/settings.local.json`, `firebase.json`, `.env`. Never commit secrets or build output.
 - **Guardrails are enforced (REQ-027):** the edit hook stops edits to protected/forbidden paths and secrets (approval
   route: the Owner approves in chat → add the path to `.claude/approved-paths.local.json`, git-ignored). The hook is a
