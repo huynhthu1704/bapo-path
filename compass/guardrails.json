@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "protectedPaths": [
+    ".github/workflows/",
+    "compass/guardrails.json",
+    "compass/check-guardrails.mjs",
+    "compass/guardrails-lib.mjs",
+    "compass/hooks/",
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".github/CODEOWNERS",
+    "firebase.json",
+    ".env"
+  ],
+  "forbiddenPaths": [
+    ".env",
+    ".env.local",
+    "secrets/",
+    "node_modules/",
+    "dist/",
+    "dist-e2e/",
+    "playwright-report/",
+    "test-results/"
+  ],
+  "secretAllowedPaths": [
+    "src/firebase-config.js"
+  ],
+  "maxFilesPerChange": 12,
+  "maxLinesPerFile": 600,
+  "requireRequirementReference": true,
+  "requireHumanApprovalFor": [
+    "delete",
+    "protected-path",
+    "dependency-change"
+  ],
+  "secretPatterns": [
+    "sk-ant-[A-Za-z0-9_-]{10,}",
+    "ghp_[A-Za-z0-9]{20,}",
+    "github_pat_[A-Za-z0-9_]{20,}",
+    "AKIA[0-9A-Z]{16}",
+    "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "\"type\":\\s*\"service_account\"",
+    "AIza[0-9A-Za-z_-]{30,}"
+  ]
+}
