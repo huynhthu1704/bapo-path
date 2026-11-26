@@ -20,6 +20,8 @@ requirements lived in a hand-kept Markdown table. travel-map's Compass setup enf
 hook and CI.
 
 ## Constraints
+- Merging: the agent merges once CI is green and the independent review approves; PRs that need a person wait for the
+  Owner (decided by the Owner in chat on 2026-11-26: "please let the agent merge", ADR-006).
 - No new paid services and no new dependencies (the checks are plain Node scripts).
 - Keep the BAPO Path specifics: Playwright tests titled with their TC id, `npm run check:prompts`, Firestore rules tests,
   feature flags, demo mode, VI/KO/FR content translations.
@@ -32,7 +34,6 @@ and an `## Independent review (Claude)` comment.
 
 ## Out of scope
 - travel-map's Compass portal and its spec.json sync.
-- Auto-merging by agents (ADR-006 keeps the Owner merging until the Owner decides otherwise).
 - Running Playwright tests at the first commit of a bug fix in CI (the reviewer checks those).
 
 ## Requirements

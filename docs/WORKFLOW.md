@@ -17,10 +17,10 @@ flowchart LR
   C --> D[Tests first<br/>TC-xxx]
   D --> E[Code]
   E --> F[npm run verify]
-  F --> G[Draft PR<br/>+ independent review]
-  G --> H{Human review}
+  F --> G[PR<br/>+ independent review]
+  G --> H{Review APPROVE<br/>+ CI green}
   H -- changes --> E
-  H -- approve --> I[Merge to main]
+  H -- approve --> I[Agent merges to main]
   I --> J[Auto deploy site<br/>+ rules]
   J --> K[Flag: owner → beta → everyone]
   K --> L[Insights, ratings, feedback]
@@ -64,14 +64,17 @@ For Christine working alone with Claude Code. The agent writes and checks the co
 3. **Let the agent work, and check in at two points**
    - **After the tests are written:** do the TC tests match what you meant? This is the cheapest place to catch a misunderstanding.
    - **After the demo works:** open `npm run dev:demo` (or the agent's screenshots) and try it as each role with "Act as".
-4. **Ship gate:** run `/ship`. It runs the checks and the traceability update, opens a **draft** PR and asks a fresh
-   agent for the **independent review** (`## Independent review (Claude)` comment).
-5. **Your review** (this one is required, even alone)
-   - Wait for the CI checks to go green and the independent review to say APPROVE.
+4. **Ship gate:** run `/ship`. It runs the checks and the traceability update, opens the PR and asks a fresh agent for
+   the **independent review** (`## Independent review (Claude)` comment).
+5. **The agent merges** (your decision of 2026-11-26, ADR-006). Once CI is green and the review says APPROVE for the
+   latest commit, the agent squash-merges with `compass/merge-pr.mjs` and then tells you what changed. CHANGES NEEDED is
+   fixed and reviewed again; after two rounds the agent stops and asks you.
+   **You still decide** PRs that change protected files (CI, guardrails, `firebase.json`), `firestore.rules`, delete files,
+   add or upgrade a library, or touch learner data, sign-in or roles. For those:
    - Read the PR description's **Not tested** and **Departures** sections first.
    - Read the whole diff of `firestore.rules`, `promptApi.js` and `firebase.js`. For the rest, skim for anything surprising.
-   - Big PR? Ask the agent to split it. A good size is one you can read in about 15 minutes.
-   - Mark it ready, then **Squash and merge**.
+   - Approve in chat; the agent adds the `human-approved` label and merges.
+   You can always read any merged PR afterwards; ask the agent to revert one if needed.
 6. **Release:** the site deploys on merge. If the rules changed, approve the **production** deploy in Actions straight away:
    the site is already live, and until the rules are, anything that needs them fails. This is one more reason new features start behind a flag.
    Do any "After merging" steps from the PR.
@@ -80,9 +83,10 @@ For Christine working alone with Claude Code. The agent writes and checks the co
 ### Solo guard-rails
 
 - Branch protection on `main`, even alone: required checks, no direct pushes (see setup below).
-  Approving your own PR isn't possible on GitHub, so for solo work set **required approvals to 0** but keep the required checks.
+  Approving your own PR isn't possible on GitHub, so for solo work set **required approvals to 0** but keep the required checks
+  (the agent merges through them; the independent review and `merge-pr.mjs` are the extra gate).
 - At most **2 agent sessions at once**, on different areas (for example, content and the admin). More than that and review becomes the bottleneck.
-- Merge in the morning, not late at night: you'll read the diff better.
+- Read the agent's merge reports and the open items in `compass/handover.md` at least once a day.
 - Each week, spend 30 minutes on Dependabot PRs and on the open items in `compass/handover.md` and `compass/agent-knowledge.md`.
 
 ---
@@ -140,7 +144,7 @@ These settings live in GitHub, not in the code, so an agent can't set them for y
 4. **AI review on PRs (optional), no API key needed:** on your computer run `claude setup-token` (needs a Claude Pro or Max plan),
    then save the token as the repository secret `CLAUDE_CODE_OAUTH_TOKEN`. Running `/install-github-app` in Claude Code does this for you.
    Reviews then count against your subscription, not paid API usage. A pay-as-you-go `ANTHROPIC_API_KEY` secret also works.
-   Draft PRs are skipped: the review starts when you mark a PR "Ready for review".
+   Draft PRs are skipped: the review starts when a PR is "Ready for review" (agents open PRs ready, ADR-006).
 5. **Settings → Code security:** switch on Dependabot alerts and secret scanning.
 6. **Labels:** create `human-approved` (the Owner adds it after approving a protected-path, deletion, dependency or
    rules change) and make sure `bug` and `requirement` exist.

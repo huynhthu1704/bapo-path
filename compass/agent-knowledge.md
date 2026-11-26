@@ -8,8 +8,11 @@ the same PR. It is written by hand (not generated).
 - Christine (GitHub `huynhthu1704`) is the **Owner**: a BA/PO, not a full-time developer. Write PR descriptions, issues
   and notes in plain English, no jargon; give "how to check it yourself" steps when useful.
 - Everything written into the repo (code comments, commits, PRs, issues, spec) is in **English**.
-- **Merging:** agents open **draft** PRs; the Owner reads and merges (ADR-006, Proposed). An agent merges only when the
-  Owner asks, and only with `node compass/merge-pr.mjs <n>`.
+- **Merging (standing instruction from the Owner, 2026-11-26, ADR-006):** once CI is green and the independent review
+  says APPROVE for the head commit, **merge the PR yourself** with `node compass/merge-pr.mjs <n>`, then report to the
+  Owner in plain English (what changed, which flag to roll out, anything to decide). PRs under *What a person still
+  decides* in `compass/REVIEW.md` (protected paths, `firestore.rules`, deletions, dependencies, learner data, sign-in or
+  roles) wait for the Owner. CHANGES NEEDED twice in a row → stop and ask.
 - Ask before anything hard to undo: deleting files, CI/deploy workflows, protected paths, branch protection, Firestore
   rules, new paid services or dependencies.
 
@@ -75,5 +78,5 @@ the same PR. It is written by hand (not generated).
   `deploy.yml` (site on merge), `deploy-rules.yml` (rules after the `production` approval).
 
 ## 8. Open items
-- The Owner to confirm the Compass intent and ADR-005…007, and add *Compass checks* to the required checks.
+- The Owner to confirm the Compass intent and ADR-005 and ADR-007, add *Compass checks* to the required checks and create the `human-approved` label.
 - Gaps from the baseline: REQ-004, REQ-021 and REQ-024 have no automated test; REQ-014 has no e2e test.

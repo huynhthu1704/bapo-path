@@ -24,13 +24,15 @@ following this file. Project: **BAPO Path** — a free learning site for starter
 3. **Code:** branch `compass/REQ-0xx-short-name` from fresh `main`. Tests first (they must fail before the change), then
    code, behind a default-off flag if user-facing. Commit messages start with the REQ id, e.g. `REQ-035: …`.
    **Bug fixes (REQ-032):** commit 1 only adds the failing test; later commits must not edit it; the PR gets label `bug`.
-4. **Pull request:** draft PR from the template; `Closes #<issue>`; CI green (*Content, build and end-to-end tests*,
+4. **Pull request:** PR from the template, ready for review (a draft cannot be merged); `Closes #<issue>`; CI green (*Content, build and end-to-end tests*,
    *rules*, *Compass checks*). Update statuses in `compass/spec.json` and run `node compass/build-views.mjs`.
    **Independent review (REQ-028):** a reviewer that did not write the code posts `## Independent review (Claude)` per
    [`compass/REVIEW.md`](compass/REVIEW.md). `CHANGES NEEDED` blocks the merge until fixed and re-reviewed.
    **Decisions (REQ-033):** when the Owner decides something in chat, add an ADR to `compass/spec.json → decisions` in the
    same PR (`Accepted`; `Proposed` for an agent's interim choice).
-5. **Release:** the Owner squash-merges (or asks an agent to run `node compass/merge-pr.mjs <n>`). `deploy.yml` publishes
+5. **Merge and release (ADR-006):** once CI is green and the review says APPROVE for the head commit, the author agent
+   squash-merges with `node compass/merge-pr.mjs <n>` and reports to the Owner; PRs that need a person (compass/REVIEW.md)
+   wait for the Owner. `deploy.yml` publishes
    the site; `deploy-rules.yml` publishes rules after the `production` approval. Then roll the flag out
    owner → beta → everyone.
 

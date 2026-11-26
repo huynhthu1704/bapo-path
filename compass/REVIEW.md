@@ -56,8 +56,13 @@ Reviewed commit: <full SHA of the PR head you reviewed>
 any later push needs a fresh review before merging (`compass/merge-pr.mjs` enforces this).
 
 ## Merge rule
-- `APPROVE` + CI green → the PR may be merged. Today **the Owner merges** (ADR-006); an agent merges only when the Owner
-  asks, and then only with `node compass/merge-pr.mjs <n>`.
+- `APPROVE` + CI green → **the author agent squash-merges** with `node compass/merge-pr.mjs <n>` and then reports the
+  result to the Owner (set by the Owner on 2026-11-26, ADR-006). Without an authenticated `gh` CLI, the agent checks the
+  same conditions itself (all required checks green on the head commit, the latest trusted review says APPROVE with
+  `Reviewed commit:` equal to the head, plan file present, `bug` label on bug fixes) and merges with the GitHub tool,
+  squash, pinned to that head commit; then it comments the branch, PR and merge commit on each closed issue.
+- PRs under *What a person still decides* (below) are **not** merged by an agent: they wait for the Owner's decision
+  (and the `human-approved` label).
 - `CHANGES NEEDED` → **no merge**. The author fixes the findings, pushes, and asks for a **new** review (again a fresh
   reviewer). If important findings remain after the second fix, stop and ask the Owner.
 - **Accepted finding:** the Owner may accept an important finding explicitly in chat. The author quotes the decision
@@ -65,7 +70,7 @@ any later push needs a fresh review before merging (`compass/merge-pr.mjs` enfor
   `### Accepted by the Owner` and can then APPROVE. Nobody edits an old review or merges over `CHANGES NEEDED`.
 
 ## What a person still decides
-The Owner decides (the review agent cannot approve) when a PR:
+The Owner decides (the review agent cannot approve, and no agent merges) when a PR:
 - changes a protected path in `compass/guardrails.json` (`.github/workflows/`, `.github/CODEOWNERS`, the enforcement
   files, `.claude/settings.json`, `firebase.json`, `.env`),
 - changes `firestore.rules`, deletes files or adds or upgrades a dependency,

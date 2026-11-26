@@ -22,12 +22,13 @@ Source of truth: `AGENTS.md`, `compass/REVIEW.md`, `compass/agent-knowledge.md`.
    Bug fix: commit 1 only adds the failing test; the fix comes later and must not edit it (`/fix-bug`).
 7. **Build:** behind a default-off flag if user-facing; 375 px; accessible. Then `npm test`, `npm run verify`,
    `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`. Commits start with the REQ id.
-8. **PR:** `/ship` (draft PR from the template, `Closes #N`, `## Plan`). Protected paths, deleted files, dependencies and
+8. **PR:** `/ship` (PR from the template, ready for review, `Closes #N`, `## Plan`). Protected paths, deleted files, dependencies and
    `firestore.rules` need the Owner's decision first, then the `human-approved` label.
 9. **Independent review:** a fresh reviewer (subagent or `claude-review.yml`) posts `## Independent review (Claude)` with
    `Reviewed commit: <sha>`. CHANGES NEEDED → fix, new review. Any push after an APPROVE needs a new review.
-10. **Merge:** the Owner merges, or on request `MERGE_TRAILER="…" node compass/merge-pr.mjs <n>`. Set the REQs to `Done`
-    in the next PR or the same one before merging.
+10. **Merge (ADR-006):** APPROVE + CI green → `MERGE_TRAILER="…" node compass/merge-pr.mjs <n>` yourself (checks CI and
+    the review, keeps the plan, comments on the issue). Set the REQs to `Done` in the PR before merging. PRs that need a
+    person (compass/REVIEW.md) wait for the Owner; never merge over CHANGES NEEDED.
 11. **Report** to the Owner in plain English: what changed, which flag to roll out, anything to decide.
 
 ## Enforced by

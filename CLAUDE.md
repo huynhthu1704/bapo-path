@@ -15,8 +15,8 @@ per **compass/REVIEW.md**. Key files: `compass/spec.json`, `compass/handover.md`
 - [ ] Intent and design approved (REQ-026 on); plan file committed first; TC tests written to fail first
 - [ ] `npm test` and `npm run verify` pass; rules tests in CI if rules changed; spec statuses + `build-views` updated
 - [ ] Behind a default-off flag if user-facing and new; 375 px with no horizontal scroll; real buttons, `aria-label`s
-- [ ] Draft PR from `.github/pull_request_template.md` (Plan, REQs covered, departures, **not tested**, after-merge steps)
-- [ ] Independent review posted (compass/REVIEW.md); `/security-review` too if rules, auth or `promptApi.js` changed
+- [ ] PR from `.github/pull_request_template.md` (Plan, REQs covered, departures, **not tested**, after-merge steps)
+- [ ] Independent review APPROVE (compass/REVIEW.md); then merge with `compass/merge-pr.mjs` and report (ADR-006)
 
 ## Lessons learned (REQ-034)
 When the same mistake (or review finding) happens twice, add one line here in the PR that fixes it — this is the single

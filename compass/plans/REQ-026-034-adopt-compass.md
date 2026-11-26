@@ -32,7 +32,9 @@ Intent: compass/intent/2026-11-26-compass-framework.md · Design: none: process 
 - The edit hook blocks agents from editing protected paths; the approval route is documented in AGENTS.md and the hook
   message.
 - Branch protection does not yet require `Compass checks`: until the Owner adds it, the checks advise but do not block.
-- `merge-pr.mjs` needs the `gh` CLI; sessions without it leave merging to the Owner (the current rule, ADR-006).
+- Agents now merge their own PRs (ADR-006, the Owner's decision). Guard: `merge-pr.mjs` refuses without green CI and an
+  APPROVE for the head commit, and PRs touching protected paths, rules, deletions or dependencies still wait for the Owner.
+  `merge-pr.mjs` needs an authenticated `gh` CLI; without it the agent checks the same conditions and merges pinned to the head.
 
 ## Proof
 - `npm test`: TC-026…034 in `tests/compass/` (views match the spec, check-spec passes, intent/design/ADR/test-id rules,

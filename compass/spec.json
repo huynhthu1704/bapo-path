@@ -86,11 +86,11 @@
     {
       "id": "ADR-006",
       "date": "2026-11-26",
-      "title": "The Owner still merges; agents open draft PRs",
-      "status": "Proposed",
-      "context": "travel-map lets the agent auto-merge once CI is green and the independent review says APPROVE. BAPO Path so far had the Owner read and merge every PR.",
-      "decision": "Keep the current rule: agents open draft PRs and the Owner merges. compass/merge-pr.mjs is available as a safe merge (it refuses without green CI and an APPROVE review) for when the Owner asks an agent to merge.",
-      "consequences": "If the Owner wants travel-map style auto-merge, change this ADR to Accepted with the new rule and update CLAUDE.md and agent-knowledge.md.",
+      "title": "Agents merge their own PRs once CI is green and the independent review approves",
+      "status": "Accepted",
+      "context": "travel-map lets the agent merge once CI is green and the independent review says APPROVE. The Owner chose the same for BAPO Path in chat on 2026-11-26 (\"please let the agent merge\"), replacing the earlier rule that the Owner merges every PR.",
+      "decision": "After CI is green and a fresh reviewer posts APPROVE for the head commit, the author agent squash-merges with node compass/merge-pr.mjs <n> and then reports to the Owner. PRs listed under \"What a person still decides\" in compass/REVIEW.md (protected paths, firestore.rules, deletions, dependencies, learner data, sign-in or roles) still wait for the Owner, and CHANGES NEEDED is never merged.",
+      "consequences": "The Owner is told about changes after the merge and rolls flags out as before. Agents open PRs as ready for review (a draft cannot be merged). A session without an authenticated gh CLI checks the same conditions by hand and merges with the GitHub tool pinned to the reviewed head commit.",
       "reqIds": [
         "REQ-028"
       ]
