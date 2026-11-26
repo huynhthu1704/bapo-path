@@ -23,7 +23,8 @@ following this file. Project: **BAPO Path** — a free learning site for starter
    [`compass/plans/README.md`](compass/plans/README.md) (Files, Steps, Risks, Proof). The PR body's `## Plan` links it.
 3. **Code:** branch `compass/REQ-0xx-short-name` from fresh `main`. Tests first (they must fail before the change), then
    code, behind a default-off flag if user-facing. Commit messages start with the REQ id, e.g. `REQ-035: …`.
-   **Bug fixes (REQ-032):** commit 1 only adds the failing test; later commits must not edit it; the PR gets label `bug`.
+   **Bug fixes (REQ-032):** commit 1 holds only the failing test and the plan file; the fix comes in later commits,
+   which must not edit that test; the PR gets label `bug`.
 4. **Pull request:** PR from the template, ready for review (a draft cannot be merged); `Closes #<issue>`; CI green (*Content, build and end-to-end tests*,
    *rules*, *Compass checks*). Update statuses in `compass/spec.json` and run `node compass/build-views.mjs`.
    **Independent review (REQ-028):** a reviewer that did not write the code posts `## Independent review (Claude)` per
@@ -52,8 +53,10 @@ node compass/merge-pr.mjs <n> --dry-run   # what a safe merge would do
 - Read `compass/spec.json` and `compass/handover.md` before changing anything.
 - Only implement requirements whose status is **Approved** or **In build**.
 - Never touch paths in `compass/guardrails.json → protectedPaths` without the Owner's explicit approval. Enforced: the
-  Claude Code hook (`.claude/settings.json` → `compass/hooks/guard-edit.mjs`) blocks such edits, and CI fails a PR that
-  breaks the guardrails unless it has the `human-approved` label, added only after the Owner approves in chat.
+  Claude Code hook (`.claude/settings.json` → `compass/hooks/guard-edit.mjs`) stops such edits and asks for approval.
+  The hook is a reminder, not a lock: its approval file is local and an agent could write it, so **never write it without
+  the Owner's approval in chat**. The real gate is CI: it fails a PR that breaks the guardrails unless it has the
+  `human-approved` label, which an agent adds only after the Owner approves in chat.
 - Security lives in `firestore.rules`, with a test in `tests/rules.test.mjs` for every rule change. Never weaken a rule
   to make a feature work; ask instead.
 - Never commit secrets, tokens, service-account keys or `.env` files.

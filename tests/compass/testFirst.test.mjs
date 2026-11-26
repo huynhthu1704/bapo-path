@@ -12,6 +12,8 @@ test('TC-032: test first, then the fix, passes (an e2e-only test is left to the 
   assert.deepEqual(r.errors, []);
   assert.match(r.warnings[0], /reviewer checks/);
   assert.deepEqual(testFirstProblems([c('1', 'tests/compass/x.test.mjs'), c('2', 'compass/x.mjs')]).unitTests, ['tests/compass/x.test.mjs']);
+  assert.deepEqual(testFirstProblems([c('1111111', 'tests/e2e/a.spec.js', 'compass/plans/bug-41-x.md'), c('2', 'src/App.jsx')]).errors, [], 'the plan file may go with the failing test');
+  assert.match(testFirstProblems([c('1111111', 'compass/plans/bug-41-x.md', 'compass/x.mjs'), c('2', 'src/App.jsx')]).errors.join(' '), /also changes compass\/x\.mjs/);
 });
 
 test('TC-032: fix in the first commit, a single commit, or editing the test later fail', () => {

@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   renderHandover, renderRequirements, renderTests, renderDecisions, handoverProblems, intentProblems, needProblems,
-  designProblems, decisionProblems, testFileProblems,
+  designProblems, decisionProblems, testFileProblems, requirementProblems,
 } from '../../compass/build-views.mjs';
 
 const root = new URL('../../', import.meta.url);
@@ -38,13 +38,28 @@ test('TC-026: a stale handover is reported', () => {
 });
 
 test('TC-026: an automated test case must point to a file that carries its TC id', () => {
-  const files = { 'tests/e2e/a.spec.js': "test('TC-001 works', …)", 'tests/e2e/b.spec.js': "test('TC-0010 other', …)" };
+  const files = {
+    'tests/e2e/a.spec.js': "test('TC-001 works', …)",
+    'tests/e2e/b.spec.js': "test('TC-0010 other', …)",
+    'tests/e2e/c.spec.js': "// TC-001 is only mentioned in a comment\ntest('something else', …)",
+    'tests/e2e/d.spec.js': "test.describe('x', () => { test(`TC-006/TC-001 shared`, …) })",
+  };
   const r = (t) => testFileProblems(mini([], [t]), (f) => files[f] ?? null);
   assert.deepEqual(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/a.spec.js' }), []);
   assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/b.spec.js' })[0], /no test titled with TC-001/);
+  assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/c.spec.js' })[0], /no test titled with TC-001/, 'a comment does not count');
+  assert.deepEqual(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/d.spec.js' }), []);
   assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/missing.spec.js' })[0], /missing/);
   assert.match(r({ id: 'TC-001', type: 'automated' })[0], /names no file/);
   assert.deepEqual(r({ id: 'TC-002', type: 'manual' }), []);
+});
+
+test('TC-026: acceptance criteria must be a list of strings and the story one sentence', () => {
+  assert.deepEqual(requirementProblems(mini([req('REQ-001', { story: 'As a learner …' })])), []);
+  assert.match(requirementProblems(mini([req('REQ-001', { ac: 'Given … When … Then …' })]))[0], /non-empty list/, 'a plain string is not a list');
+  assert.match(requirementProblems(mini([req('REQ-001', { ac: [] })]))[0], /non-empty list/);
+  assert.match(requirementProblems(mini([req('REQ-001', { story: ['Given'] })]))[0], /story must be one sentence/);
+  assert.deepEqual(requirementProblems(spec), [], 'the repository requirements are well formed');
 });
 
 test('TC-029: requirements from REQ-026 need an approved intent that lists them and keeps the business need', () => {

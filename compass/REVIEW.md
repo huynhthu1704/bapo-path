@@ -27,7 +27,7 @@ The reviewer gets only: the PR number, its diff, the linked requirement(s) in `c
 5. **Maintainability:** only issues that will cause real trouble later (duplicated logic, dead code, files growing
    past `maxLinesPerFile`).
 
-**Bug fixes (REQ-032):** the PR carries the `bug` label; its first commit only adds the failing test and later commits do
+**Bug fixes (REQ-032):** the PR carries the `bug` label; its first commit holds only the failing test (and the plan file) and later commits do
 not edit it (`compass/test-first.mjs` checks this in CI). Playwright tests cannot run at the first commit in CI: the
 reviewer checks out the first commit, runs `npx playwright test -g "#<issue>"` and confirms it fails. A test that does not
 fail is an important finding.

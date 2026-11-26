@@ -1,7 +1,7 @@
 // REQ-032: a bug fix starts with a commit that only adds a failing test; later commits must not edit that test.
 // CI (npm test, pull_request event): runs when the PR carries the "bug" label; otherwise it skips.
 // Locally: node compass/test-first.mjs [baseRef] --bug   (default base origin/main)
-// Checks: ≥ 2 commits · the first commit only touches tests/ and adds or changes a test · later commits do
+// Checks: ≥ 2 commits · the first commit only touches tests/ (and its plan file in compass/plans/) and adds or changes a test · later commits do
 // not touch those test files (unless the PR has the human-approved label) · the unit tests of the first commit
 // fail at that commit — a run that times out does not count (Playwright tests in tests/e2e/ cannot run in this job: the independent reviewer checks those).
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -13,6 +13,8 @@ import { fileURLToPath } from 'node:url';
 export const BUG_LABEL = 'bug';
 export const APPROVAL_LABEL = 'human-approved';
 export const TEST_PATH = /^tests\//;
+// The plan file of the fix may go in the first commit too (it is not code: compass/plans/README.md)
+export const PLAN_PATH = /^compass\/plans\/[^/]+\.md$/i;
 export const UNIT_TEST = /^tests\/compass\/[^/]+\.test\.mjs$/;
 // How long the first commit's test may run (TEST_FIRST_TIMEOUT_MS lets the unit test use a short limit)
 export const PROOF_TIMEOUT_MS = Number(process.env.TEST_FIRST_TIMEOUT_MS) || 300000;
@@ -30,8 +32,8 @@ export function testFirstProblems(commits, { approved = false } = {}) {
   const [first, ...later] = commits;
   const testFiles = first.files.filter((f) => TEST_PATH.test(f.path) && f.status !== 'D').map((f) => f.path);
   const unitTests = testFiles.filter((p) => UNIT_TEST.test(p));
-  const other = first.files.filter((f) => !TEST_PATH.test(f.path)).map((f) => f.path);
-  if (other.length) errors.push(`the first commit (${short(first.sha)}) must only add the failing test (tests/), but it also changes ${other.join(', ')} — put the fix in a later commit.`);
+  const other = first.files.filter((f) => !TEST_PATH.test(f.path) && !PLAN_PATH.test(f.path)).map((f) => f.path);
+  if (other.length) errors.push(`the first commit (${short(first.sha)}) must only add the failing test (tests/) and its plan file (compass/plans/), but it also changes ${other.join(', ')} — put the fix in a later commit.`);
   if (!testFiles.length) errors.push(`the first commit (${short(first.sha)}) adds no test — start a bug fix with a commit that adds a failing test in tests/.`);
   if (!later.length) errors.push('a bug-fix PR needs at least two commits: first the failing test, then the fix.');
   for (const c of later) {

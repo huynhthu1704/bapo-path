@@ -37,7 +37,7 @@ and an `## Independent review (Claude)` comment.
 - Running Playwright tests at the first commit of a bug fix in CI (the reviewer checks those).
 
 ## Requirements
-- REQ-026 — One source of truth for requirements, tests and handover
+- REQ-026 — One source of truth for requirements, tests and handover (#41, for all nine)
 - REQ-027 — Enforce the guardrails automatically
 - REQ-028 — Independent review of every pull request
 - REQ-029 — Capture the business need as an intent before requirements

@@ -35,7 +35,7 @@ flowchart LR
 | 1 | **Capture** | Person, or the agent with `/new-requirement` | REQ in `compass/spec.json` + issue, Given/When/Then and a TC id | A person confirms the criteria; assumptions are tagged `[ASSUMPTION]` and approved |
 | 1b | **Design** | Agent drafts (Figma), Owner approves | `compass/design/…md` with frames, or `none: <reason>` | Owner approves; no code before (`check-spec`) |
 | 2 | **Plan** | Person + agent | Sprint label, priority; `compass/plans/…md` (Files, Steps, Risks, Proof) | The work fits in one PR (≤ 12 files), one sprint at most |
-| 3 | **Build** | Agent (Claude Code), following `AGENTS.md` | Failing TC tests first, then the code, behind a flag | `npm test` and `npm run verify` pass locally; the edit hook blocks protected paths and secrets |
+| 3 | **Build** | Agent (Claude Code), following `AGENTS.md` | Failing TC tests first, then the code, behind a flag | `npm test` and `npm run verify` pass locally; the edit hook stops edits to protected paths and secrets |
 | 4 | **Verify** | CI | `ci.yml` (prompt check, build, e2e) · `rules-test.yml` (Firestore rules) · `compass.yml` (spec, guardrails, plan, test-first) | Required checks are green |
 | 5 | **Review** | Independent AI review (`compass/REVIEW.md`: a fresh agent or `claude-review.yml`), then a person | `## Independent review (Claude)` says APPROVE for the head commit | A person approves. The Owner decides rules, pipeline, deletions and dependencies |
 | 6 | **Release** | CI + Owner | Site to GitHub Pages; rules to Firebase after the `production` approval | Owner approves the rules deploy. The feature stays at flag audience `owner` |

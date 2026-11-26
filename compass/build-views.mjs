@@ -197,9 +197,19 @@ export function needProblems(spec, readIntent) {
   return problems;
 }
 
+/** REQ-026: acceptance criteria are a non-empty list of Given/When/Then strings; the story is one sentence. */
+export function requirementProblems(spec) {
+  const problems = [];
+  for (const r of spec.requirements) {
+    if (!Array.isArray(r.ac) || !r.ac.length || !r.ac.every((a) => typeof a === 'string' && a.trim())) problems.push(`${r.id} acceptance criteria ("ac") must be a non-empty list of Given/When/Then strings`);
+    if (r.story !== undefined && typeof r.story !== 'string') problems.push(`${r.id} story must be one sentence (a string), not a list`);
+  }
+  return problems;
+}
+
 /**
- * REQ-026: an automated test case names a real file, and that file mentions the TC id (Playwright titles start
- * with it, so `npx playwright test -g TC-0xx` finds it). tests/rules.test.mjs is exempt (its titles predate TC ids).
+ * REQ-026: an automated test case names a real file with a test whose title carries the TC id (Playwright titles
+ * start with it, so `npx playwright test -g TC-0xx` finds it); a mention in a comment does not count. tests/rules.test.mjs is exempt (its titles predate TC ids).
  */
 export function testFileProblems(spec, readFile) {
   const problems = [];
@@ -212,7 +222,7 @@ export function testFileProblems(spec, readFile) {
     for (const file of t.file.split(/\s*\+\s*/)) {
       const text = readFile(file);
       if (text == null) problems.push(`${t.id} points to missing ${file}`);
-      else if (file !== 'tests/rules.test.mjs' && !new RegExp(`\\b${t.id}(?!\\d)`).test(text)) problems.push(`${file} has no test titled with ${t.id}`);
+      else if (file !== 'tests/rules.test.mjs' && !new RegExp(`\\btest(?:\\.\\w+)?\\(\\s*['"\`][^'"\`\\n]*\\b${t.id}(?!\\d)`).test(text)) problems.push(`${file} has no test titled with ${t.id}`);
     }
   }
   return problems;

@@ -47,8 +47,9 @@ the same PR. It is written by hand (not generated).
 - **Protected paths — never change without explicit approval:** `.github/workflows/`, `.github/CODEOWNERS`,
   `compass/guardrails.json`, `compass/check-guardrails.mjs`, `compass/guardrails-lib.mjs`, `compass/hooks/`,
   `.claude/settings.json`, `.claude/settings.local.json`, `firebase.json`, `.env`. Never commit secrets or build output.
-- **Guardrails are enforced (REQ-027):** the edit hook blocks protected/forbidden paths and secrets (approval route: the
-  Owner approves in chat → add the path to `.claude/approved-paths.local.json`, git-ignored); the CI guardrails check
+- **Guardrails are enforced (REQ-027):** the edit hook stops edits to protected/forbidden paths and secrets (approval
+  route: the Owner approves in chat → add the path to `.claude/approved-paths.local.json`, git-ignored). The hook is a
+  reminder, not a lock — nothing stops an agent writing that file, so never do it without the Owner's OK. The CI guardrails check
   runs main's copy of the rules and fails PRs over 12 files, with forbidden paths or secrets, or — without the
   `human-approved` label — with protected paths, deletions or dependency changes.
 - Commit messages: English, start with the REQ id (`REQ-035: …`; bugs `#<issue>: …`).
@@ -58,7 +59,7 @@ the same PR. It is written by hand (not generated).
   REQs and issues (`/new-requirement`, label `requirement`, module label, `sprint-N`).
 - **Tests prove the criteria:** each acceptance criterion gets a test whose title starts with its `TC-0xx` id
   (`npx playwright test -g TC-018`); check-spec fails when an automated TC's file does not carry its id.
-- **Bugs:** issue with the bug template; fix PR has label `bug`; **commit 1 only adds the failing test** (title `#<issue> …`),
+- **Bugs:** issue with the bug template; fix PR has label `bug`; **commit 1 holds only the failing test** (title `#<issue> …`) and the plan file,
   later commits must not edit it (REQ-032, `compass/test-first.mjs`).
 - **Linking:** PR body has `Closes #N`; after merging, comment on the issue with the branch, PR and merge commit
   (`merge-pr.mjs` does this).

@@ -2,6 +2,7 @@
 
 Before changing code, write **one plan file per change**: `compass/plans/<REQ-ids>-<short-name>.md`
 (for example `compass/plans/REQ-035-prompt-search-speed.md`). Commit it as the first commit of the branch, then code.
+**Bug fixes:** the plan file goes in commit 1 together with the failing test, and nothing else (REQ-032).
 If the approach changes during the work, update the plan in the same PR: it is the record of *how* and *why*.
 
 "Code" means `src/` (except content under `src/data/`, but including `promptApi.js` and `flags.js`), `tests/`,

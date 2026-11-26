@@ -1,11 +1,11 @@
 // Compass traceability check — run in CI. Exits 1 if the spec is inconsistent.
 import { readFileSync, existsSync } from 'node:fs';
-import { handoverProblems, decisionProblems, intentProblems, needProblems, designProblems, testFileProblems } from './build-views.mjs';
+import { handoverProblems, decisionProblems, intentProblems, needProblems, designProblems, testFileProblems, requirementProblems } from './build-views.mjs';
 const spec = JSON.parse(readFileSync(new URL('./spec.json', import.meta.url), 'utf8'));
 const errors = [];
 const reqIds = new Set(spec.requirements.map((r) => r.id));
+errors.push(...requirementProblems(spec));
 for (const r of spec.requirements) {
-  if (!r.ac || r.ac.length === 0) errors.push(`${r.id} has no acceptance criteria`);
   if (r.status !== 'Draft' && !spec.tests.some((t) => t.reqIds.includes(r.id))) errors.push(`${r.id} (${r.status}) has no test case`);
 }
 for (const t of spec.tests) {

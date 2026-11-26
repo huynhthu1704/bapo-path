@@ -19,7 +19,7 @@ Source of truth: `AGENTS.md`, `compass/REVIEW.md`, `compass/agent-knowledge.md`.
 4. **Branch** from fresh `main`: `compass/REQ-0xx-short-name`; ≤ 12 files; never force push.
 5. **Plan:** commit `compass/plans/<REQ-ids>-<name>.md` (Files, Steps, Risks, Proof) first. Check: `node compass/plan-file.mjs origin/main`.
 6. **Tests first:** Playwright tests titled `TC-0xx …` (or `#<issue> …` for a bug) that fail before the change.
-   Bug fix: commit 1 only adds the failing test; the fix comes later and must not edit it (`/fix-bug`).
+   Bug fix: commit 1 holds only the failing test and the plan file; the fix comes later and must not edit it (`/fix-bug`).
 7. **Build:** behind a default-off flag if user-facing; 375 px; accessible. Then `npm test`, `npm run verify`,
    `node compass/check-spec.mjs`, `node compass/check-guardrails.mjs origin/main`. Commits start with the REQ id.
 8. **PR:** `/ship` (PR from the template, ready for review, `Closes #N`, `## Plan`). Protected paths, deleted files, dependencies and

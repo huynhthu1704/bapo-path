@@ -9,7 +9,8 @@ description: Use when the user reports something broken on the site. Reproduce-f
 2. Branch `compass/fix-<issue>-short-name` from fresh `main`. Write the plan file
    `compass/plans/<REQ-id or bug-<issue>>-<name>.md` (Files, Steps, Risks, Proof).
 3. **Reproduce with a failing test first.** Add a Playwright test in `tests/e2e/` titled `#<issue> …` and run it to watch
-   it fail. **Commit it on its own** (commit 1 touches only `tests/`). If it can't be reproduced in demo mode, say so and
+   it fail. **Commit it together with the plan file and nothing else** (commit 1 touches only `tests/` and
+   `compass/plans/`; `compass/test-first.mjs` fails anything more). If it can't be reproduced in demo mode, say so and
    explain why.
 4. Find the cause and write it in the issue in one or two plain sentences.
 5. Fix it with the smallest change, in later commits that **do not edit the failing test**. Look for the same mistake

@@ -490,125 +490,134 @@
     {
       "id": "REQ-026",
       "title": "One source of truth for requirements, tests and handover",
-      "story": [
-        "Given compass/spec.json\nWhen I run node compass/check-spec.mjs\nThen it fails if a requirement (not Draft) has no test case, a test case points to an unknown requirement, or an automated test case's file does not carry its TC id",
-        "Given I changed compass/spec.json\nWhen I run node compass/build-views.mjs\nThen requirements.md, tests.md, decisions.md and handover.md are regenerated, and check-spec fails in CI while handover.md is stale"
-      ],
+      "story": "As the Owner I want requirements, test cases and decisions in one file with generated views, so that any person or agent can see where the project stands.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want requirements, test cases and decisions in one file with generated views, so that any person or agent can see where the project stands."
+      "ac": [
+        "Given compass/spec.json\nWhen I run node compass/check-spec.mjs\nThen it fails if a requirement (not Draft) has no test case, a test case points to an unknown requirement, or an automated test case's file does not carry its TC id",
+        "Given I changed compass/spec.json\nWhen I run node compass/build-views.mjs\nThen requirements.md, tests.md, decisions.md and handover.md are regenerated, and check-spec fails in CI while handover.md is stale"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-027",
       "title": "Enforce the guardrails automatically",
-      "story": [
-        "Given an agent in Claude Code\nWhen it edits a protected or forbidden path in compass/guardrails.json, or writes text that looks like a secret\nThen the edit hook blocks it until the Owner approves the path in chat",
-        "Given a pull request\nWhen it changes more than 12 files, a forbidden path, or (without the human-approved label) a protected path, a deletion or a dependency\nThen the CI guardrails check fails, using main's copy of the check and its rules"
-      ],
+      "story": "As the Owner I want the agent rules enforced by machines, so that protected files, secrets and oversized changes cannot slip through.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want the agent rules enforced by machines, so that protected files, secrets and oversized changes cannot slip through."
+      "ac": [
+        "Given an agent in Claude Code\nWhen it edits a protected or forbidden path in compass/guardrails.json, or writes text that looks like a secret\nThen the edit hook stops the edit and asks for the Owner's approval in chat (a reminder: the CI check with the human-approved label is the real gate)",
+        "Given a pull request\nWhen it changes more than 12 files, a forbidden path, or (without the human-approved label) a protected path, a deletion or a dependency\nThen the CI guardrails check fails, using main's copy of the check and its rules"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-028",
       "title": "Independent review of every pull request",
-      "story": [
-        "Given a pull request\nWhen it is ready to merge\nThen a fresh reviewer has posted '## Independent review (Claude)' with a verdict and the reviewed commit, as described in compass/REVIEW.md",
-        "Given node compass/merge-pr.mjs <n>\nWhen CI is not green, the latest trusted review is not APPROVE for the head commit, or firestore.rules changed without human-approved\nThen it refuses to merge and says why"
-      ],
+      "story": "As the Owner I want every PR reviewed by an agent that did not write it, so that the author never approves its own work.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want every PR reviewed by an agent that did not write it, so that the author never approves its own work."
+      "ac": [
+        "Given a pull request\nWhen it is ready to merge\nThen a fresh reviewer has posted '## Independent review (Claude)' with a verdict and the reviewed commit, as described in compass/REVIEW.md",
+        "Given node compass/merge-pr.mjs <n>\nWhen CI is not green, the latest trusted review is not APPROVE for the head commit, or firestore.rules changed without human-approved\nThen it refuses to merge and says why"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-029",
       "title": "Capture the business need as an intent before requirements",
-      "story": [
-        "Given a requirement from REQ-026 on\nWhen check-spec runs\nThen it fails unless the requirement points to an Approved compass/intent/ file that lists it and keeps the Owner's words under '## Business need'"
-      ],
+      "story": "As the Owner I want my request written down as a measurable intent that I approve, so that the reason behind every requirement stays next to the code.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want my request written down as a measurable intent that I approve, so that the reason behind every requirement stays next to the code."
+      "ac": [
+        "Given a requirement from REQ-026 on\nWhen check-spec runs\nThen it fails unless the requirement points to an Approved compass/intent/ file that lists it and keeps the Owner's words under '## Business need'"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-030",
       "title": "Approved design before any code",
-      "story": [
-        "Given a requirement from REQ-026 on that is not Draft\nWhen check-spec runs\nThen it fails unless the requirement has a design file in compass/design/ that mentions it, or 'none: <reason>'",
-        "Given a requirement In build or Done\nWhen its design file is not 'Status: Approved'\nThen check-spec fails (no code before the design is approved)"
-      ],
+      "story": "As the Owner I want to approve how a change will look before it is built, so that misunderstandings are caught before coding.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want to approve how a change will look before it is built, so that misunderstandings are caught before coding."
+      "ac": [
+        "Given a requirement from REQ-026 on that is not Draft\nWhen check-spec runs\nThen it fails unless the requirement has a design file in compass/design/ that mentions it, or 'none: <reason>'",
+        "Given a requirement In build or Done\nWhen its design file is not 'Status: Approved'\nThen check-spec fails (no code before the design is approved)"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-031",
       "title": "A written plan before code",
-      "story": [
-        "Given a change that touches code\nWhen node compass/plan-file.mjs or merge-pr runs\nThen it fails unless the change adds compass/plans/<REQ-ids>-<name>.md with real Files, Steps, Risks and Proof",
-        "Given a pull request that touches code\nWhen the CI guardrails check runs\nThen it fails unless the PR body has a '## Plan' with Files, Steps, Risks and Proof filled in"
-      ],
+      "story": "As the Owner I want each code change to start from a short plan, so that the reviewer can check the diff against what was intended.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want each code change to start from a short plan, so that the reviewer can check the diff against what was intended."
+      "ac": [
+        "Given a change that touches code\nWhen node compass/plan-file.mjs or merge-pr runs\nThen it fails unless the change adds compass/plans/<REQ-ids>-<name>.md with real Files, Steps, Risks and Proof",
+        "Given a pull request that touches code\nWhen the CI guardrails check runs\nThen it fails unless the PR body has a '## Plan' with Files, Steps, Risks and Proof filled in"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-032",
       "title": "Failing test committed before every bug fix",
-      "story": [
-        "Given a pull request with the bug label\nWhen compass/test-first.mjs runs in CI\nThen it fails unless the first commit only adds a test under tests/, later commits do not edit that test, and a node test from the first commit fails at that commit"
-      ],
+      "story": "As the Owner I want each bug fix to start with a test that fails, so that we know the fix really fixes the bug.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want each bug fix to start with a test that fails, so that we know the fix really fixes the bug."
+      "ac": [
+        "Given a pull request with the bug label\nWhen compass/test-first.mjs runs in CI\nThen it fails unless the first commit only adds a test under tests/ (plus its plan file in compass/plans/), later commits do not edit that test, and a node test from the first commit fails at that commit"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-033",
       "title": "Record decisions as ADRs",
-      "story": [
-        "Given spec.json decisions\nWhen check-spec runs\nThen every ADR has id, date, title, status (Proposed, Accepted, Superseded or Rejected), context, decision and consequences, and links only to known requirements"
-      ],
+      "story": "As the Owner I want decisions I make in chat recorded with their reasons, so that later sessions do not undo them.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want decisions I make in chat recorded with their reasons, so that later sessions do not undo them."
+      "ac": [
+        "Given spec.json decisions\nWhen check-spec runs\nThen every ADR has id, date, title, status (Proposed, Accepted, Superseded or Rejected), context, decision and consequences, and links only to known requirements"
+      ],
+      "issue": 41
     },
     {
       "id": "REQ-034",
       "title": "Shared memory for agents: lessons learned and working knowledge",
-      "story": [
-        "Given CLAUDE.md\nWhen the process tests run\nThen it has a 'Lessons learned' section, imports compass/agent-knowledge.md, and stays under one page",
-        "Given the repo skills in .claude/skills/\nWhen the process tests run\nThen each has a 'Use when' description and names the check that enforces it"
-      ],
+      "story": "As the Owner I want agents to learn from repeated mistakes, so that I do not correct the same thing twice.",
       "priority": "Must",
       "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-26",
       "intent": "compass/intent/2026-11-26-compass-framework.md",
       "design": "none: process change, no UI",
-      "ac": "As the Owner I want agents to learn from repeated mistakes, so that I do not correct the same thing twice."
+      "ac": [
+        "Given CLAUDE.md\nWhen the process tests run\nThen it has a 'Lessons learned' section, imports compass/agent-knowledge.md, and stays under one page",
+        "Given the repo skills in .claude/skills/\nWhen the process tests run\nThen each has a 'Use when' description and names the check that enforces it"
+      ],
+      "issue": 41
     }
   ],
   "tests": [

@@ -1,4 +1,4 @@
-// Prompt Workbench, learner side. Test ids TC-xxx match the requirements in docs/requirements/prompt-workbench.md.
+// Prompt Workbench, learner side. Test ids TC-xxx match the requirements in compass/spec.json (see compass/tests.md).
 // Runs in demo mode as the Owner (the `prompts` flag is on for staff) unless a test says otherwise.
 import { test, expect } from '@playwright/test';
 import { PROMPTS } from '../../src/data/prompts/index.js';
