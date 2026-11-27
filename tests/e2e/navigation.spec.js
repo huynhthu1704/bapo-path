@@ -70,15 +70,19 @@ const OLD = [
   ['#/pw-admin/new', /#\/admin\/prompts\/new$/],
   ['#/pw-admin/edit/P-A01', /#\/admin\/prompts\/P-A01\/edit$/],
   ['#/pw-admin/history/P-A01', /#\/admin\/prompts\/P-A01\/history$/],
+  ['#/pw-admin/preview/P-A01', /#\/admin\/prompts\/P-A01\/preview$/, 'no menu'], // the preview shows the prompt as learners see it
+  ['#/pw-admin/review/P-A01', /#\/admin\/review\/P-A01$/, 'no menu'], // P-A01 is not imported in this test
+  ['#/pw-admin/history/P-A01?a=1&b=2', /#\/admin\/prompts\/P-A01\/history\?a=1&b=2$/], // query string kept
+  ['#/admin', /#\/admin\/prompts$/], // the old Knowledge admin link; the Admin overview comes with REQ-039
 ];
 
 test('TC-038c old admin links land on the matching page of the Admin area', async ({ page }) => {
   await actAs(page, 'owner');
   await onboarded(page);
-  for (const [from, to] of OLD) {
+  for (const [from, to, noMenu] of OLD) {
     await page.goto(from);
     await expect(page, from).toHaveURL(to);
-    await expect(adminMenu(page)).toBeVisible();
+    if (!noMenu) await expect(adminMenu(page), from).toBeVisible();
   }
 });
 
@@ -101,4 +105,47 @@ test('TC-038d at 375 px the Admin menu is a drop-down and nothing scrolls sidewa
     await expectNoHorizontalOverflow(page);
   }
   noErrors();
+});
+
+const GROUPS = [
+  [null, ['Home']],
+  ['LEARN', ['Skill Roadmap', 'Glossary', 'BABOK & PMBOK', 'Domain Knowledge', 'References']],
+  ['PRACTISE', ['Practice', 'Speed Round', 'Story Mode']],
+  ['PROGRESS', ['Achievements', 'Collection', 'Study Circle']],
+  ['MY STUFF', ['Saved', 'My Library', 'My Job Search', 'Progress & Profile']],
+];
+const menuLinks = (page) => mainMenu(page).locator('a.nav-item');
+const menuGroups = (page) => mainMenu(page).locator('.nav-sec');
+
+test('TC-038a learners see the sidebar grouped as Learn, Practise, Progress and My stuff @mobile', async ({ page }) => {
+  const noErrors = failOnPageErrors(page);
+  await actAs(page, 'learner');
+  await onboarded(page);
+  await page.goto('#/home');
+  await expect(menuGroups(page)).toHaveText(GROUPS.slice(1).map(([g]) => g));
+  await expect(menuLinks(page)).toHaveText(GROUPS.flatMap(([, items]) => items)); // Prompt Workbench not released yet
+  if (page.viewportSize().width <= 900) {
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await expect(mainMenu(page).getByRole('link', { name: 'Story Mode' })).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  }
+  noErrors();
+});
+
+test('TC-038a a group with no released feature is hidden; staff see Admin under Home', async ({ page }) => {
+  await actAs(page, 'learner');
+  await onboarded(page);
+  await page.addInitScript(() => {
+    const db = JSON.parse(localStorage.getItem('bapo-path-local-db') || '{}');
+    db['settings/site'] = { flags: { achievements: { audience: 'owner' }, collection: { audience: 'owner' }, circle: { audience: 'owner' } } };
+    localStorage.setItem('bapo-path-local-db', JSON.stringify(db));
+  });
+  await page.goto('#/home');
+  await expect(menuGroups(page)).toHaveText(['LEARN', 'PRACTISE', 'MY STUFF']);
+  await page.evaluate(() => localStorage.setItem('bapo-path-demo-identity', 'demo-owner'));
+  await page.reload();
+  await expect(menuLinks(page).nth(0)).toHaveText('Home');
+  await expect(menuLinks(page).nth(1)).toHaveText('Admin');
+  await expect(menuGroups(page)).toHaveText(['LEARN', 'PRACTISE', 'PROGRESS', 'MY STUFF']); // staff see every feature
+  await expect(mainMenu(page).getByRole('link', { name: 'Prompt Workbench', includeHidden: true })).toBeAttached();
 });
