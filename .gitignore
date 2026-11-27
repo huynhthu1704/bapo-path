@@ -4,3 +4,7 @@ dist
 dist-e2e
 test-results
 playwright-report
+
+# Compass: the Owner's per-machine approvals for protected paths, and local Claude settings
+.claude/approved-paths.local.json
+.claude/settings.local.json

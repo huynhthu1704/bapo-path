@@ -11,6 +11,8 @@ labels: requirement
 **Sprint:**
 **Source:** [USER] / [STANDARD] / [ASSUMPTION (approved)]
 **Feature flag:** `<flag>` (off by default)
+**Intent:** `compass/intent/<file>.md` (approved by the Owner)
+**Design:** `compass/design/<file>.md` or none: <reason>
 
 ### User story
 As a <role> I want <capability>, so that <outcome>.
@@ -22,4 +24,4 @@ As a <role> I want <capability>, so that <outcome>.
 
 ### Traceability
 Test case: TC-0xx → `tests/e2e/<file>.spec.js` (test title starts with `TC-0xx`)
-Requirements doc: `docs/requirements/<module>.md`
+Spec: `compass/spec.json` (REQ and TC entries; run `node compass/build-views.mjs`)
