@@ -11,9 +11,9 @@ const mainMenu = (page) => page.locator('aside[aria-label="Main menu"]');
 const adminMenu = (page) => page.getByRole('navigation', { name: 'Admin' });
 
 const SECTIONS = {
-  owner: ['Prompts', 'Review queue', 'Feedback', 'Taxonomy', 'Knowledge base', 'Staff', 'Features', 'Insights', 'Audit log'],
-  reviewer: ['Prompts', 'Review queue', 'Feedback'],
-  editor: ['Prompts'],
+  owner: ['Overview', 'Prompts', 'Review queue', 'Feedback', 'Taxonomy', 'Knowledge base', 'Staff', 'Features', 'Insights', 'Audit log'],
+  reviewer: ['Overview', 'Prompts', 'Review queue', 'Feedback'],
+  editor: ['Overview', 'Prompts'],
 };
 
 test('TC-038b staff see one Admin entry that opens the Admin area', async ({ page }) => {
@@ -73,7 +73,7 @@ const OLD = [
   ['#/pw-admin/preview/P-A01', /#\/admin\/prompts\/P-A01\/preview$/, 'no menu'], // the preview shows the prompt as learners see it
   ['#/pw-admin/review/P-A01', /#\/admin\/review\/P-A01$/, 'no menu'], // P-A01 is not imported in this test
   ['#/pw-admin/history/P-A01?a=1&b=2', /#\/admin\/prompts\/P-A01\/history\?a=1&b=2$/], // query string kept
-  ['#/admin', /#\/admin\/prompts$/], // the old Knowledge admin link; the Admin overview comes with REQ-039
+  ['#/admin', /#\/admin$/], // the old Knowledge admin link opens the Admin overview (REQ-039)
 ];
 
 test('TC-038c old admin links land on the matching page of the Admin area', async ({ page }) => {
