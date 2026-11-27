@@ -223,7 +223,7 @@ export function Onboarding2() {
       <div className="col gap10"><span className="label">Daily goal</span>
         <div className="grid g3" style={{ gap: 10 }}>
           {[['Casual', 10, '5 min · 10 cards'], ['Regular', 20, '10 min · 20 cards'], ['Serious', 40, '20 min · 40 cards']].map(([n, v, d]) => (
-            <button key={n} className={`card row center ${goal === v ? 'selected' : ''}`} style={{ padding: 14, gap: 10, textAlign: 'left' }} onClick={() => setGoal(v)}>
+            <button key={n} className={`card row center ${goal === v ? 'selected' : ''}`} style={{ padding: 14, gap: 10, textAlign: 'left', flexDirection: 'row' }} aria-pressed={goal === v} onClick={() => setGoal(v)}>
               <Icon name={goal === v ? 'Flame' : 'Clock'} size={18} color={goal === v ? '#D97706' : '#94A3B8'} /><div className="col gap4" style={{ gap: 0 }}><span className="label">{n}</span><span className="caption faint">{d}</span></div>
             </button>
           ))}
