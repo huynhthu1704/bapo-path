@@ -35,7 +35,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -67,7 +67,7 @@ jobs:
             echo "::error::The production environment has no required reviewers, so the rules were not deployed. Add yourself under Settings → Environments → production → Required reviewers, then re-run this workflow."
             exit 1
           fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: env.HAS_KEY == 'true'
         with:
           node-version: 20
