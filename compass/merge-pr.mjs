@@ -40,12 +40,14 @@ export function latestReview(comments) {
 export const latestReviewVerdict = (comments) => latestReview(comments)?.verdict ?? null;
 
 /**
- * REQ-032: true when a "Test-first run:" line proves the failing test failed at a named commit: it says
- * "fails at <sha>" or "failed at <sha>", and no "not", "no longer" or "never" comes before "fail".
+ * REQ-032: true when a "Test-first run:" line proves the failing test failed at a named commit: at least one
+ * "fails at <sha>" / "failed at <sha>" in it is not directly negated ("not", "no longer", "never" or "n't", plus at most
+ * one word, right before it). Text elsewhere in the line, such as "does not fail at <sha> (after the fix)", is fine.
  */
 export function testFirstProven(line) {
   const text = line || '';
-  return /\b(?:fails|failed) at `?[0-9a-f]{7,40}\b/i.test(text) && !/\b(?:not|no longer|never)\s+(?:\w+\s+)?fail/i.test(text) && !/n't\s+(?:\w+\s+)?fail/i.test(text);
+  const negated = /(?:\b(?:not|no longer|never)|n't)\s+(?:\w+\s+)?$/i;
+  return [...text.matchAll(/\b(?:fails|failed) at `?[0-9a-f]{7,40}\b/gi)].some((m) => !negated.test(text.slice(0, m.index)));
 }
 
 /** Reasons the PR must not be merged yet (empty = OK). */

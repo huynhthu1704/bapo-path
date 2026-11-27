@@ -16,6 +16,9 @@ Requested by the Owner in chat on 2026-11-27 ("yes please do the small PR"), whi
 2. Update the message, the comment and REVIEW.md.
 3. Add the TC-028 cases; run `npm test`, check-spec and plan-file.
 
+Review of PR #48 (CHANGES NEEDED): the negation rule looked at the whole line → now only directly in front of each
+"fails at <sha>", so an honest line that also describes the result after the fix is accepted.
+
 ## Risks
 - An unusual but honest wording could be refused. Mitigation: the message shows the exact format to use.
 

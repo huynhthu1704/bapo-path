@@ -33,7 +33,7 @@ reviewer checks out the first commit, runs `npx playwright test -g "#<issue>"` a
 fail is an important finding. The reviewer writes the result in the comment as
 `Test-first run: <test> fails at <sha> (before the fix)`; for a node test it may cite the CI test-first output.
 The line must name the commit, as `fails at <sha>` or `failed at <sha>`; `compass/merge-pr.mjs` refuses a `bug` PR whose
-APPROVE review has no such line, or one that says the test did not fail ("not", "no longer", "never"). The CI reviewer (`claude-review.yml`)
+APPROVE review has no such line, or one that only says the test did not fail ("not", "no longer", "never" or "n't" right before "fails at"). The CI reviewer (`claude-review.yml`)
 cannot run Playwright, so a `bug` PR needs an **in-session reviewer**: a fresh subagent with the checkout, `npm ci` and
 the browser.
 
