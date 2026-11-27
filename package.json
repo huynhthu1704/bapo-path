@@ -28,6 +28,6 @@
     "@firebase/rules-unit-testing": "^4.0.1",
     "@playwright/test": "^1.63.0",
     "@vitejs/plugin-react": "^4.3.3",
-    "vite": "^5.4.10"
+    "vite": "^8.3.8"
   }
 }
