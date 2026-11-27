@@ -35,17 +35,17 @@ No new visual language: the sidebar keeps today's `nav-sec` / `nav-item` styles,
   (Saved, My Library, My Job Search, Progress & Profile); rank card.
 - States: the mockup shows a learner with Story Mode and the Prompt Workbench not released — both are simply absent ·
   staff → Admin item under Home · group with no released item → group hidden.
-- Frame: _to add_
+- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2289
 
 ### SCR-2 · Phone menu (375 px) — REQ-038 (TC-038)
 - Purpose: the same menu in the slide-in drawer; bottom bar unchanged (Home, Roadmap, Glossary, Practice, Me — each
   hidden when its feature is off).
-- Frame: _to add_
+- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2295
 
 ### SCR-3 · "Coming soon" for a feature that is off — REQ-037 (TC-037)
 - Purpose: a learner opens a direct link (e.g. `#/story`) to a feature not released to them.
 - Elements: card "Coming soon", "<Feature> is not available yet. It will open here once it is released.", Back to Home.
-- Frame: _to add_
+- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2290
 
 ### SCR-4 · Admin → Overview (Owner) — REQ-039 (TC-039), REQ-038
 - Purpose: see what needs attention and jump there.
@@ -53,7 +53,7 @@ No new visual language: the sidebar keeps today's `nav-sec` / `nav-item` styles,
   not released to everyone (Owner); Quick links (New prompt, Knowledge base, Staff, Insights).
 - States: Owner (3 cards) · Reviewer (review + feedback) · Editor (Your drafts, Sent back for changes; menu shows only
   Overview and Prompts) · nothing pending → "Nothing to do right now" · loading → spinner.
-- Frames: _to add_ (Owner, Editor, empty)
+- Frames: Owner https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2291 · Editor https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2294 · nothing pending https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2293
 
 ### SCR-5 · Admin → Features (Owner) — REQ-037 (TC-037)
 - Purpose: decide who sees each feature and roll it out.
@@ -62,7 +62,7 @@ No new visual language: the sidebar keeps today's `nav-sec` / `nav-item` styles,
   switch "Released to everyone"; when off: the preview link `?preview=<key>` and the beta-tester picker (people who
   signed in once). Each change → audit log "Feature: <name> → <audience>".
 - States: saving (switch disabled) · error (red message) · no match ("No feature matches").
-- Frames: _to add_ (desktop, 375 px)
+- Frames: desktop https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2292 · 375 px https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=49-2296
 
 ### SCR-6 · Other admin pages — REQ-038
 - Prompts, Review queue, Feedback, Taxonomy, Staff, Insights (usage only), Audit log (its own page, moved out of
