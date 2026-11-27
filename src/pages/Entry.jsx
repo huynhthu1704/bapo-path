@@ -197,7 +197,7 @@ export function Onboarding1() {
       <div className="col gap10"><span className="label">Your current level</span>
         <div className="grid g4" style={{ gap: 10 }}>
           {[['Beginner', '0–1 year'], ['Intermediate', '1–3 years'], ['Advanced', '3–5 years'], ['Expert', '5+ years']].map(([n, d], i) => (
-            <button key={n} className={`card ${level === i + 1 ? 'selected' : ''}`} style={{ padding: 14, gap: 2, textAlign: 'left' }} onClick={() => setLevel(i + 1)}><span className={`label ${level === i + 1 ? 'c-primary' : ''}`}>{n}</span><span className="caption faint">{d}</span></button>
+            <button key={n} className={`card ${level === i + 1 ? 'selected' : ''}`} style={{ padding: 14, gap: 2, textAlign: 'left' }} aria-pressed={level === i + 1} onClick={() => setLevel(i + 1)}><span className={`label ${level === i + 1 ? 'c-primary' : ''}`}>{n}</span><span className="caption faint">{d}</span></button>
           ))}
         </div>
       </div>
@@ -215,7 +215,7 @@ export function Onboarding2() {
     <OnbFrame step={2} title="Which business domains interest you?" sub="Pick any — we will add their glossary to your practice. Choose at least one.">
       <div className="grid g4" style={{ gap: 10 }}>
         {DOMAINS.map((d) => { const on = doms.includes(d.id); return (
-          <button key={d.id} className={`card ${on ? 'selected' : ''}`} style={{ padding: 16, gap: 10, textAlign: 'left', minHeight: 108 }} onClick={() => tog(d.id)}>
+          <button key={d.id} className={`card ${on ? 'selected' : ''}`} style={{ padding: 16, gap: 10, textAlign: 'left', minHeight: 108 }} aria-pressed={on} onClick={() => tog(d.id)}>
             <Icon name={d.icon} size={22} color={on ? '#4F46E5' : '#475569'} /><span className={`label ${on ? 'c-primary' : ''}`}>{d.name}</span>
           </button>); })}
       </div>
