@@ -83,5 +83,5 @@ the same PR. It is written by hand (not generated).
   `deploy.yml` (site on merge), `deploy-rules.yml` (rules after the `production` approval).
 
 ## 8. Open items
-- The Owner to confirm the Compass intent and ADR-005 and ADR-007, add *Compass checks* to the required checks and create the `human-approved` label.
+- The Owner to confirm ADR-007 (Proposed) and add *Compass checks* to the required checks on `main`.
 - Gaps from the baseline: REQ-004, REQ-021 and REQ-024 have no automated test; REQ-014 has no e2e test.

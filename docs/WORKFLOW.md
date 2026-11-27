@@ -146,7 +146,7 @@ These settings live in GitHub, not in the code, so an agent can't set them for y
    Reviews then count against your subscription, not paid API usage. A pay-as-you-go `ANTHROPIC_API_KEY` secret also works.
    Draft PRs are skipped: the review starts when a PR is "Ready for review" (agents open PRs ready, ADR-006).
 5. **Settings → Code security:** switch on Dependabot alerts and secret scanning.
-6. **Labels:** create `human-approved` (the Owner adds it after approving a protected-path, deletion, dependency or
+6. **Labels:** create `human-approved` (the agent adds it only after you approve, in chat, a protected-path, deletion, dependency or
    rules change) and make sure `bug` and `requirement` exist.
 
 ## Where things are

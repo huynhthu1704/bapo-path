@@ -50,6 +50,9 @@ test('TC-028: a bug fix merges only when the APPROVE review reports the test-fir
   assert.ok(bug('').some((b) => /Test-first run/.test(b)));
   assert.ok(bug('Test-first run: not run (CI reviewer) — needs an in-session reviewer\n').some((b) => /Test-first run/.test(b)));
   assert.deepEqual(bug('Test-first run: tests/e2e/smoke.spec.js "#41 …" fails at 1234567 (before the fix)\n'), []);
+  assert.deepEqual(bug('Test-first run: failed at `abcdef1` as expected\n'), []);
+  assert.ok(bug('Test-first run: the test does not fail at abc1234\n').some((b) => /Test-first run/.test(b)), '"does not fail" is no proof');
+  assert.ok(bug('Test-first run: it fails\n').some((b) => /Test-first run/.test(b)), 'the commit must be named');
 });
 
 test('TC-028: closes links and the squash message keep the traceability', () => {
