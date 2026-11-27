@@ -636,15 +636,15 @@
       "title": "Product Manager role and learning path",
       "story": "As a starter Product Manager I want to choose \"Product Manager\" when I join and follow a PM skill roadmap from Beginner to Expert, so that I learn the skills for my role and not only BA or PO ones.",
       "priority": "Should",
-      "status": "In build",
+      "status": "Done",
       "source": "Requested by the Owner in chat on 2026-11-27",
       "intent": "compass/intent/2026-11-27-product-manager-path.md",
       "design": "compass/design/2026-11-27-product-manager-path.md",
       "ac": [
         "Given the pmTrack flag is on for me\nWhen I open onboarding step 1\nThen I see three role cards (Business Analyst, Product Owner, Product Manager), and picking Product Manager and a level then Continue saves PM as my track",
-        "Given my track is Product Manager\nWhen I open the Skill Roadmap\nThen the Product Manager tab is selected and shows four levels (Beginner → Expert) with full Beginner lessons, short skills above and a challenge at the end of each level, my starting level unlocked",
+        "Given my track is Product Manager\nWhen I open the Skill Roadmap\nThen the Product Manager tab is selected and shows four levels (Beginner → Expert) with 10 · 10 · 8 · 6 skills (full lessons at Beginner) and a 5-scenario challenge at the end of each level (pass 4 of 5), my starting level unlocked",
         "Given I am on the PM track\nWhen I gain XP\nThen my rank uses PM names: Intern → Associate PM → Product Manager → Senior PM → Lead PM",
-        "Given the pmTrack flag is off for me\nWhen I open onboarding, the Roadmap, search or a term page\nThen I see only BA and PO, as today"
+        "Given the pmTrack flag is off for me and my track is not Product Manager\nWhen I open onboarding, the Roadmap, search or a term page\nThen I see only BA and PO, as today"
       ],
       "issue": 44
     }
@@ -1002,8 +1002,9 @@
       "reqIds": [
         "REQ-036"
       ],
-      "type": "manual",
-      "status": "Manual"
+      "type": "automated",
+      "status": "Passing",
+      "file": "tests/e2e/pm-track.spec.js"
     }
   ]
 }

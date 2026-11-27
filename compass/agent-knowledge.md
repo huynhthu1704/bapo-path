@@ -72,7 +72,7 @@ the same PR. It is written by hand (not generated).
 - Every new user-facing feature goes behind a flag in `src/data/flags.js`, audience `owner` by default (ADR-002).
 - The Owner moves audiences owner → beta → everyone in **Prompt admin → Insights → Features**. Preview any flag with
   `?preview=<flag>`.
-- Flags still at `owner`: `prompts`.
+- Flags still at `owner`: `prompts`, `pmTrack` (Product Manager track, REQ-036; roll out after the Owner has read the lessons).
 
 ## 7. Tests and CI/CD
 - `npm test`: process tests (`tests/compass/`, node:test). `npm run test:first`: the failing-test-first check on a bug branch.
