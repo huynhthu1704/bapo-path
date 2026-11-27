@@ -116,15 +116,65 @@ test('TC-037c features that are live today stay visible to everyone with no save
   noErrors();
 });
 
+test('TC-037a the Features page lists every feature with search, filters and status @mobile', async ({ page }) => {
+  const noErrors = failOnPageErrors(page);
+  await actAs(page, 'owner');
+  await onboarded(page);
+  await page.goto('#/pw-admin/features');
+  await expect(page.getByRole('heading', { name: 'Features', level: 1 })).toBeVisible();
+  const cards = page.locator('.flag-card');
+  await expect(cards).toHaveCount(18);
+  const story = cards.filter({ hasText: 'Story Mode' });
+  await expect(story).toContainText('Menu, Story Mode page, Home card'); // where it appears
+  await expect(story).toContainText('Live before flags');
+  await expect(story).toContainText('Everyone');
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('Owner only');
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('Since 2026-11-23');
+  // Filters with counts
+  await expect(page.getByRole('button', { name: 'All (18)' })).toBeVisible();
+  await page.getByRole('button', { name: /^Unreleased \(3\)$/ }).click();
+  await expect(cards).toHaveCount(3);
+  await page.getByRole('button', { name: /^Released \(15\)$/ }).click();
+  await expect(cards).toHaveCount(15);
+  await page.getByRole('button', { name: /^All/ }).click();
+  // Search
+  await page.getByRole('textbox', { name: 'Search features' }).fill('story');
+  await expect(cards).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Search features' }).fill('');
+  // The preview link shows for a feature that is not released
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('?preview=prompts');
+  await expectNoHorizontalOverflow(page);
+  noErrors();
+});
+
+test('TC-037a only the Owner sees the Features tab', async ({ page }) => {
+  await actAs(page, 'reviewer');
+  await onboarded(page);
+  await page.goto('#/pw-admin');
+  await expect(page.getByRole('navigation', { name: 'Prompt admin' }).getByRole('link', { name: 'Features' })).toHaveCount(0);
+  await page.goto('#/pw-admin/features');
+  await expect(page.getByText('Only the Owner can change features.')).toBeVisible();
+});
+
+test('TC-037b "Coming soon" on a full-screen feature page keeps the menu', async ({ page }) => {
+  await actAs(page, 'learner');
+  await onboarded(page);
+  await setFlags(page, { speed: { audience: 'owner' } });
+  await page.goto('#/speed');
+  await expect(page.getByRole('heading', { name: 'Coming soon' })).toBeVisible();
+  await expect(page.locator('aside[aria-label="Main menu"]')).toBeAttached();
+});
+
 test('TC-037d changing a feature audience is written to the audit log', async ({ page }) => {
   await actAs(page, 'owner');
   await onboarded(page);
-  await page.goto('#/pw-admin/insights');
-  const features = page.locator('section', { has: page.getByRole('heading', { name: 'Features' }) });
-  await expect(features.getByLabel('Audience: Story Mode')).toHaveValue('everyone');
-  await features.getByLabel('Audience: Story Mode').selectOption('owner');
+  await page.goto('#/pw-admin/features');
+  const story = page.locator('.flag-card').filter({ hasText: 'Story Mode' });
+  await expect(story.getByRole('button', { name: 'Released to everyone: Story Mode' })).toHaveAttribute('aria-pressed', 'true');
+  await story.getByRole('button', { name: 'Released to everyone: Story Mode' }).click();
   await expect(page.getByText('Feature setting saved.')).toBeVisible();
-  await page.reload();
+  await expect(story).toContainText('Owner only');
+  await page.goto('#/pw-admin/insights');
   const log = page.locator('section', { has: page.getByRole('heading', { name: 'Audit log' }) });
   await expect(log.getByText('Story Mode: owner')).toBeVisible();
 });
