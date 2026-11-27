@@ -41,12 +41,19 @@ export const ADMIN_MENU = [
 const allowed = (who, role) => who === 'all' || (who === 'reviewer' && isReviewer(role)) || (who === 'owner' && role === 'owner');
 const activeIn = (path, pathname) => pathname === path || (path !== '/admin' && pathname.startsWith(`${path}/`));
 
+// Menu badges. Kept for a minute so moving between admin pages does not re-read every prompt and feedback item
+// (the Review queue and Feedback pages themselves always read fresh data).
+const COUNT_TTL = 60 * 1000;
+let countCache = { at: 0, counts: {} };
 function useCounts(role) {
-  const [counts, setCounts] = useState({});
+  const [counts, setCounts] = useState(countCache.counts);
   useEffect(() => {
     if (!isReviewer(role)) return;
-    api.listPrompts().then((l) => setCounts((c) => ({ ...c, '/admin/review': l.filter((p) => p.status === 'review').length }))).catch(() => {});
-    api.listFeedback().then((l) => setCounts((c) => ({ ...c, '/admin/feedback': l.filter((f) => f.status !== 'done').length }))).catch(() => {});
+    if (Date.now() - countCache.at < COUNT_TTL) { setCounts(countCache.counts); return; }
+    countCache = { at: Date.now(), counts: {} };
+    const put = (k, n) => { countCache.counts = { ...countCache.counts, [k]: n }; setCounts(countCache.counts); };
+    api.listPrompts().then((l) => put('/admin/review', l.filter((p) => p.status === 'review').length)).catch(() => {});
+    api.listFeedback().then((l) => put('/admin/feedback', l.filter((f) => f.status !== 'done').length)).catch(() => {});
   }, [role]);
   return counts;
 }

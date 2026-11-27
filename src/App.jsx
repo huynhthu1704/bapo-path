@@ -10,7 +10,7 @@ import { PracticeSetup, Flashcards, Quiz, Results } from './pages/Practice.jsx';
 import { Achievements, Collection, Story, Speed, Circle } from './pages/Game.jsx';
 import Profile from './pages/Profile.jsx';
 import { Frameworks, FrameworkDetail, References } from './pages/Frameworks.jsx';
-import { Jobs, Library, Admin } from './pages/Account.jsx';
+import { Jobs, Library } from './pages/Account.jsx';
 import { FlagGate, StaffGate } from './pages/PromptGate.jsx';
 import { ROUTE_FLAGS, catFlag, termFlag } from './data/flags.js';
 
@@ -25,7 +25,7 @@ const ADMIN_ROUTES = [
   ['/admin/prompts', adm('AdminPrompts')], ['/admin/prompts/new', adm('PromptEditor')], ['/admin/prompts/:id/edit', adm('PromptEditor')],
   ['/admin/prompts/:id/preview', adm('PromptPreview')], ['/admin/prompts/:id/history', adm('VersionHistory')],
   ['/admin/review', adm('ReviewQueue')], ['/admin/review/:id', adm('ReviewPrompt')],
-  ['/admin/feedback', admMore('FeedbackInbox')], ['/admin/taxonomy', admMore('Taxonomy')], ['/admin/knowledge', Admin],
+  ['/admin/feedback', admMore('FeedbackInbox')], ['/admin/taxonomy', admMore('Taxonomy')], ['/admin/knowledge', admMore('KnowledgeBase')],
   ['/admin/staff', admMore('Staff')], ['/admin/features', admMore('Features')], ['/admin/insights', admMore('Insights')],
   ['/admin/audit', admMore('AuditLog')], ['/admin', admMore('Overview')],
 ];
