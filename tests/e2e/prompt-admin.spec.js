@@ -49,7 +49,7 @@ test('TC-015/TC-017/TC-018 an editor submits, a reviewer publishes, learners see
   await tickChecklist(page);
   await expect(publish).toBeEnabled();
   await publish.click();
-  await expect(page).toHaveURL(/#\/pw-admin\/review$/);
+  await expect(page).toHaveURL(/#\/admin\/review$/);
 
   await page.goto(`#/prompts/${TARGET.id}`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Validate a business idea (edited)');
@@ -89,7 +89,7 @@ test('TC-019 unpublishing hides a prompt; favourites show "No longer available"'
 
 test('TC-022 only the Owner sees Staff, Taxonomy and Insights', async ({ page }) => {
   await page.goto('#/pw-admin');
-  const tabs = page.getByRole('navigation', { name: 'Prompt admin' });
+  const tabs = page.getByRole('navigation', { name: 'Admin' }); // REQ-038: the Admin side menu
   for (const t of ['Taxonomy', 'Staff', 'Insights']) await expect(tabs.getByRole('link', { name: t })).toBeVisible();
   await actAsInBar(page, 'editor');
   for (const t of ['Taxonomy', 'Staff', 'Insights', 'Feedback']) await expect(tabs.getByRole('link', { name: t })).toHaveCount(0);
@@ -97,7 +97,7 @@ test('TC-022 only the Owner sees Staff, Taxonomy and Insights', async ({ page })
 
 test('TC-023 admin actions are written to the audit log', async ({ page }) => {
   await importLaunchPrompts(page);
-  await page.goto('#/pw-admin/insights');
+  await page.goto('#/admin/audit'); // REQ-038: the audit log has its own page
   await expect(page.getByRole('main')).toContainText(/import/i);
 });
 
@@ -108,7 +108,7 @@ test('TC-016 an editor previews a saved draft as learners will see it', async ({
   await page.getByRole('button', { name: 'Save draft' }).click();
   await expect(page.getByText(/Saved as draft v\d+/)).toBeVisible();
   await page.getByRole('button', { name: 'Preview' }).click();
-  await expect(page).toHaveURL(new RegExp(`#/pw-admin/preview/${TARGET.id}`));
+  await expect(page).toHaveURL(new RegExp(`#/admin/prompts/${TARGET.id}/preview`));
   await expect(page.getByRole('heading', { name: 'Fill in your context' })).toBeVisible();
   await expect(page.getByRole('main')).toContainText('Preview me');
 });
@@ -123,7 +123,7 @@ test('TC-020 version history lists every save and restore makes a new draft', as
   await expect(page.getByRole('checkbox', { name: 'Compare version 1' })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: 'Compare version 2' })).toBeVisible();
   await page.getByRole('button', { name: 'Restore' }).first().click(); // restores v1
-  await expect(page).toHaveURL(new RegExp(`#/pw-admin/edit/${TARGET.id}$`));
+  await expect(page).toHaveURL(new RegExp(`#/admin/prompts/${TARGET.id}/edit$`));
   await expect(page.getByLabel('Title', { exact: true })).toHaveValue(TARGET.title);
   await page.goto(`#/pw-admin/history/${TARGET.id}`);
   await expect(page.getByRole('checkbox', { name: 'Compare version 3' })).toBeVisible();

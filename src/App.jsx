@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, lazy } from 'react';
 import { StoreProvider } from './store.jsx';
 import { Layout, Toasts, TopLoader, SignInPrompt } from './components/ui.jsx';
@@ -18,14 +18,31 @@ import { ROUTE_FLAGS, catFlag, termFlag } from './data/flags.js';
 const pwPage = (name) => lazy(() => import('./pages/Prompts.jsx').then((m) => ({ default: m[name] })));
 const PromptLibrary = pwPage('PromptLibrary'); const PromptDetail = pwPage('PromptDetail'); const Workbench = pwPage('Workbench');
 const Collections = pwPage('Collections'); const CollectionRun = pwPage('CollectionRun'); const MyPrompts = pwPage('MyPrompts');
-// Prompt admin pages (staff only) load as another chunk.
+// The Admin area (staff only, REQ-038) loads as its own chunks.
 const adm = (name) => lazy(() => import('./pages/PromptAdmin.jsx').then((m) => ({ default: m[name] })));
+const admMore = (name) => lazy(() => import('./pages/AdminPages.jsx').then((m) => ({ default: m[name] })));
 const ADMIN_ROUTES = [
-  ['/pw-admin', adm('AdminPrompts')], ['/pw-admin/new', adm('PromptEditor')], ['/pw-admin/edit/:id', adm('PromptEditor')],
-  ['/pw-admin/preview/:id', adm('PromptPreview')], ['/pw-admin/review', adm('ReviewQueue')], ['/pw-admin/review/:id', adm('ReviewPrompt')],
-  ['/pw-admin/history/:id', adm('VersionHistory')], ['/pw-admin/taxonomy', adm('Taxonomy')], ['/pw-admin/staff', adm('Staff')],
-  ['/pw-admin/feedback', adm('FeedbackInbox')], ['/pw-admin/insights', adm('Insights')], ['/pw-admin/features', adm('Features')],
+  ['/admin/prompts', adm('AdminPrompts')], ['/admin/prompts/new', adm('PromptEditor')], ['/admin/prompts/:id/edit', adm('PromptEditor')],
+  ['/admin/prompts/:id/preview', adm('PromptPreview')], ['/admin/prompts/:id/history', adm('VersionHistory')],
+  ['/admin/review', adm('ReviewQueue')], ['/admin/review/:id', adm('ReviewPrompt')],
+  ['/admin/feedback', admMore('FeedbackInbox')], ['/admin/taxonomy', admMore('Taxonomy')], ['/admin/knowledge', Admin],
+  ['/admin/staff', admMore('Staff')], ['/admin/features', admMore('Features')], ['/admin/insights', admMore('Insights')],
+  ['/admin/audit', admMore('AuditLog')],
 ];
+// Old Prompt admin and Knowledge admin links keep working (REQ-038).
+const MOVED = [
+  ['/pw-admin', () => '/admin/prompts'], ['/pw-admin/new', () => '/admin/prompts/new'],
+  ['/pw-admin/edit/:id', ({ id }) => `/admin/prompts/${id}/edit`], ['/pw-admin/preview/:id', ({ id }) => `/admin/prompts/${id}/preview`],
+  ['/pw-admin/history/:id', ({ id }) => `/admin/prompts/${id}/history`], ['/pw-admin/review', () => '/admin/review'],
+  ['/pw-admin/review/:id', ({ id }) => `/admin/review/${id}`], ['/pw-admin/taxonomy', () => '/admin/taxonomy'],
+  ['/pw-admin/staff', () => '/admin/staff'], ['/pw-admin/feedback', () => '/admin/feedback'],
+  ['/pw-admin/insights', () => '/admin/insights'], ['/pw-admin/features', () => '/admin/features'],
+  ['/admin', () => '/admin/prompts'], // the Admin overview comes with REQ-039
+];
+function Moved({ to }) {
+  const params = useParams(); const { search } = useLocation();
+  return <Navigate to={to(params) + search} replace />;
+}
 
 function ScrollTop() {
   const { pathname } = useLocation();
@@ -79,7 +96,6 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/circle" element={inApp(flagged('/circle', <Circle />))} />
           <Route path="/jobs" element={inApp(flagged('/jobs', <Jobs />))} />
           <Route path="/library" element={inApp(flagged('/library', <Library />))} />
-          <Route path="/admin" element={inApp(<Admin />)} />
           <Route path="/prompts" element={pw(<PromptLibrary />)} />
           <Route path="/prompts/:id" element={pw(<PromptDetail />)} />
           <Route path="/workbench" element={pw(<Workbench />)} />
@@ -87,6 +103,7 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/collections/:id" element={pw(<CollectionRun />)} />
           <Route path="/my-prompts" element={pw(<MyPrompts />)} />
           {ADMIN_ROUTES.map(([path, C]) => <Route key={path} path={path} element={<Layout><StaffGate><C /></StaffGate></Layout>} />)}
+          {MOVED.map(([path, to]) => <Route key={path} path={path} element={<Moved to={to} />} />)}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toasts />

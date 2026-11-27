@@ -30,15 +30,15 @@ export function FlagGate({ flag = 'prompts', framed, children }) {
   return framed ? <Layout>{soon}</Layout> : soon;
 }
 
-// Prompt admin area: Owner, Reviewers and Editors only (Firestore rules enforce the same).
+// The Admin area: Owner, Reviewers and Editors only (Firestore rules enforce the same).
 export function StaffGate({ children }) {
   const { role, user, sync } = useStore();
   if (role) return <Suspense fallback={<Loading label="Loading…" />}>{children}</Suspense>;
   if (sync === 'loading') return <Loading label="Checking access…" />;
   return (
     <div className="card p28" style={{ maxWidth: 600 }}>
-      <h1 className="h2">Prompt admin</h1>
-      <p className="body muted">{user || LOCAL_MODE ? 'Your account has no Editor, Reviewer or Owner role yet. Ask the Owner to add you on the Staff page.' : 'Sign in with Google to use the Prompt admin.'}</p>
+      <h1 className="h2">Admin</h1>
+      <p className="body muted">{user || LOCAL_MODE ? 'Your account has no Editor, Reviewer or Owner role yet. Ask the Owner to add you on the Staff page.' : 'Sign in with Google to use the Admin area.'}</p>
       {user && <p className="small muted">Your user ID: <code>{user.uid}</code></p>}
     </div>
   );
