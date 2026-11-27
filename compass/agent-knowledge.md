@@ -72,7 +72,7 @@ the same PR. It is written by hand (not generated).
 - Every new user-facing feature goes behind a flag in `src/data/flags.js`, audience `owner` by default (ADR-002).
 - The Owner moves audiences owner → beta → everyone in **Prompt admin → Insights → Features**. Preview any flag with
   `?preview=<flag>`.
-- Flags still at `owner`: `prompts`.
+- Flags still at `owner`: `prompts`, `pmTrack` (Product Manager track, REQ-036; roll out after the Owner has read the lessons).
 
 ## 7. Tests and CI/CD
 - `npm test`: process tests (`tests/compass/`, node:test). `npm run test:first`: the failing-test-first check on a bug branch.
@@ -83,5 +83,8 @@ the same PR. It is written by hand (not generated).
   `deploy.yml` (site on merge), `deploy-rules.yml` (rules after the `production` approval).
 
 ## 8. Open items
-- The Owner to confirm ADR-007 (Proposed) and add *Compass checks* to the required checks on `main`.
+- Done 2026-11-27: *Compass checks*, *Content, build and end-to-end tests* and *rules* are required checks on `main`;
+  ADR-007 accepted.
+- Optional small fixes from the PR #48 review: catch the curly apostrophe ("hasn’t failed at …") in
+  `testFirstProven()`, and say in REVIEW.md that one word may sit between the negation and "fails at".
 - Gaps from the baseline: REQ-004, REQ-021 and REQ-024 have no automated test; REQ-014 has no e2e test.

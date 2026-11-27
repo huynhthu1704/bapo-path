@@ -1,4 +1,5 @@
-// Skill roadmap content for the Business Analyst (BA) and Product Owner (PO) tracks.
+// Skill roadmap content for the Business Analyst (BA), Product Owner (PO) and Product Manager (PM) tracks.
+// The PM track is shown only while the `pmTrack` flag is on (REQ-036).
 // Beginner skills have full lessons; higher levels have a summary and key points (full lessons planned).
 
 export const LEVELS = [
@@ -11,6 +12,7 @@ export const LEVELS = [
 export const TRACKS = {
   BA: { id: 'BA', name: 'Business Analyst', ranks: ['Intern', 'Junior BA', 'Business Analyst', 'Senior BA', 'Lead BA'] },
   PO: { id: 'PO', name: 'Product Owner', ranks: ['Intern', 'Junior PO', 'Product Owner', 'Senior PO', 'Lead PO'] },
+  PM: { id: 'PM', name: 'Product Manager', ranks: ['Intern', 'Associate PM', 'Product Manager', 'Senior PM', 'Lead PM'], flag: 'pmTrack' },
 };
 
 const full = (track, level, title, minutes, summary, why, steps, example, mistakes, checks, terms) =>
@@ -266,7 +268,117 @@ const PO = [
   short('PO', 4, 'Product ethics', 'Make responsible product decisions.', ['Privacy', 'Inclusion', 'Long-term impact']),
 ];
 
-export const SKILLS = [...BA, ...PO].map((s, i, arr) => {
+const PM = [
+  full('PM', 1, 'Role of a Product Manager', 10,
+    'What a Product Manager does, and how the job differs from a Product Owner and a Business Analyst.',
+    'Companies use the titles differently. Knowing what a PM is usually accountable for helps you explain your value and focus on the right work from day one.',
+    ['Understand the market, the customers and the business goals.', 'Decide which problems are worth solving, and why now.', 'Set the product direction: vision, strategy and roadmap.', 'Work with engineering, design, marketing, sales and support to ship.', 'Measure whether what you shipped worked, and adjust.'],
+    'In many companies the PM looks outward (customers, market, strategy) while the PO looks inward (backlog, sprints, the team). A BA digs into the detail of processes and requirements. In small teams one person often does all three.',
+    ['Becoming a “feature factory” that ships whatever is asked.', 'Spending all week in team ceremonies and never talking to customers.'],
+    ['I can describe the PM role in two sentences.', 'I can explain one difference between a PM, a PO and a BA.', 'I can name 5 teams a PM works with.'],
+    ['team-product-owner', 'team-stakeholder', 'team-product-goal']),
+  full('PM', 1, 'Understanding users and problems', 15,
+    'Find out who your users are and which problems really matter to them before thinking about features.',
+    'Most failed products solve a problem nobody has. Time spent understanding users is the cheapest way to avoid building the wrong thing.',
+    ['Pick one user group to focus on.', 'Talk to at least 5 of them about their recent experience, not about your idea.', 'Write down the problems in their own words.', 'Look for problems that are frequent, painful and that people already try to solve.', 'Turn the strongest one into a short problem statement.'],
+    'Problem statement: “Small shop owners on ShopNow spend 2 hours a week answering ‘where is my order?’ messages, because buyers can’t see delivery status.”',
+    ['Asking “Would you use this feature?” — people say yes to be polite.', 'Talking only to the loudest customer or to sales.'],
+    ['I can write a problem statement without naming a solution.', 'I have interviewed 3 users about a real problem.', 'I can explain why past behaviour beats opinions.'],
+    ['se-requirements-elicitation', 'se-user-requirement', 'team-stakeholder']),
+  full('PM', 1, 'Market and competitor basics', 15,
+    'Size the opportunity and understand the alternatives your customers use today.',
+    'A product succeeds in a market, not in a vacuum. Knowing the alternatives tells you how good “good enough” has to be.',
+    ['List the alternatives: competitors, spreadsheets, doing nothing.', 'Note what each does well and badly for your users.', 'Estimate roughly how many potential customers there are.', 'Write one sentence on why users would switch to you.'],
+    'Alternatives for order tracking: courier SMS, a spreadsheet the shop shares, phone calls. Our edge: status in the ShopNow app, with no extra work for the seller.',
+    ['Listing only direct competitors and forgetting “do nothing”.', 'Copying a competitor’s feature without knowing why they built it.'],
+    ['I can name 3 alternatives for a product I know.', 'I can say why a user would switch.'],
+    ['ecommerce-marketplace', 'se-feasibility-study']),
+  full('PM', 1, 'Product vision and strategy basics', 15,
+    'Write where the product is going, and the few choices that will get it there.',
+    'Without a clear direction, every request looks equally important and the roadmap becomes a wish list.',
+    ['Vision: who it is for and the change it makes for them, in one or two sentences.', 'Strategy: the 2–3 bets that will move you towards the vision.', 'Say what you will not do — strategy is about choices.', 'Share it often and connect each roadmap item to it.'],
+    'Vision: “Every ShopNow seller runs their shop from their phone.” This year’s bets: mobile order management, simple delivery tracking, instant payouts. Not this year: a desktop analytics suite.',
+    ['A vision that is just a feature list.', 'A strategy with ten priorities, which means none.'],
+    ['I can write a vision in two sentences.', 'I can name what my strategy says no to.'],
+    ['team-product-goal', 'babok-value']),
+  full('PM', 1, 'Writing a PRD or one-pager', 20,
+    'Capture the problem, goals, scope and success measures on one page the whole team can read.',
+    'A short shared document stops misunderstandings early and lets engineering and design challenge the idea before anyone builds.',
+    ['Problem: who has it, and the evidence.', 'Goal and success metric: how you will know it worked.', 'Scope: what is in, and what is out.', 'Key user stories or flows (the BA or PO can add detail).', 'Risks and open questions.', 'Review it with engineering and design before you commit.'],
+    'One-pager “Delivery tracking”: Problem — sellers answer 40 status messages a week. Goal — halve them in 3 months. In — status on the order page. Out — live map. Open question — which couriers share data?',
+    ['Writing 20 pages that nobody reads.', 'Specifying the solution in detail before the team has seen the problem.'],
+    ['My one-pager fits on one page.', 'It has a measurable success metric.', 'It lists what is out of scope.'],
+    ['it-requirement', 'it-mvp', 'it-scope-creep']),
+  full('PM', 1, 'Prioritisation basics', 15,
+    'Decide what to work on next, using impact, effort and confidence rather than opinions.',
+    'There is always more to do than time. A clear way to compare options makes your decisions faster and easier to explain.',
+    ['List the options as problems or opportunities.', 'Estimate impact on your goal (High / Medium / Low).', 'Ask the team to estimate effort.', 'Note how confident you are, and what evidence you have.', 'Pick, and explain the choice openly.'],
+    'Delivery tracking: high impact, medium effort, good evidence → this quarter. Dark mode: low impact, low effort, little evidence → later.',
+    ['Prioritising by who asked most recently or most loudly.', 'Saying yes to everything and finishing nothing.'],
+    ['I can rank 5 items by impact and effort.', 'I can explain one “no” with a reason.'],
+    ['babok-moscow-prioritisation', 'corp-low-hanging-fruit', 'team-backlog']),
+  full('PM', 1, 'Working with engineering and design', 15,
+    'Build a trio with your engineering lead and designer, and decide together.',
+    'The best solutions come from people who understand the problem and the technology. PMs who “throw requirements over the wall” get worse products.',
+    ['Share the problem and the evidence, not just the solution.', 'Invite engineers and designers to user interviews.', 'Let them propose solutions; you guard the goal.', 'Agree trade-offs together: scope, time, quality.', 'Protect the team from random requests.'],
+    'Instead of “build a live map”, the PM shares: “sellers get 40 status questions a week.” The engineer suggests reusing courier webhooks; the designer suggests a simple status timeline. Faster and cheaper than the map.',
+    ['Promising dates to customers before asking the team.', 'Treating technical debt as “not my problem”.'],
+    ['I share the problem before the solution.', 'I know my team’s biggest technical constraint.'],
+    ['it-technical-debt', 'se-prototype', 'team-blocker']),
+  full('PM', 1, 'Product metrics basics', 15,
+    'Pick a few numbers that show whether the product is creating value.',
+    'What you measure is what the team optimises. Good metrics tell you early whether you are on track.',
+    ['Choose one main metric that reflects value for users (a “north star”).', 'Add a few supporting metrics: activation, retention, conversion.', 'Set a baseline before you change anything.', 'Review the numbers every week with the team.'],
+    'North star for a seller app: weekly active sellers who process at least one order. Supporting: day-7 retention, share of orders with tracking.',
+    ['Tracking vanity numbers like total downloads.', 'Changing the metric after the result comes in.'],
+    ['I can name a north star metric for a product I know.', 'I can explain retention in one sentence.'],
+    ['ecommerce-conversion-rate', 'it-dashboard']),
+  full('PM', 1, 'Launch basics', 15,
+    'Plan a release so that users find, understand and use what you built.',
+    'A feature nobody knows about creates no value. A good launch also prepares support and sales for questions.',
+    ['Decide who the launch is for and the one message they should hear.', 'Prepare support with FAQs and known issues.', 'Brief sales and marketing.', 'Release to a small group first if you can.', 'Watch the metrics and feedback in the first week.'],
+    'Delivery tracking: release to 10% of sellers → check errors and support tickets → 100% after one week, with an in-app message and an FAQ for support.',
+    ['Launching on a Friday evening.', 'Forgetting to tell support.'],
+    ['I can list 4 teams to inform before a launch.', 'I know how to roll back if something goes wrong.'],
+    ['it-go-live', 'it-rollback', 'se-release-management']),
+  full('PM', 1, 'Stakeholder communication', 15,
+    'Keep leaders, sales, support and partners informed and on your side.',
+    'PMs lead without formal authority. Trust built through clear, regular updates is what lets you say “not now” later.',
+    ['Map who cares about your product and how much influence they have.', 'Send a short regular update: progress, metrics, decisions, risks.', 'Share bad news early, with a plan.', 'Say no with the reason and an alternative.'],
+    'Monthly update: “Tracking is live for 30% of sellers. ‘Where is my order’ messages are down 22%. Risk: one courier is late with data — we will show an estimate until it is fixed.”',
+    ['Only talking to stakeholders when you need something.', 'Hiding a delay until the deadline.'],
+    ['I can write a 5-line status update.', 'I can say no politely with a reason.'],
+    ['team-stakeholder', 'corp-escalate', 'corp-i-see-your-point-but', 'pmbok-stakeholder-engagement']),
+
+  short('PM', 2, 'Customer discovery', 'Run regular customer conversations to find and test opportunities.', ['Interview guides', 'Synthesis', 'Opportunity mapping']),
+  short('PM', 2, 'Outcome-based roadmaps', 'Plan by problems and outcomes rather than dated feature lists.', ['Now / Next / Later', 'Themes', 'Updating the roadmap']),
+  short('PM', 2, 'Hypotheses and MVPs', 'Test the riskiest assumption with the smallest experiment.', ['Riskiest assumption', 'MVP types', 'Learning goals']),
+  short('PM', 2, 'Prioritisation frameworks', 'Use RICE, Kano and opportunity scoring, and know their limits.', ['RICE', 'Kano', 'Cost of delay']),
+  short('PM', 2, 'Analytics and funnels', 'Read product data and find where users drop off.', ['Events', 'Funnels', 'Cohorts']),
+  short('PM', 2, 'Working with UX research', 'Plan research with designers and use the findings.', ['Usability tests', 'Personas', 'Journey maps']),
+  short('PM', 2, 'Requirements handoff', 'Work with BAs and POs so the detail matches the intent.', ['Shared context', 'Story maps', 'Acceptance criteria review']),
+  short('PM', 2, 'Release and launch planning', 'Coordinate releases across teams.', ['Staged rollout', 'Release notes', 'Support readiness']),
+  short('PM', 2, 'Feedback management', 'Collect, tag and act on feedback from many channels.', ['Feedback loops', 'Tagging', 'Closing the loop']),
+  short('PM', 2, 'Business model basics', 'Understand how the product earns money and what it costs.', ['Revenue', 'Unit economics', 'Costs']),
+
+  short('PM', 3, 'Product strategy', 'Choose where to play and how to win.', ['Market segments', 'Positioning', 'Strategic bets']),
+  short('PM', 3, 'Pricing and packaging', 'Set prices and plans that match the value delivered.', ['Willingness to pay', 'Tiers', 'Price tests']),
+  short('PM', 3, 'Go-to-market', 'Launch new products with marketing, sales and partners.', ['Target segment', 'Messaging', 'Channels']),
+  short('PM', 3, 'Experimentation and A/B tests', 'Run controlled experiments and read the results honestly.', ['Hypotheses', 'Sample size', 'Guardrail metrics']),
+  short('PM', 3, 'OKRs', 'Set objectives and key results that guide the team.', ['Ambitious objectives', 'Measurable KRs', 'Check-ins']),
+  short('PM', 3, 'Growth and retention', 'Find the levers that bring users back.', ['Activation', 'Habit loops', 'Churn analysis']),
+  short('PM', 3, 'Platform and API products', 'Manage products whose users are developers or other teams.', ['Developer experience', 'APIs as products', 'Adoption']),
+  short('PM', 3, 'Influencing without authority', 'Get agreement across teams you do not manage.', ['Stakeholder maps', 'Narratives', 'Trade-offs']),
+
+  short('PM', 4, 'Product portfolio management', 'Balance investment across several products.', ['Investment mix', 'Sunsetting', 'Dependencies']),
+  short('PM', 4, 'Building a product organisation', 'Shape teams, roles and ways of working.', ['Team topology', 'Hiring', 'Career paths']),
+  short('PM', 4, 'Executive and board communication', 'Present strategy and results to leadership.', ['Narratives', 'Metrics', 'Asks']),
+  short('PM', 4, 'Mentoring product managers', 'Coach new PMs and grow product thinking.', ['Shadowing', 'Feedback', 'Growth plans']),
+  short('PM', 4, 'Mergers, partnerships and ecosystems', 'Grow through partners and integrations.', ['Partner strategy', 'Build vs buy', 'Integration']),
+  short('PM', 4, 'Responsible and ethical products', 'Make decisions that protect users and society.', ['Privacy', 'Inclusion', 'AI risks']),
+];
+
+export const SKILLS = [...BA, ...PO, ...PM].map((s, i, arr) => {
   const sameLevel = arr.filter((x) => x.track === s.track && x.level === s.level);
   const order = sameLevel.indexOf(s);
   return { ...s, id: `${s.track.toLowerCase()}-${s.level}-${order + 1}`, order };

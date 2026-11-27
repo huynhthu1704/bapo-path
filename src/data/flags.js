@@ -14,6 +14,7 @@ import { useSyncExternalStore } from 'react';
 export const FLAGS = {
   prompts: { name: 'Prompt Workbench', audience: 'owner', since: '2026-11-23' },
   googleOnly: { name: 'Google-only sign-in (browse without an account)', audience: 'owner', since: '2026-11-27' },
+  pmTrack: { name: 'Product Manager role and learning path', audience: 'owner', since: '2026-11-27' },
 };
 export const AUDIENCES = [
   ['owner', 'Owner and staff only'],

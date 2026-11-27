@@ -84,12 +84,12 @@ const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
 function Sidebar({ open, onClose }) {
   useLocation(); // re-render on navigation so the Prompt Workbench item highlights on its sub-pages
   useFlags();
-  const { s, admin, role, me } = useStore();
+  const { s, admin, role, me, pmTrack } = useStore();
   const pwOn = can('prompts', { role, uid: me && me.uid });
   const r = rankInfo(s.xp, s.track);
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
-      <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">BA & PO learning</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
+      <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">{pmTrack ? 'BA, PO & PM learning' : 'BA & PO learning'}</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
       {NAV.map(([sec, items]) => (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
@@ -112,7 +112,7 @@ function Sidebar({ open, onClose }) {
 
 function SearchBox() {
   useFlags();
-  const { user, role, me } = useStore();
+  const { user, role, me, tracks } = useStore();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
@@ -123,7 +123,7 @@ function SearchBox() {
   useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/promptStore.js').then((m) => { setPrompts(m.promptData().prompts); m.loadPromptData().then(() => setPrompts(m.promptData().prompts)); }); }, [pwOn, ql, prompts]);
   const results = ql.length < 2 ? [] : [
     ...TERMS.filter((t) => (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
-    ...SKILLS.filter((k) => k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
+    ...SKILLS.filter((k) => tracks.some((t) => t.id === k.track) && k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
     ...(pwOn && prompts ? prompts.filter((p) => (p.title + ' ' + p.tags.join(' ')).toLowerCase().includes(ql)).slice(0, 4).map((p) => ({ to: `/prompts/${p.id}`, label: p.title, meta: 'Prompt' })) : []),
   ];
   return (
