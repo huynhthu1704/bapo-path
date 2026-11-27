@@ -76,12 +76,13 @@ test('TC-035d signing in from the top bar while browsing leads to the setup, not
 });
 
 // Bug #45: the Features panel only listed the Prompt Workbench, so Google-only sign-in could not be switched on.
+// Since REQ-037 the switch lives on the Features page.
 test('#45 the Owner can release Google-only sign-in from the Features panel', async ({ page }) => {
-  await page.goto('#/pw-admin/insights');
-  const features = page.locator('section', { has: page.getByRole('heading', { name: 'Features' }) });
-  await features.getByLabel('Audience: Google-only sign-in').selectOption('everyone');
+  await page.goto('#/pw-admin/features'); // REQ-037: the Features page replaced the Insights card
+  const cards = page.locator('.flag-card');
+  await cards.filter({ hasText: 'Google-only sign-in' }).getByRole('button', { name: /^Released to everyone/ }).click();
   await expect(page.getByText('Feature setting saved.')).toBeVisible();
-  await expect(features.getByLabel('Audience: Prompt Workbench')).toHaveValue('owner');
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('Owner only');
   await page.goto('#/signup');
   await page.reload();
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();

@@ -7,7 +7,7 @@ const onboarded = (page) => page.addInitScript(() => {
   const cur = JSON.parse(localStorage.getItem('bapo-path-v1') || '{}');
   localStorage.setItem('bapo-path-v1', JSON.stringify({ ...cur, onboarded: true, name: 'Hoa' }));
 });
-// Saves feature settings as the Owner would (Insights → Features), before the page loads.
+// Saves feature settings as the Owner would on the Features page, before the page loads.
 const setFlags = (page, flags) => page.addInitScript((f) => {
   const db = JSON.parse(localStorage.getItem('bapo-path-local-db') || '{}');
   db['settings/site'] = { flags: f };
@@ -116,15 +116,94 @@ test('TC-037c features that are live today stay visible to everyone with no save
   noErrors();
 });
 
+test('TC-037a the Features page lists every feature with search, filters and status @mobile', async ({ page }) => {
+  const noErrors = failOnPageErrors(page);
+  await actAs(page, 'owner');
+  await onboarded(page);
+  await page.goto('#/pw-admin/features');
+  await expect(page.getByRole('heading', { name: 'Features', level: 1 })).toBeVisible();
+  const cards = page.locator('.flag-card');
+  await expect(cards).toHaveCount(18);
+  const story = cards.filter({ hasText: 'Story Mode' });
+  await expect(story).toContainText('Menu, Story Mode page, Home card'); // where it appears
+  await expect(story).toContainText('Live before flags');
+  await expect(story).toContainText('Everyone');
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('Owner only');
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('Since 2026-11-23');
+  // Filters with counts
+  await expect(page.getByRole('button', { name: 'All (18)' })).toBeVisible();
+  await page.getByRole('button', { name: /^Unreleased \(3\)$/ }).click();
+  await expect(cards).toHaveCount(3);
+  await page.getByRole('button', { name: /^Released \(15\)$/ }).click();
+  await expect(cards).toHaveCount(15);
+  await page.getByRole('button', { name: /^All/ }).click();
+  // Search
+  await page.getByRole('textbox', { name: 'Search features' }).fill('story');
+  await expect(cards).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Search features' }).fill('');
+  // The preview link shows for a feature that is not released
+  await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('?preview=prompts');
+  await expectNoHorizontalOverflow(page);
+  noErrors();
+});
+
+test('TC-037a beta testers: status, Beta filter and ticking a tester', async ({ page }) => {
+  await actAs(page, 'owner');
+  await onboarded(page);
+  await setFlags(page, { story: { audience: 'beta', beta: ['demo-learner'] } });
+  await page.addInitScript(() => { // people who signed in once (the beta-tester picker lists them)
+    const db = JSON.parse(localStorage.getItem('bapo-path-local-db') || '{}');
+    db['directory/demo-learner'] = { name: 'Hoa', email: 'hoa@demo.local' };
+    db['directory/demo-reviewer'] = { name: 'Minh', email: 'minh@demo.local' };
+    localStorage.setItem('bapo-path-local-db', JSON.stringify(db));
+  });
+  await page.goto('#/pw-admin/features');
+  const cards = page.locator('.flag-card');
+  const story = cards.filter({ hasText: 'Story Mode' });
+  await expect(story).toContainText('Beta · 1 person');
+  await page.getByRole('button', { name: /^Beta \(1\)$/ }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first()).toContainText('Story Mode');
+  // Tick a second tester, then untick both: Beta · 2 people → Owner only
+  await page.getByRole('button', { name: /^All/ }).click();
+  await story.getByRole('checkbox', { name: /Minh/ }).check();
+  await expect(story).toContainText('Beta · 2 people');
+  await story.getByRole('checkbox', { name: /Minh/ }).uncheck();
+  await expect(story).toContainText('Beta · 1 person');
+  await story.getByRole('checkbox', { name: /Hoa/ }).uncheck();
+  await expect(story).toContainText('Owner only');
+  await page.goto('#/pw-admin/insights');
+  await expect(page.getByText('Story Mode beta: added minh@demo.local (beta)')).toBeVisible();
+});
+
+test('TC-037a only the Owner sees the Features tab', async ({ page }) => {
+  await actAs(page, 'reviewer');
+  await onboarded(page);
+  await page.goto('#/pw-admin');
+  await expect(page.getByRole('navigation', { name: 'Prompt admin' }).getByRole('link', { name: 'Features' })).toHaveCount(0);
+  await page.goto('#/pw-admin/features');
+  await expect(page.getByText('Only the Owner can change features.')).toBeVisible();
+});
+
+test('TC-037b "Coming soon" on a full-screen feature page keeps the menu', async ({ page }) => {
+  await actAs(page, 'learner');
+  await onboarded(page);
+  await setFlags(page, { speed: { audience: 'owner' } });
+  await page.goto('#/speed');
+  await expect(page.getByRole('heading', { name: 'Coming soon' })).toBeVisible();
+  await expect(page.locator('aside[aria-label="Main menu"]')).toBeAttached();
+});
+
 test('TC-037d changing a feature audience is written to the audit log', async ({ page }) => {
   await actAs(page, 'owner');
   await onboarded(page);
-  await page.goto('#/pw-admin/insights');
-  const features = page.locator('section', { has: page.getByRole('heading', { name: 'Features' }) });
-  await expect(features.getByLabel('Audience: Story Mode')).toHaveValue('everyone');
-  await features.getByLabel('Audience: Story Mode').selectOption('owner');
+  await page.goto('#/pw-admin/features');
+  const story = page.locator('.flag-card').filter({ hasText: 'Story Mode' });
+  await expect(story.getByRole('button', { name: 'Released to everyone: Story Mode' })).toHaveAttribute('aria-pressed', 'true');
+  await story.getByRole('button', { name: 'Released to everyone: Story Mode' }).click();
   await expect(page.getByText('Feature setting saved.')).toBeVisible();
-  await page.reload();
+  await expect(story).toContainText('Owner only');
+  await page.goto('#/pw-admin/insights');
   const log = page.locator('section', { has: page.getByRole('heading', { name: 'Audit log' }) });
   await expect(log.getByText('Story Mode: owner')).toBeVisible();
 });

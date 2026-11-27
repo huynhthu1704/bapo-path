@@ -36,7 +36,7 @@
       "status": "Accepted",
       "context": "Changes reach learners as soon as they merge; the Owner wants to try them first. Recorded from CLAUDE.md.",
       "decision": "Every new user-facing feature gets a flag in src/data/flags.js, off by default with audience owner, then moves owner → beta → everyone.",
-      "consequences": "Every feature PR adds a flag; the Owner moves audiences in Prompt admin → Insights → Features.",
+      "consequences": "Every feature PR adds a flag; the Owner moves audiences in the Features page (Prompt admin → Features; Admin › Features after REQ-038).",
       "reqIds": [
         "REQ-026"
       ]
@@ -665,7 +665,7 @@
       "title": "Every feature behind its own feature flag",
       "story": "As the Owner I want every learner feature to have its own flag that hides it everywhere it appears, so that I can pause or roll out any feature in stages without a code change.",
       "priority": "Must",
-      "status": "In build",
+      "status": "Done",
       "source": "Requested by the Owner in chat on 2026-11-27",
       "intent": "compass/intent/2026-11-27-admin-redesign-and-flags.md",
       "design": "compass/design/2026-11-27-admin-redesign-and-flags.md",
