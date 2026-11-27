@@ -38,7 +38,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-032 | Failing test committed before every bug fix | — | Must | In build | TC-032 |
 | REQ-033 | Record decisions as ADRs | — | Must | In build | TC-033 |
 | REQ-034 | Shared memory for agents: lessons learned and working knowledge | — | Must | In build | TC-034 |
-| REQ-036 | Product Manager role and learning path | — | Should | In build | TC-036 |
+| REQ-036 | Product Manager role and learning path | — | Should | Done | TC-036 |
 
 ## REQ-001 — Browse prompts by phase or category
 
@@ -319,6 +319,6 @@ Intent: [compass/intent/2026-11-27-product-manager-path.md](../compass/intent/20
 Design: [compass/design/2026-11-27-product-manager-path.md](../compass/design/2026-11-27-product-manager-path.md)
 
 - Given the pmTrack flag is on for me · When I open onboarding step 1 · Then I see three role cards (Business Analyst, Product Owner, Product Manager), and picking Product Manager and a level then Continue saves PM as my track
-- Given my track is Product Manager · When I open the Skill Roadmap · Then the Product Manager tab is selected and shows four levels (Beginner → Expert) with full Beginner lessons, short skills above and a challenge at the end of each level, my starting level unlocked
+- Given my track is Product Manager · When I open the Skill Roadmap · Then the Product Manager tab is selected and shows four levels (Beginner → Expert) with 10 · 10 · 8 · 6 skills (full lessons at Beginner) and a 5-scenario challenge at the end of each level (pass 4 of 5), my starting level unlocked
 - Given I am on the PM track · When I gain XP · Then my rank uses PM names: Intern → Associate PM → Product Manager → Senior PM → Lead PM
-- Given the pmTrack flag is off for me · When I open onboarding, the Roadmap, search or a term page · Then I see only BA and PO, as today
+- Given the pmTrack flag is off for me and my track is not Product Manager · When I open onboarding, the Roadmap, search or a term page · Then I see only BA and PO, as today
