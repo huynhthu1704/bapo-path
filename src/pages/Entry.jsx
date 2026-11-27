@@ -183,13 +183,14 @@ function OnbFrame({ step, title, sub, children }) {
 }
 
 export function Onboarding1() {
-  const { s, a } = useStore(); const nav = useNavigate();
+  const { s, a, tracks } = useStore(); const nav = useNavigate();
   const [track, setTrack] = useState(s.track); const [level, setLevel] = useState(s.startLevel);
-  const opts = [['BA', 'Briefcase', 'primary', 'Business Analyst', 'Bridge business needs and the tech team: requirements, processes, analysis.'], ['PO', 'Route', 'po', 'Product Owner', 'Own the product backlog, prioritise value and work with stakeholders.']];
+  const opts = [['BA', 'Briefcase', 'primary', 'Business Analyst', 'Bridge business needs and the tech team: requirements, processes, analysis.'], ['PO', 'Route', 'po', 'Product Owner', 'Own the product backlog, prioritise value and work with stakeholders.'],
+    ['PM', 'Compass', 'accent', 'Product Manager', 'Find the right problems, set the product direction and measure what works.']].filter(([id]) => tracks.some((t) => t.id === id));
   return (
     <OnbFrame step={1} title="What would you like to learn?" sub="We will build your roadmap around your role and current level. You can change this any time.">
       {opts.map(([id, i, t, h, d]) => (
-        <button key={id} className={`card row center ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left' }} onClick={() => setTrack(id)}>
+        <button key={id} className={`card row center ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left' }} aria-pressed={track === id} onClick={() => setTrack(id)}>
           <IconBox name={i} tone={t} size={44} /><div className="col gap4 grow"><span className="h3">{h}</span><span className="small muted">{d}</span></div><span className={`box ${track === id ? 'on' : ''}`} style={{ borderRadius: 999 }}>{track === id && <Icon name="Check" size={14} color="#fff" />}</span>
         </button>
       ))}

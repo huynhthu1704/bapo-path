@@ -84,12 +84,12 @@ const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
 function Sidebar({ open, onClose }) {
   useLocation(); // re-render on navigation so the Prompt Workbench item highlights on its sub-pages
   useFlags();
-  const { s, admin, role, me } = useStore();
+  const { s, admin, role, me, pmTrack } = useStore();
   const pwOn = can('prompts', { role, uid: me && me.uid });
   const r = rankInfo(s.xp, s.track);
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
-      <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">BA & PO learning</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
+      <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">{pmTrack ? 'BA, PO & PM learning' : 'BA & PO learning'}</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
       {NAV.map(([sec, items]) => (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>

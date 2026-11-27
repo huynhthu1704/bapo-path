@@ -290,8 +290,11 @@ export function StoreProvider({ children }) {
   // The flag follows the signed-in person's role only: in demo mode the "Act as" identity alone does not turn it on.
   const googleOnly = can('googleOnly', { role: signedIn ? role : null, uid: me && me.uid });
   gated.current = () => googleOnly && !signedIn;
+  // Tracks this visitor can pick. PM is behind the `pmTrack` flag, but stays visible to anyone already on it.
+  const pmTrack = can('pmTrack', { role, uid: me && me.uid });
+  const tracks = Object.values(TRACKS).filter((t) => !t.flag || pmTrack || state.track === t.id);
   return <Ctx.Provider value={{ s: state, a: actions, user, admin: LOCAL_MODE ? role === 'owner' : admin, sync, role, me, setDemoPerson,
-    signedIn, googleOnly, signIn, signOut, askSignIn, cancelSignIn, unsavedResult }}>{children}</Ctx.Provider>;
+    signedIn, googleOnly, pmTrack, tracks, signIn, signOut, askSignIn, cancelSignIn, unsavedResult }}>{children}</Ctx.Provider>;
 }
 
 export const useStore = () => useContext(Ctx);

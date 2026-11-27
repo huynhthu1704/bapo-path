@@ -176,10 +176,10 @@ export function TermDetail() {
 }
 
 export function Domains() {
-  const { s } = useStore();
+  const { s, pmTrack } = useStore();
   return (
     <>
-      <PageHead title="Domain Knowledge" sub="A BA or PO must speak the language of the business. Each domain explains how the industry works, its key processes, and its glossary." />
+      <PageHead title="Domain Knowledge" sub={`A ${pmTrack ? 'BA, PO or PM' : 'BA or PO'} must speak the language of the business. Each domain explains how the industry works, its key processes, and its glossary.`} />
       <div className="grid g4 text">
         {DOMAINS.map((d) => { const all = termsIn(d.id); const got = all.filter((t) => s.learned.includes(t.id)).length; return (
           <Link key={d.id} to={`/domain/${d.id}`} className="card hover">
