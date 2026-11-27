@@ -1,6 +1,6 @@
 # Design: A clearer sidebar and admin area, and every feature behind its own flag
 
-Status: Draft
+Status: Approved (by Christine, 2026-11-27)
 Requirements: REQ-037, REQ-038, REQ-039
 Design tool: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca (page "03 · Screens", section "F · Sidebar, admin and features"; frames are mockups drawn on the running demo with the site's own styles)
 
