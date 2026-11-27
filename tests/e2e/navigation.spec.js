@@ -132,7 +132,7 @@ test('TC-038a learners see the sidebar grouped as Learn, Practise, Progress and 
   noErrors();
 });
 
-test('TC-038a a group with no released feature is hidden; staff see Admin under Home', async ({ page }) => {
+test('TC-038a a group with no released feature is hidden', async ({ page }) => {
   await actAs(page, 'learner');
   await onboarded(page);
   await page.addInitScript(() => {
@@ -142,10 +142,14 @@ test('TC-038a a group with no released feature is hidden; staff see Admin under 
   });
   await page.goto('#/home');
   await expect(menuGroups(page)).toHaveText(['LEARN', 'PRACTISE', 'MY STUFF']);
-  await page.evaluate(() => localStorage.setItem('bapo-path-demo-identity', 'demo-owner'));
-  await page.reload();
+});
+
+test('TC-038a staff see Admin right under Home and every group', async ({ page }) => {
+  await actAs(page, 'owner');
+  await onboarded(page);
+  await page.goto('#/home');
   await expect(menuLinks(page).nth(0)).toHaveText('Home');
   await expect(menuLinks(page).nth(1)).toHaveText('Admin');
-  await expect(menuGroups(page)).toHaveText(['LEARN', 'PRACTISE', 'PROGRESS', 'MY STUFF']); // staff see every feature
+  await expect(menuGroups(page)).toHaveText(['LEARN', 'PRACTISE', 'PROGRESS', 'MY STUFF']);
   await expect(mainMenu(page).getByRole('link', { name: 'Prompt Workbench', includeHidden: true })).toBeAttached();
 });

@@ -70,15 +70,15 @@ The rules are in `firestore.rules`. The app loads the knowledge base from Firest
 4. **Build → Firestore Database → Create database** → choose a location (e.g. `asia-southeast1`) → **Production mode**.
 5. **Firestore → Rules**: replace everything with the contents of `firestore.rules` → **Publish**.
 6. **Project settings (gear) → Your apps → Web (`</>`)** → register an app → copy the `firebaseConfig` values into `src/firebase-config.js`, commit and push.
-7. Open the site, **sign in with Google**, go to **Knowledge admin** (or `#/admin`), copy your user ID, then in **Firestore → Start collection** `admins` → Document ID = your user ID → Save (no fields needed). Reload.
-8. On **Knowledge admin**, click **Publish to Firestore** once. From now on you can add or edit terms there without touching code.
+7. Open the site, **sign in with Google**, open `#/admin` (the page shows your user ID while you have no role yet), copy it, then in **Firestore → Start collection** `admins` → Document ID = your user ID → Save (no fields needed). Reload.
+8. In **Admin › Knowledge base**, click **Publish to Firestore** once. From now on you can add or edit terms there without touching code.
 9. Go to **My Job Search → Import CSV / JSON** and import your jobs (the Pipeline tab of the Job Search Tracker downloaded as CSV works too).
 
 ## Prompt Workbench (BA/PO/PM prompt library)
 
-Learners browse, fill in and copy prompts at `#/prompts`; staff manage them at `#/pw-admin`.
-It is behind the `prompts` feature flag (`src/data/flags.js`). The Owner changes who sees it in
-**Prompt admin → Insights → Features** (Owner and staff only / beta testers / everyone).
+Learners browse, fill in and copy prompts at `#/prompts`; staff manage them in **Admin** (`#/admin`).
+Every feature has its own flag (`src/data/flags.js`); the Prompt Workbench is `prompts`. The Owner changes who sees each
+feature in **Admin › Features** (Owner and staff only / beta testers / everyone).
 
 **Roles**
 - **Owner**: has an `admins/{uid}` document (created by hand in the console). Everything, including taxonomy, staff, insights and features.

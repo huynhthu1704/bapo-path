@@ -94,10 +94,14 @@ export const PageHead = ({ title, sub, children }) => (
   </div>
 );
 
+// REQ-038: the sidebar grouped by what a learner wants to do (design SCR-1). Each item still follows its feature
+// flag (REQ-037); a group with nothing to show is left out. Staff get one Admin item under Home.
 const NAV = [
-  ['LEARN', [['/home', 'Home', 'Home'], ['/roadmap', 'Skill Roadmap', 'Route'], ['/general', 'General Knowledge', 'Globe'], ['/frameworks', 'BABOK & PMBOK', 'Compass'], ['/domains', 'Domain Knowledge', 'Briefcase'], ['/practice', 'Practice', 'Zap'], ['/saved', 'Saved', 'Bookmark']]],
-  ['PLAY', [['/story', 'Story Mode', 'BookOpen'], ['/speed', 'Speed Round', 'Timer'], ['/collection', 'Collection', 'Copy'], ['/circle', 'Study Circle', 'Users']]],
-  ['YOU', [['/jobs', 'My Job Search', 'ClipboardList'], ['/library', 'My Library', 'History'], ['/achievements', 'Achievements', 'Award'], ['/profile', 'Progress & Profile', 'User'], ['/references', 'References', 'Library']]],
+  [null, [['/home', 'Home', 'Home']]],
+  ['LEARN', [['/roadmap', 'Skill Roadmap', 'Route'], ['/general', 'Glossary', 'Globe'], ['/frameworks', 'BABOK & PMBOK', 'Compass'], ['/domains', 'Domain Knowledge', 'Briefcase'], ['/references', 'References', 'Library']]],
+  ['PRACTISE', [['/practice', 'Practice', 'Zap'], ['/speed', 'Speed Round', 'Timer'], ['/story', 'Story Mode', 'BookOpen'], ['/prompts', 'Prompt Workbench', 'Sparkles']]],
+  ['PROGRESS', [['/achievements', 'Achievements', 'Award'], ['/collection', 'Collection', 'Copy'], ['/circle', 'Study Circle', 'Users']]],
+  ['MY STUFF', [['/saved', 'Saved', 'Bookmark'], ['/library', 'My Library', 'History'], ['/jobs', 'My Job Search', 'ClipboardList'], ['/profile', 'Progress & Profile', 'User']]],
 ];
 
 const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
@@ -113,11 +117,10 @@ function Sidebar({ open, onClose }) {
     <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
       <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">{pmTrack ? 'BA, PO & PM learning' : 'BA & PO learning'}</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
       {NAV.map(([sec, all]) => {
-        // Each item shows only when its feature is on; a group with nothing to show is left out (REQ-037).
-        const items = (sec === 'LEARN' ? [...all.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...all.slice(5)] : all).filter(([to]) => onPath(to));
+        const items = all.filter(([to]) => onPath(to));
         return items.length > 0 && (
-        <div key={sec} className="col gap4" style={{ gap: 2 }}>
-          <div className="nav-sec overline">{sec}</div>
+        <div key={sec || 'top'} className="col gap4" style={{ gap: 2 }}>
+          {sec && <div className="nav-sec overline">{sec}</div>}
           {items.map(([to, label, icon]) => (
             <Fragment key={to}>
               <NavLink to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
