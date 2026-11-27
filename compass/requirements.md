@@ -38,7 +38,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-032 | Failing test committed before every bug fix | — | Must | In build | TC-032 |
 | REQ-033 | Record decisions as ADRs | — | Must | In build | TC-033 |
 | REQ-034 | Shared memory for agents: lessons learned and working knowledge | — | Must | In build | TC-034 |
-| REQ-036 | Product Manager role and learning path | — | Should | Approved | TC-036 |
+| REQ-036 | Product Manager role and learning path | — | Should | In build | TC-036 |
 
 ## REQ-001 — Browse prompts by phase or category
 

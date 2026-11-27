@@ -636,7 +636,7 @@
       "title": "Product Manager role and learning path",
       "story": "As a starter Product Manager I want to choose \"Product Manager\" when I join and follow a PM skill roadmap from Beginner to Expert, so that I learn the skills for my role and not only BA or PO ones.",
       "priority": "Should",
-      "status": "Approved",
+      "status": "In build",
       "source": "Requested by the Owner in chat on 2026-11-27",
       "intent": "compass/intent/2026-11-27-product-manager-path.md",
       "design": "compass/design/2026-11-27-product-manager-path.md",
