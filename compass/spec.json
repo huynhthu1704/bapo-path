@@ -36,7 +36,7 @@
       "status": "Accepted",
       "context": "Changes reach learners as soon as they merge; the Owner wants to try them first. Recorded from CLAUDE.md.",
       "decision": "Every new user-facing feature gets a flag in src/data/flags.js, off by default with audience owner, then moves owner → beta → everyone.",
-      "consequences": "Every feature PR adds a flag; the Owner moves audiences in Prompt admin → Insights → Features.",
+      "consequences": "Every feature PR adds a flag; the Owner moves audiences in the Features page (Prompt admin → Features; Admin › Features after REQ-038).",
       "reqIds": [
         "REQ-026"
       ]

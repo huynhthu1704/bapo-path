@@ -633,12 +633,16 @@ export function Features() {
 
   const betaOf = (key) => (remoteFlags()[key] || {}).beta || [];
   const stateOf = (key) => { const a = audienceOf(key); return a === 'everyone' ? 'released' : a === 'beta' && betaOf(key).length ? 'beta' : 'owner'; };
-  const save = (key, patch) => act.run(async () => {
+  // `what` is the audit-log line; by default "<feature>: <audience>".
+  const save = (key, patch, what) => act.run(async () => {
     const next = { ...remoteFlags(), [key]: { audience: audienceOf(key), beta: betaOf(key), ...patch } };
-    await api.saveFlags(next, me, `${FLAGS[key].name}: ${next[key].audience}`); setRemoteFlags(next);
+    await api.saveFlags(next, me, what || `${FLAGS[key].name}: ${next[key].audience}`); setRemoteFlags(next);
   }, 'Feature setting saved.');
   const setReleased = (key, on) => save(key, { audience: on ? 'everyone' : betaOf(key).length ? 'beta' : 'owner' });
-  const setBeta = (key, list) => save(key, { beta: list, ...(audienceOf(key) === 'everyone' ? {} : { audience: list.length ? 'beta' : 'owner' }) });
+  const setBeta = (key, list, who, added) => {
+    const audience = audienceOf(key) === 'everyone' ? 'everyone' : list.length ? 'beta' : 'owner';
+    return save(key, { beta: list, audience }, `${FLAGS[key].name} beta: ${added ? 'added' : 'removed'} ${who} (${audience})`);
+  };
 
   const keys = Object.keys(FLAGS);
   const count = (f) => keys.filter((k) => f === 'all' || (f === 'unreleased' ? stateOf(k) !== 'released' : stateOf(k) === f)).length;
@@ -673,14 +677,14 @@ export function Features() {
               <Tag tone={tone}>{label || `Beta · ${beta.length} ${beta.length === 1 ? 'person' : 'people'}`}</Tag>
             </div>
             <div className="row center wrap gap10">
-              <Toggle on={released} label={`Released to everyone: ${f.name}`} onChange={(v) => { if (!act.busy) setReleased(key, v); }} />
+              <span style={{ opacity: act.busy ? 0.5 : 1 }} aria-busy={act.busy}><Toggle on={released} label={`Released to everyone: ${f.name}`} onChange={(v) => { if (!act.busy) setReleased(key, v); }} /></span>
               <span className="label">Released to everyone</span>
               {!released && <span className="caption faint">Off: Owner and staff see it{beta.length ? ', plus the beta testers below' : ''}. Preview link: <code>?preview={key}</code></span>}
             </div>
             {!released && (
               <div className="col gap6"><span className="caption muted">Beta testers · {beta.length}</span>
                 {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
-                  <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => setBeta(key, on ? beta.filter((x) => x !== d._id) : [...beta, d._id])} />{d.name || d.email} <span className="faint">{d.email}</span></label>
+                  <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => setBeta(key, on ? beta.filter((x) => x !== d._id) : [...beta, d._id], d.email || d.name, !on)} />{d.name || d.email} <span className="faint">{d.email}</span></label>
                 ); })}
                 {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
               </div>

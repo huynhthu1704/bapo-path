@@ -32,7 +32,7 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 
 **Decision.** Every new user-facing feature gets a flag in src/data/flags.js, off by default with audience owner, then moves owner → beta → everyone.
 
-**Consequences.** Every feature PR adds a flag; the Owner moves audiences in Prompt admin → Insights → Features.
+**Consequences.** Every feature PR adds a flag; the Owner moves audiences in the Features page (Prompt admin → Features; Admin › Features after REQ-038).
 
 ## ADR-003 — Security lives in firestore.rules, with a test for every rule change
 

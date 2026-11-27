@@ -7,7 +7,7 @@ const onboarded = (page) => page.addInitScript(() => {
   const cur = JSON.parse(localStorage.getItem('bapo-path-v1') || '{}');
   localStorage.setItem('bapo-path-v1', JSON.stringify({ ...cur, onboarded: true, name: 'Hoa' }));
 });
-// Saves feature settings as the Owner would (Insights → Features), before the page loads.
+// Saves feature settings as the Owner would on the Features page, before the page loads.
 const setFlags = (page, flags) => page.addInitScript((f) => {
   const db = JSON.parse(localStorage.getItem('bapo-path-local-db') || '{}');
   db['settings/site'] = { flags: f };
@@ -145,6 +145,35 @@ test('TC-037a the Features page lists every feature with search, filters and sta
   await expect(cards.filter({ hasText: 'Prompt Workbench' })).toContainText('?preview=prompts');
   await expectNoHorizontalOverflow(page);
   noErrors();
+});
+
+test('TC-037a beta testers: status, Beta filter and ticking a tester', async ({ page }) => {
+  await actAs(page, 'owner');
+  await onboarded(page);
+  await setFlags(page, { story: { audience: 'beta', beta: ['demo-learner'] } });
+  await page.addInitScript(() => { // people who signed in once (the beta-tester picker lists them)
+    const db = JSON.parse(localStorage.getItem('bapo-path-local-db') || '{}');
+    db['directory/demo-learner'] = { name: 'Hoa', email: 'hoa@demo.local' };
+    db['directory/demo-reviewer'] = { name: 'Minh', email: 'minh@demo.local' };
+    localStorage.setItem('bapo-path-local-db', JSON.stringify(db));
+  });
+  await page.goto('#/pw-admin/features');
+  const cards = page.locator('.flag-card');
+  const story = cards.filter({ hasText: 'Story Mode' });
+  await expect(story).toContainText('Beta · 1 person');
+  await page.getByRole('button', { name: /^Beta \(1\)$/ }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first()).toContainText('Story Mode');
+  // Tick a second tester, then untick both: Beta · 2 people → Owner only
+  await page.getByRole('button', { name: /^All/ }).click();
+  await story.getByRole('checkbox', { name: /Minh/ }).check();
+  await expect(story).toContainText('Beta · 2 people');
+  await story.getByRole('checkbox', { name: /Minh/ }).uncheck();
+  await expect(story).toContainText('Beta · 1 person');
+  await story.getByRole('checkbox', { name: /Hoa/ }).uncheck();
+  await expect(story).toContainText('Owner only');
+  await page.goto('#/pw-admin/insights');
+  await expect(page.getByText('Story Mode beta: added minh@demo.local (beta)')).toBeVisible();
 });
 
 test('TC-037a only the Owner sees the Features tab', async ({ page }) => {
