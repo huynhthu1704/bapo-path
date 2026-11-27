@@ -25,7 +25,7 @@ const scrollToSection = (id) => {
 };
 
 export function Landing() {
-  const { s, user, googleOnly, signedIn } = useStore();
+  const { s, user, googleOnly, signedIn, tracks } = useStore();
   const nav = useNavigate();
   // googleOnly (REQ-035): anyone can go straight in and look around; signing in is only needed to save.
   const start = googleOnly || s.onboarded ? '/home' : '/signup';
@@ -63,7 +63,7 @@ export function Landing() {
         </div>
       </section>
       <section className="section" style={{ paddingTop: 40, paddingBottom: 40 }}><div className="grid g4" style={{ gap: 24 }}>
-        {[[`${SKILLS.length}`, 'skills across BA & PO tracks'], [`${TERMS.length}+`, 'IT, teamwork & business terms'], ['8', 'business domains'], ['3', 'practice modes + games']].map(([n, l]) => (
+        {[[`${SKILLS.filter((k) => tracks.some((t) => t.id === k.track)).length}`, `skills across ${tracks.map((t) => t.id).join(' & ').replace(/ & (?=.* & )/g, ', ')} tracks`], [`${TERMS.length}+`, 'IT, teamwork & business terms'], ['8', 'business domains'], ['3', 'practice modes + games']].map(([n, l]) => (
           <div key={l} className="col gap4"><div className="h1 c-primary">{n}</div><div className="small muted">{l}</div></div>
         ))}
       </div></section>
@@ -183,13 +183,14 @@ function OnbFrame({ step, title, sub, children }) {
 }
 
 export function Onboarding1() {
-  const { s, a } = useStore(); const nav = useNavigate();
+  const { s, a, tracks } = useStore(); const nav = useNavigate();
   const [track, setTrack] = useState(s.track); const [level, setLevel] = useState(s.startLevel);
-  const opts = [['BA', 'Briefcase', 'primary', 'Business Analyst', 'Bridge business needs and the tech team: requirements, processes, analysis.'], ['PO', 'Route', 'po', 'Product Owner', 'Own the product backlog, prioritise value and work with stakeholders.']];
+  const opts = [['BA', 'Briefcase', 'primary', 'Business Analyst', 'Bridge business needs and the tech team: requirements, processes, analysis.'], ['PO', 'Route', 'po', 'Product Owner', 'Own the product backlog, prioritise value and work with stakeholders.'],
+    ['PM', 'Compass', 'accent', 'Product Manager', 'Find the right problems, set the product direction and measure what works.']].filter(([id]) => tracks.some((t) => t.id === id));
   return (
     <OnbFrame step={1} title="What would you like to learn?" sub="We will build your roadmap around your role and current level. You can change this any time.">
       {opts.map(([id, i, t, h, d]) => (
-        <button key={id} className={`card row center ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left' }} onClick={() => setTrack(id)}>
+        <button key={id} className={`card row center ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left' }} aria-pressed={track === id} onClick={() => setTrack(id)}>
           <IconBox name={i} tone={t} size={44} /><div className="col gap4 grow"><span className="h3">{h}</span><span className="small muted">{d}</span></div><span className={`box ${track === id ? 'on' : ''}`} style={{ borderRadius: 999 }}>{track === id && <Icon name="Check" size={14} color="#fff" />}</span>
         </button>
       ))}

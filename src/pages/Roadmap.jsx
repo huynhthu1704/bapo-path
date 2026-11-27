@@ -9,7 +9,7 @@ import { CHALLENGES } from '../data/challenges.js';
 const LV_COLOR = { 1: '#22C55E', 2: '#3B82F6', 3: '#8B5CF6', 4: '#F59E0B' };
 
 export function Roadmap() {
-  const { s } = useStore();
+  const { s, tracks, pmTrack } = useStore();
   const [params, setParams] = useSearchParams();
   const view = params.get('view') || 'map';
   const [track, setTrack] = useState(s.track);
@@ -19,12 +19,12 @@ export function Roadmap() {
   const current = SKILLS.find((k) => k.track === track && skillState(s, k) === 'open');
   return (
     <>
-      <PageHead title="Skill Roadmap" sub="Everything you need to grow as a Business Analyst or Product Owner. Complete skills to unlock the next ones, and beat the challenge at the end of each level.">
+      <PageHead title="Skill Roadmap" sub={`Everything you need to grow as a Business Analyst${pmTrack ? ', Product Owner or Product Manager' : ' or Product Owner'}. Complete skills to unlock the next ones, and beat the challenge at the end of each level.`}>
         <div className="seg dark"><button className={view === 'list' ? 'on' : ''} onClick={() => setParams({ view: 'list' })}>List</button><button className={view === 'map' ? 'on' : ''} onClick={() => setParams({ view: 'map' })}>Map</button></div>
       </PageHead>
       <div className="row center wrap gap24">
         <div className="seg dark" style={{ background: '#fff', border: '1px solid var(--border)' }}>
-          {Object.values(TRACKS).map((t) => <button key={t.id} className={track === t.id ? 'on' : ''} onClick={() => setTrack(t.id)}>{t.name}</button>)}
+          {tracks.map((t) => <button key={t.id} className={track === t.id ? 'on' : ''} aria-pressed={track === t.id} onClick={() => setTrack(t.id)}>{t.name}</button>)}
         </div>
         {view === 'map' && <div className="row center wrap gap24 caption muted">{[['#16A34A', 'Done'], ['#4F46E5', 'Next up'], ['#CBD5E1', 'Locked'], ['#F59E0B', 'Level challenge']].map(([c, l]) => <span key={l} className="row center gap6"><span style={{ width: 10, height: 10, borderRadius: 99, background: c }} />{l}</span>)}</div>}
       </div>
@@ -242,7 +242,7 @@ export function Challenge() {
             return <button key={n} className={`option ${cls}`} disabled={checked} onClick={() => { setSel(n); setErr(''); }}><span className="letter">{'ABCD'[n]}</span><span className="grow">{o}</span>{checked && n === q.answer && <Icon name="Check" color="#16A34A" />}</button>;
           })}
           {err && <span className="caption c-danger">{err}</span>}
-          {hint && !checked && <div className="soft bg-accent-soft small">Hint: think about what a professional BA/PO would do to protect both the relationship and the team’s process.</div>}
+          {hint && !checked && <div className="soft bg-accent-soft small">Hint: think about what a professional {TRACKS[track] ? TRACKS[track].name : 'BA or PO'} would do to protect both the relationship and the team’s process.</div>}
           {checked && <div className="card row" style={{ gap: 14 }}><IconBox name="Lightbulb" tone={sel === q.answer ? 'success' : 'danger'} size={36} /><div className="col grow gap4"><span className={`label ${sel === q.answer ? 'c-success' : 'c-danger'}`}>{sel === q.answer ? 'Correct!' : 'Not quite — you lost a life.'}</span><span className="small muted">{q.explain}</span></div></div>}
           <div className="row center">
             {!checked && !hint && <button className="btn btn-ghost" style={{ color: 'var(--accent)' }} onClick={() => setHint(true)}><Icon name="Lightbulb" size={18} />Show a hint</button>}
