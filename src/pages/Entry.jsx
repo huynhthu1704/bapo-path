@@ -6,7 +6,7 @@ import { useStore } from '../store.jsx';
 import { DOMAINS } from '../data/domains.js';
 import { TERMS } from '../data/terms.js';
 import { SKILLS } from '../data/skills.js';
-import { enabled, signInWithGoogle, loadProgress } from '../firebase.js';
+import { enabled, loadProgress, LOCAL_MODE } from '../firebase.js';
 
 const Logo = ({ light }) => (
   <div className="row center gap10">
@@ -25,10 +25,11 @@ const scrollToSection = (id) => {
 };
 
 export function Landing() {
-  const { s, user } = useStore();
+  const { s, user, googleOnly, signedIn } = useStore();
   const nav = useNavigate();
-  const start = s.onboarded ? '/home' : '/signup';
-  const afterSignIn = async (u) => { const c = await loadProgress(u.uid).catch(() => null); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); };
+  // googleOnly (REQ-035): anyone can go straight in and look around; signing in is only needed to save.
+  const start = googleOnly || s.onboarded ? '/home' : '/signup';
+  const afterSignIn = useAfterSignIn();
   return (
     <div style={{ background: '#fff' }}>
       <nav className="landing-nav">
@@ -36,7 +37,8 @@ export function Landing() {
         {[['mod-roadmap', 'Roadmap'], ['mod-knowledge', 'Glossary'], ['domains', 'Domains'], ['mod-practice', 'Practice']].map(([id, l]) => (
           <button key={id} type="button" className="link-btn label muted hide-sm" onClick={() => scrollToSection(id)}>{l}</button>
         ))}
-        {user || !enabled ? <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
+        {googleOnly ? (signedIn ? <Link to="/home" className="btn btn-ghost">Go to my dashboard</Link> : <GoogleButton label="Sign in with Google" small onDone={afterSignIn} />)
+          : user || !enabled ? <Link to={start} className="btn btn-ghost">{s.onboarded ? 'Go to my dashboard' : 'Log in'}</Link>
           : <GoogleButton label="Sign in with Google" small onDone={afterSignIn} />}
       </nav>
       <section className="hero">
@@ -87,8 +89,8 @@ export function Landing() {
       </section>
       <section className="section" style={{ background: 'var(--primary)', alignItems: 'center', textAlign: 'center', gap: 16 }}>
         <h2 className="h1 c-white">Start your BA / PO path today</h2>
-        <p className="body c-white">Free. No credit card. Progress saves on your device.</p>
-        <Link to={start} className="btn btn-secondary">Create free account</Link>
+        <p className="body c-white">{googleOnly ? 'Free. No credit card. Sign in with Google to save your progress.' : 'Free. No credit card. Progress saves on your device.'}</p>
+        <Link to={googleOnly && !signedIn ? '/signup' : start} className="btn btn-secondary">Create free account</Link>
       </section>
       <footer className="landing-nav" style={{ height: 'auto', paddingTop: 28, paddingBottom: 28, flexWrap: 'wrap', gap: 24 }}>
         <Logo /><div className="grow" />{['About', 'Contribute a term', 'Privacy', '© 2026 BAPO Path'].map((l) => <span key={l} className="small faint">{l}</span>)}
@@ -97,26 +99,63 @@ export function Landing() {
   );
 }
 
+// After a Google sign-in from the landing or sign-up page: new accounts do the 2-step setup, returning ones go Home.
+function useAfterSignIn() {
+  const { s } = useStore();
+  const nav = useNavigate();
+  return async (u) => {
+    const c = LOCAL_MODE ? null : await loadProgress(u.uid).catch(() => null);
+    nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1');
+  };
+}
+
+const SignUpAside = () => (
+  <div className="hide-sm" style={{ width: 600, background: 'var(--primary)', padding: 64, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <Link to="/"><Logo light /></Link>
+    <div className="col" style={{ gap: 20 }}>
+      <p className="h2 c-white">“I switched from teaching to BA in 6 months. The glossary and daily flashcards made meetings finally make sense.”</p>
+      <p className="body c-white" style={{ opacity: .8 }}>— Linh, Junior Business Analyst</p>
+    </div>
+    <div className="col">{['Free roadmap for BA & PO', `${TERMS.length}+ terms in plain English`, 'Track your progress every day'].map((t) => <div key={t} className="row center gap10 body c-white"><Icon name="Check" size={18} color="#fff" />{t}</div>)}</div>
+  </div>
+);
+
 export function SignUp() {
+  const { googleOnly } = useStore();
+  return googleOnly ? <GoogleSignUp /> : <NameSignUp />;
+}
+
+// REQ-035: Google is the only way to sign in.
+function GoogleSignUp() {
+  const afterSignIn = useAfterSignIn();
+  return (
+    <div className="row" style={{ minHeight: '100vh', gap: 0, alignItems: 'stretch' }}>
+      <SignUpAside />
+      <div className="col grow" style={{ padding: '48px clamp(20px, 8vw, 120px)', justifyContent: 'center', gap: 20, maxWidth: 840 }}>
+        <h1 className="h1">Sign in to BAPO Path</h1>
+        <p className="body muted">Use your Google account to save your progress on every device. It’s free.</p>
+        <GoogleButton label="Continue with Google" block onDone={afterSignIn} />
+        {LOCAL_MODE && <p className="caption faint">Demo mode: this signs you in as a demo learner.</p>}
+        <div className="row center gap10 soft bg-bg small muted"><Icon name="Compass" size={18} style={{ flex: 'none' }} /><span>Just looking? <Link to="/home" className="label" style={{ color: 'var(--primary)' }}>Explore without signing in</Link> — you can sign in when you want to save.</span></div>
+      </div>
+    </div>
+  );
+}
+
+function NameSignUp() {
   const { s, a } = useStore();
   const nav = useNavigate();
+  const afterSignIn = useAfterSignIn();
   const [name, setName] = useState(s.name); const [email, setEmail] = useState(s.email);
   const [err, setErr] = useState('');
   const go = (e) => { e.preventDefault(); if (!name.trim()) { setErr('Please enter your name.'); return; } a.set({ name: name.trim(), email: email.trim() }); nav('/onboarding/1'); };
   return (
     <div className="row" style={{ minHeight: '100vh', gap: 0, alignItems: 'stretch' }}>
-      <div className="hide-sm" style={{ width: 600, background: 'var(--primary)', padding: 64, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <Link to="/"><Logo light /></Link>
-        <div className="col" style={{ gap: 20 }}>
-          <p className="h2 c-white">“I switched from teaching to BA in 6 months. The glossary and daily flashcards made meetings finally make sense.”</p>
-          <p className="body c-white" style={{ opacity: .8 }}>— Linh, Junior Business Analyst</p>
-        </div>
-        <div className="col">{['Free roadmap for BA & PO', `${TERMS.length}+ terms in plain English`, 'Track your progress every day'].map((t) => <div key={t} className="row center gap10 body c-white"><Icon name="Check" size={18} color="#fff" />{t}</div>)}</div>
-      </div>
+      <SignUpAside />
       <form className="col grow" style={{ padding: '48px clamp(20px, 8vw, 120px)', justifyContent: 'center', gap: 20, maxWidth: 840 }} onSubmit={go}>
         <h1 className="h1">Create your free account</h1>
         <p className="body muted">Sign in with Google to save your progress on every device, or just enter your name.</p>
-        {enabled ? <GoogleButton label="Continue with Google" block onDone={async (u) => { const c = await loadProgress(u.uid).catch(() => null); nav(c?.progress?.onboarded || s.onboarded ? '/home' : '/onboarding/1'); }} />
+        {enabled ? <GoogleButton label="Continue with Google" block onDone={afterSignIn} />
           : <p className="caption c-accent">Google sign-in is not switched on for this site yet. Enter your name below — your progress is saved in this browser.</p>}
         <div className="row center gap10"><div className="grow" style={{ height: 1, background: 'var(--border)' }} /><span className="caption faint">or</span><div className="grow" style={{ height: 1, background: 'var(--border)' }} /></div>
         <label className="col gap6"><span className="label">Full name</span><input className="input" value={name} onChange={(e) => { setName(e.target.value); setErr(''); }} placeholder="Your name" /></label>
@@ -202,8 +241,9 @@ export function Onboarding2() {
 }
 
 export function RequireOnboarding({ children }) {
-  const { s, user, sync } = useStore();
+  const { s, user, sync, googleOnly, signedIn } = useStore();
+  if (googleOnly && !signedIn) return children; // REQ-035: visitors look around on the default path without signing in
   if (!s.onboarded && user && sync === 'loading') return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body muted"><Spinner size={22} color="#4F46E5" label="Loading your progress…" /></span></div>;
-  if (!s.onboarded) return <Navigate to="/signup" replace />;
+  if (!s.onboarded) return <Navigate to={googleOnly ? '/onboarding/1' : '/signup'} replace />; // signed in but not set up yet
   return children;
 }

@@ -1,7 +1,7 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useEffect, lazy } from 'react';
 import { StoreProvider } from './store.jsx';
-import { Layout, Toasts, TopLoader } from './components/ui.jsx';
+import { Layout, Toasts, TopLoader, SignInPrompt } from './components/ui.jsx';
 import { Landing, SignUp, Onboarding1, Onboarding2, RequireOnboarding } from './pages/Entry.jsx';
 import Home from './pages/Home.jsx';
 import { Roadmap, SkillDetail, Challenge } from './pages/Roadmap.jsx';
@@ -84,6 +84,7 @@ export default function App({ kbVersion = 0 }) {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toasts />
+        <SignInPrompt />
       </HashRouter>
     </StoreProvider>
   );

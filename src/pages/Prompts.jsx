@@ -672,7 +672,7 @@ function RatingSummary({ id }) {
 }
 
 function RateCard({ p }) {
-  const { me, user } = useStore();
+  const { me, signedIn } = useStore();
   const [mine, setMine] = useState(0); const [hover, setHover] = useState(0);
   const [text, setText] = useState(''); const [msg, setMsg] = useState(''); const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   useEffect(() => { setMine(0); setMsg(''); setErr(''); if (me) getMyRating(p.id, me.uid).then((r) => setMine(r ? r.stars : 0)).catch(() => {}); }, [p.id, me && me.uid]); // eslint-disable-line
@@ -692,7 +692,7 @@ function RateCard({ p }) {
       {!me ? (
         <>
           <p className="small muted">Sign in to rate prompts and send private suggestions to the editors.</p>
-          {!user && <GoogleButton label="Sign in with Google" small />}
+          {!signedIn && <GoogleButton label="Sign in with Google" small />}
         </>
       ) : (
         <>

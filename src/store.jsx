@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { onUser, loadProgress, saveProgress, isAdmin, LOCAL_MODE } from './firebase.js';
+import { onUser, loadProgress, saveProgress, isAdmin, LOCAL_MODE, signInWithGoogle, logOut } from './firebase.js';
+import { can, useFlags } from './data/flags.js';
 import { getStaffRole, touchDirectory } from './data/promptApi.js';
 import { track } from './busy.js';
 import { TERMS, TERM_BY_ID, CATEGORIES, termsIn } from './data/terms.js';
@@ -100,6 +101,10 @@ export const DEMO_PEOPLE = [
 ];
 const DEMO_KEY = 'bapo-path-demo-identity';
 const readDemo = () => { try { return DEMO_PEOPLE.find((p) => p.uid === localStorage.getItem(DEMO_KEY)) || DEMO_PEOPLE[0]; } catch (e) { return DEMO_PEOPLE[0]; } };
+// Demo mode has no Google: "Continue with Google" signs this browser in as a demo learner instead.
+const DEMO_SIGNED_KEY = 'bapo-path-demo-signed-in';
+const DEMO_USER = { uid: 'demo-signed-in', displayName: 'Demo learner', email: null };
+const readDemoSignedIn = () => { try { return localStorage.getItem(DEMO_SIGNED_KEY) === '1'; } catch (e) { return false; } };
 
 // ---------- context ----------
 const Ctx = createContext(null);
@@ -108,7 +113,15 @@ export function StoreProvider({ children }) {
   const [state, setState] = useState(load);
   const [user, setUser] = useState(null); const [admin, setAdmin] = useState(false); const [sync, setSync] = useState('off');
   const [staffRole, setStaffRole] = useState(null); const [demo, setDemo] = useState(readDemo);
+  const [demoSignedIn, setDemoSignedIn] = useState(readDemoSignedIn);
+  const [askSignIn, setAskSignIn] = useState(false);
   const ready = useRef(false);
+  // REQ-035: with the googleOnly flag on, a visitor who is not signed in can look around but nothing is saved.
+  // A save opens the "Sign in to save" prompt; the changes wait in `pending` and are applied after sign-in.
+  const pending = useRef([]);
+  // A finished quiz shows its score even when the visitor chooses not to sign in (it is not saved).
+  const [unsavedResult, setUnsavedResult] = useState(null);
+  const gated = useRef(() => false);
   useEffect(() => { const { toasts, ...rest } = state; localStorage.setItem(KEY, JSON.stringify(rest)); }, [state]);
 
   // Google account: on sign-in, merge cloud progress with this browser, then keep the cloud copy up to date.
@@ -126,8 +139,9 @@ export function StoreProvider({ children }) {
         const base = useCloud ? { ...fresh(), ...migrate({ ...c }), toasts: [] } : local;
         return { ...base, name: base.name && base.name !== 'Guest' ? base.name : (u.displayName || base.name), email: u.email };
       });
+      applyPending();
       ready.current = true; setSync('saved');
-    } catch (e) { console.warn(e); setSync('error'); }
+    } catch (e) { console.warn(e); setSync('error'); applyPending(); } // keep the held change on this device rather than lose it
   }), []);
   useEffect(() => {
     if (!user || !ready.current) return;
@@ -139,7 +153,7 @@ export function StoreProvider({ children }) {
     return () => clearTimeout(t);
   }, [state, user]);
 
-  const update = useCallback((fn) => setState((prev) => {
+  const apply = useCallback((fn) => setState((prev) => {
     const s = structuredClone(prev);
     const today = dayStr();
     if (s.daily.date !== today) s.daily = { date: today, cards: 0, terms: 0, quizPassed: 0, chest: false };
@@ -159,6 +173,32 @@ export function StoreProvider({ children }) {
     }
     return s;
   }), []);
+  // Saves go through here. When saving needs sign-in, hold the change and ask the visitor to sign in.
+  const update = useCallback((fn) => {
+    if (gated.current()) { pending.current = [...pending.current, fn]; setAskSignIn(true); return; }
+    apply(fn);
+  }, [apply]);
+  // After sign-in from the prompt: apply the held change and keep the visitor where they are
+  // (they were already learning on the default path, so the setup steps are skipped).
+  function applyPending() {
+    const fns = pending.current; if (!fns.length) return;
+    pending.current = []; setAskSignIn(false); setUnsavedResult(null);
+    apply((s) => { for (const fn of fns) fn(s); s.onboarded = true; });
+  }
+  const signIn = useCallback(async () => {
+    if (!LOCAL_MODE) return signInWithGoogle(); // the auth listener above loads progress, then applies the held change
+    try { localStorage.setItem(DEMO_SIGNED_KEY, '1'); } catch (e) { /* ignore */ }
+    setDemoSignedIn(true);
+    apply((s) => { s.name = s.name || DEMO_USER.displayName; });
+    applyPending();
+    return DEMO_USER;
+  }, [apply]); // eslint-disable-line react-hooks/exhaustive-deps
+  const signOut = useCallback(() => {
+    if (!LOCAL_MODE) return logOut();
+    try { localStorage.removeItem(DEMO_SIGNED_KEY); } catch (e) { /* ignore */ }
+    setDemoSignedIn(false); return Promise.resolve();
+  }, []);
+  const cancelSignIn = useCallback(() => { pending.current = []; setAskSignIn(false); }, []);
 
   // shared mutations used inside update()
   const touch = (s) => {
@@ -200,26 +240,32 @@ export function StoreProvider({ children }) {
       gain(s, 2);
       if (rating === 'good' || rating === 'easy') learn(s, id);
     }),
-    recordAttempt: (r) => update((s) => {
-      const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
-      s.attempts.push({ date: dayStr(), score: r.score, total: r.total, mode: r.mode, cats: r.cats });
-      if (r.total && r.score / r.total >= 0.7) s.daily.quizPassed += 1;
-      for (const id of r.correctIds) learn(s, id);
-      for (const id of r.mistakes) s.cards[id] = { box: 1, due: dayStr() };
-      gain(s, xp);
-      s.lastResult = { ...r, xp, fresh: true, newBadges: [], quest: r.total && r.score / r.total >= 0.7 };
-    }),
-    seenResult: () => update((s) => { if (s.lastResult) s.lastResult.fresh = false; }),
+    recordAttempt: (r) => {
+      if (gated.current()) {
+        const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
+        setUnsavedResult({ ...r, xp, fresh: false, newBadges: [], quest: false, unsaved: true });
+      }
+      update((s) => {
+        const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
+        s.attempts.push({ date: dayStr(), score: r.score, total: r.total, mode: r.mode, cats: r.cats });
+        if (r.total && r.score / r.total >= 0.7) s.daily.quizPassed += 1;
+        for (const id of r.correctIds) learn(s, id);
+        for (const id of r.mistakes) s.cards[id] = { box: 1, due: dayStr() };
+        gain(s, xp);
+        s.lastResult = { ...r, xp, fresh: true, newBadges: [], quest: r.total && r.score / r.total >= 0.7 };
+      });
+    },
+    seenResult: () => apply((s) => { if (s.lastResult) s.lastResult.fresh = false; }),
     passChallenge: (key) => update((s) => { if (!s.challengesPassed.includes(key)) { s.challengesPassed.push(key); gain(s, 300); } }),
     claimChest: () => update((s) => { if (!s.daily.chest) { s.daily.chest = true; gain(s, 50); } }),
     speedResult: (matches) => update((s) => { s.speedBest = Math.max(s.speedBest, matches); gain(s, matches * 5); }),
     storyChoice: (q) => update((s) => gain(s, q === 'best' ? 40 : q === 'ok' ? 15 : 5)),
     storyDone: (n, score) => update((s) => { if (!s.storyDone.includes(n)) { s.storyDone.push(n); gain(s, 100); } s.storyBest[n] = Math.max(s.storyBest[n] || 0, score); }),
     joinCircle: () => update((s) => { s.circleJoined = true; s.circleOptIn = true; }),
-    togglePromptFav: (id) => update((s) => { s.promptFavs = s.promptFavs.includes(id) ? s.promptFavs.filter((x) => x !== id) : [id, ...s.promptFavs]; }),
-    usePrompt: (id) => update((s) => { if (!s.promptUsed.includes(id)) s.promptUsed.push(id); s.promptRecent = [{ id, at: new Date().toISOString() }, ...s.promptRecent.filter((r) => r.id !== id)].slice(0, 20); }),
+    togglePromptFav: (id) => apply((s) => { s.promptFavs = s.promptFavs.includes(id) ? s.promptFavs.filter((x) => x !== id) : [id, ...s.promptFavs]; }),
+    usePrompt: (id) => apply((s) => { if (!s.promptUsed.includes(id)) s.promptUsed.push(id); s.promptRecent = [{ id, at: new Date().toISOString() }, ...s.promptRecent.filter((r) => r.id !== id)].slice(0, 20); }),
     reset: () => setState(fresh()),
-    loadDemo: () => update((s) => {
+    loadDemo: () => apply((s) => {
       const t = s.track;
       s.onboarded = true; s.name = s.name || 'Christine';
       s.completedSkills = SKILLS.filter((k) => k.track === t && k.level === 1 && k.order < 3).map((k) => k.id);
@@ -232,13 +278,20 @@ export function StoreProvider({ children }) {
       s.circleJoined = true; s.speedBest = 14; s.storyDone = [1];
       for (let i = 6; i >= 0; i--) s.activity[addDays(dayStr(), -i)] = [60, 100, 40, 120, 90, 150, 30][6 - i];
     }),
-  }), [update]);
+  }), [update, apply]);
 
   // role: 'owner' | 'reviewer' | 'editor' | null; me: who is acting (signed-in user, or the demo person).
   const role = LOCAL_MODE ? demo.role : admin ? 'owner' : staffRole;
   const me = LOCAL_MODE ? demo : user ? { uid: user.uid, name: user.displayName || state.name || user.email, email: user.email } : null;
   const setDemoPerson = useCallback((uid) => { try { localStorage.setItem(DEMO_KEY, uid); } catch (e) { /* ignore */ } setDemo(DEMO_PEOPLE.find((p) => p.uid === uid) || DEMO_PEOPLE[0]); }, []);
-  return <Ctx.Provider value={{ s: state, a: actions, user, admin: LOCAL_MODE ? role === 'owner' : admin, sync, role, me, setDemoPerson }}>{children}</Ctx.Provider>;
+  // Signed in = a Google account on the live site; the demo sign-in in demo mode.
+  const signedIn = LOCAL_MODE ? demoSignedIn : !!user;
+  useFlags();
+  // The flag follows the signed-in person's role only: in demo mode the "Act as" identity alone does not turn it on.
+  const googleOnly = can('googleOnly', { role: signedIn ? role : null, uid: me && me.uid });
+  gated.current = () => googleOnly && !signedIn;
+  return <Ctx.Provider value={{ s: state, a: actions, user, admin: LOCAL_MODE ? role === 'owner' : admin, sync, role, me, setDemoPerson,
+    signedIn, googleOnly, signIn, signOut, askSignIn, cancelSignIn, unsavedResult }}>{children}</Ctx.Provider>;
 }
 
 export const useStore = () => useContext(Ctx);

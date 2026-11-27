@@ -2,7 +2,7 @@ import * as L from './icons.js';
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
-import { logSearch, enabled as authEnabled, signInWithGoogle, signInErrorText } from '../firebase.js';
+import { logSearch, enabled as authEnabled, signInErrorText, LOCAL_MODE } from '../firebase.js';
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
@@ -141,7 +141,7 @@ function SearchBox() {
 }
 
 function TopBar({ onMenu }) {
-  const { s, user } = useStore();
+  const { s, user, signedIn } = useStore();
   return (
     <header className="topbar">
       <button className="icon-btn menu-btn" aria-label="Open menu" onClick={onMenu}><Icon name="Menu" size={20} /></button>
@@ -150,7 +150,7 @@ function TopBar({ onMenu }) {
       <Tag className="hide-sm">{s.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][s.startLevel - 1]}</Tag>
       <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} color="#D97706" />{s.streak.count}</span>
       <span className="pill bg-primary-soft c-primary hide-sm"><Icon name="Star" size={16} color="#4F46E5" />{s.xp.toLocaleString()} XP</span>
-      {!user && <span className="hide-sm"><GoogleButton label="Sign in" small /></span>}
+      {!signedIn && <span className="hide-sm"><GoogleButton label="Sign in" small /></span>}
       <Link to="/profile" className="mark" title={user ? `Signed in as ${user.email}` : 'Not signed in'} style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999, overflow: 'hidden' }}>{user && user.photoURL ? <img src={user.photoURL} alt="" width="36" height="36" referrerPolicy="no-referrer" /> : (s.name || 'You')[0].toUpperCase()}</Link>
     </header>
   );
@@ -163,6 +163,41 @@ function MobileNav() {
         <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} size={20} />{l}</NavLink>
       ))}
     </nav>
+  );
+}
+
+// REQ-035: shown when a visitor who is not signed in tries to save something (googleOnly flag on).
+export function SignInPrompt() {
+  const { askSignIn, cancelSignIn } = useStore();
+  const box = useRef(null);
+  useEffect(() => {
+    if (!askSignIn) return undefined;
+    const prev = document.activeElement;
+    box.current?.querySelector('button')?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') { cancelSignIn(); return; }
+      if (e.key !== 'Tab' || !box.current) return; // keep keyboard focus inside the dialog
+      const items = [...box.current.querySelectorAll('button:not([disabled])')];
+      if (!items.length) return;
+      const first = items[0]; const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!box.current.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); if (prev && prev.focus) prev.focus(); };
+  }, [askSignIn, cancelSignIn]);
+  if (!askSignIn) return null;
+  return (
+    <div className="signin-scrim" onClick={(e) => { if (e.target === e.currentTarget) cancelSignIn(); }}>
+      <div ref={box} className="card p28 signin-box" role="dialog" aria-modal="true" aria-labelledby="signin-title" aria-describedby="signin-text">
+        <h2 id="signin-title" className="h2">Sign in to save</h2>
+        <p id="signin-text" className="body muted">Sign in with Google to keep your progress, saved terms and results on every device. It’s free.</p>
+        {LOCAL_MODE && <p className="caption faint">Demo mode: this signs you in as a demo learner.</p>}
+        <GoogleButton primary block label="Continue with Google" />
+        <button type="button" className="btn btn-ghost block" onClick={cancelSignIn}>Not now</button>
+      </div>
+    </div>
   );
 }
 
@@ -222,13 +257,17 @@ export const GoogleG = () => (
 );
 
 // "Sign in with Google" button used across the site. After sign-in it calls onDone(user) if given.
+// In demo mode it only shows when the googleOnly flag is on, and signs in as a demo learner.
 export function GoogleButton({ label = 'Sign in with Google', primary = false, block = false, small = false, onDone }) {
+  const { signIn, googleOnly } = useStore();
   const [busy, setBusy] = useState(false); const [err, setErr] = useState('');
-  if (!authEnabled) return null;
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  if (!authEnabled && !googleOnly) return null;
   const go = async () => {
     setErr(''); setBusy(true);
-    try { const u = await track(signInWithGoogle()); if (u && onDone) await onDone(u); } catch (e) { setErr(signInErrorText(e)); }
-    setBusy(false);
+    try { const u = await track(signIn()); if (u && onDone) await onDone(u); } catch (e) { if (alive.current) setErr(signInErrorText(e)); }
+    if (alive.current) setBusy(false);
   };
   return (
     <span className="col" style={{ gap: 6, alignItems: block ? 'stretch' : 'flex-start', width: block ? '100%' : undefined }}>
