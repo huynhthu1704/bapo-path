@@ -39,3 +39,6 @@ _Generated from `spec.json`. Process tests: `npm test` (`tests/compass/`). UI te
 | TC-033 | Record decisions as ADRs | REQ-033 | automated | Passing | tests/compass/spec.test.mjs |
 | TC-034 | Shared memory for agents: lessons learned and working knowledge | REQ-034 | automated | Passing | tests/compass/memory.test.mjs |
 | TC-036 | Product Manager role and learning path | REQ-036 | manual | Manual | — |
+| TC-037 | Every feature behind its own feature flag | REQ-037 | manual | Manual | — |
+| TC-038 | Restructured sidebar and one admin area | REQ-038 | manual | Manual | — |
+| TC-039 | Admin Overview of what needs attention | REQ-039 | manual | Manual | — |

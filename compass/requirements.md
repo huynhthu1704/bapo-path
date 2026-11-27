@@ -39,6 +39,9 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-033 | Record decisions as ADRs | — | Must | In build | TC-033 |
 | REQ-034 | Shared memory for agents: lessons learned and working knowledge | — | Must | In build | TC-034 |
 | REQ-036 | Product Manager role and learning path | — | Should | In build | TC-036 |
+| REQ-037 | Every feature behind its own feature flag | — | Must | Approved | TC-037 |
+| REQ-038 | Restructured sidebar and one admin area | — | Must | Approved | TC-038 |
+| REQ-039 | Admin Overview of what needs attention | — | Should | Approved | TC-039 |
 
 ## REQ-001 — Browse prompts by phase or category
 
@@ -322,3 +325,47 @@ Design: [compass/design/2026-11-27-product-manager-path.md](../compass/design/20
 - Given my track is Product Manager · When I open the Skill Roadmap · Then the Product Manager tab is selected and shows four levels (Beginner → Expert) with full Beginner lessons, short skills above and a challenge at the end of each level, my starting level unlocked
 - Given I am on the PM track · When I gain XP · Then my rank uses PM names: Intern → Associate PM → Product Manager → Senior PM → Lead PM
 - Given the pmTrack flag is off for me · When I open onboarding, the Roadmap, search or a term page · Then I see only BA and PO, as today
+
+## REQ-037 — Every feature behind its own feature flag
+
+As the Owner I want every learner feature to have its own flag that hides it everywhere it appears, so that I can pause or roll out any feature in stages without a code change.
+
+Issue: #57
+
+Intent: [compass/intent/2026-11-27-admin-redesign-and-flags.md](../compass/intent/2026-11-27-admin-redesign-and-flags.md)
+
+Design: [compass/design/2026-11-27-admin-redesign-and-flags.md](../compass/design/2026-11-27-admin-redesign-and-flags.md)
+
+- Given the feature catalogue in src/data/flags.js · When the Owner opens Admin → Features · Then every feature is listed with its icon, name, where it appears, since date and status (Owner only, Beta · N people, Everyone), with search and the filters All, Released, Unreleased and Beta
+- Given a feature (for example Story Mode) is set to Owner and staff · When a learner uses the site · Then its menu item, Home card and search results are hidden and its direct link shows "Coming soon", while staff still see it
+- Given a feature that is live today has no saved setting · When anyone opens the site · Then it is shown as today (released to everyone)
+- Given the Owner changes a feature audience · When the change is saved · Then the audit log has an entry naming the feature and its new audience
+
+## REQ-038 — Restructured sidebar and one admin area
+
+As a learner I want the sidebar grouped by what I want to do, and as staff I want one Admin entry with a clear side menu, so that I find things faster.
+
+Issue: #59
+
+Intent: [compass/intent/2026-11-27-admin-redesign-and-flags.md](../compass/intent/2026-11-27-admin-redesign-and-flags.md)
+
+Design: [compass/design/2026-11-27-admin-redesign-and-flags.md](../compass/design/2026-11-27-admin-redesign-and-flags.md)
+
+- Given I am a learner · When I open the sidebar · Then I see Home and the groups Learn, Practise, Progress and My stuff with only the features released to me, and a group with no visible item is hidden
+- Given I am staff · When I open the sidebar · Then I see one Admin entry (no separate Knowledge admin or Prompt admin) that opens a side menu Overview, Content, People, Features, Activity showing only the sections my role may use, the knowledge base tools staying Owner only
+- Given an old link #/admin or #/pw-admin/… · When I open it · Then I land on the matching page of the new admin area
+- Given a 375 px screen · When I open the sidebar or the admin area · Then nothing scrolls sideways
+
+## REQ-039 — Admin Overview of what needs attention
+
+As the Owner or staff I want an Overview of what needs my attention, so that I can act on it in two clicks or fewer.
+
+Issue: #60
+
+Intent: [compass/intent/2026-11-27-admin-redesign-and-flags.md](../compass/intent/2026-11-27-admin-redesign-and-flags.md)
+
+Design: [compass/design/2026-11-27-admin-redesign-and-flags.md](../compass/design/2026-11-27-admin-redesign-and-flags.md)
+
+- Given prompts waiting for review, new feedback or unreleased features · When I open Admin → Overview · Then each is a count card that links to its page
+- Given my role · When I open Admin → Overview · Then I see only the cards for sections my role can open
+- Given nothing is pending · When I open Admin → Overview · Then I see "Nothing to do right now"

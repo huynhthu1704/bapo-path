@@ -12,6 +12,7 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 | ADR-006 | 2026-11-26 | Agents merge their own PRs once CI is green and the independent review approves | Accepted | REQ-028 |
 | ADR-007 | 2026-11-26 | Compass checks run as a separate CI workflow; existing job names stay | Proposed | REQ-026, REQ-027 |
 | ADR-008 | 2026-11-27 | "PM" in the learning roadmap means Product Manager | Accepted | REQ-036 |
+| ADR-009 | 2026-11-27 | The restructured sidebar ships without a feature flag | Accepted | REQ-038 |
 
 ## ADR-001 — Static site on GitHub Pages with Firebase as the only backend
 
@@ -92,3 +93,13 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 **Decision.** The Owner chose Product Manager for the new track (REQ-036), at the same depth as the BA and PO tracks, behind the pmTrack flag (audience owner).
 
 **Consequences.** The PM track teaches discovery, strategy, metrics and launch. Project-management topics stay in the PMBOK glossary. A Project Manager track would be a separate requirement.
+
+## ADR-009 — The restructured sidebar ships without a feature flag
+
+**Status:** Accepted · **Date:** 2026-11-27 · **Requirements:** REQ-038
+
+**Context.** ADR-002 puts new user-facing features behind a default-off flag. The sidebar restructure (REQ-038) reorganises existing menu items rather than adding a feature, and each item it shows is already controlled by its own feature flag (REQ-037).
+
+**Decision.** The Owner decided in chat on 2026-11-27: "no need feature flag for new sidebar". The new sidebar and the single admin area replace the old ones for everyone on merge.
+
+**Consequences.** No staged roll-out for the new layout: e2e tests at desktop and 375 px must cover it before merge. Old admin links redirect. Features themselves still roll out through their own flags.

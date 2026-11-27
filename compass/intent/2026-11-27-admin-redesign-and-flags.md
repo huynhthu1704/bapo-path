@@ -95,4 +95,6 @@ Follow-up answers (2026-11-27):
 - Changing learning content or the Editor → Reviewer publishing flow.
 
 ## Requirements
-<filled after approval>
+- REQ-037 — Every feature behind its own feature flag (#57)
+- REQ-038 — Restructured sidebar and one admin area (#59); no flag for the sidebar itself (ADR-009)
+- REQ-039 — Admin Overview of what needs attention (#60)

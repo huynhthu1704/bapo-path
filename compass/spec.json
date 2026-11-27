@@ -119,6 +119,18 @@
       "reqIds": [
         "REQ-036"
       ]
+    },
+    {
+      "id": "ADR-009",
+      "date": "2026-11-27",
+      "title": "The restructured sidebar ships without a feature flag",
+      "status": "Accepted",
+      "context": "ADR-002 puts new user-facing features behind a default-off flag. The sidebar restructure (REQ-038) reorganises existing menu items rather than adding a feature, and each item it shows is already controlled by its own feature flag (REQ-037).",
+      "decision": "The Owner decided in chat on 2026-11-27: \"no need feature flag for new sidebar\". The new sidebar and the single admin area replace the old ones for everyone on merge.",
+      "consequences": "No staged roll-out for the new layout: e2e tests at desktop and 375 px must cover it before merge. Old admin links redirect. Features themselves still roll out through their own flags.",
+      "reqIds": [
+        "REQ-038"
+      ]
     }
   ],
   "requirements": [
@@ -647,6 +659,56 @@
         "Given the pmTrack flag is off for me\nWhen I open onboarding, the Roadmap, search or a term page\nThen I see only BA and PO, as today"
       ],
       "issue": 44
+    },
+    {
+      "id": "REQ-037",
+      "title": "Every feature behind its own feature flag",
+      "story": "As the Owner I want every learner feature to have its own flag that hides it everywhere it appears, so that I can pause or roll out any feature in stages without a code change.",
+      "priority": "Must",
+      "status": "Approved",
+      "source": "Requested by the Owner in chat on 2026-11-27",
+      "intent": "compass/intent/2026-11-27-admin-redesign-and-flags.md",
+      "design": "compass/design/2026-11-27-admin-redesign-and-flags.md",
+      "ac": [
+        "Given the feature catalogue in src/data/flags.js\nWhen the Owner opens Admin → Features\nThen every feature is listed with its icon, name, where it appears, since date and status (Owner only, Beta · N people, Everyone), with search and the filters All, Released, Unreleased and Beta",
+        "Given a feature (for example Story Mode) is set to Owner and staff\nWhen a learner uses the site\nThen its menu item, Home card and search results are hidden and its direct link shows \"Coming soon\", while staff still see it",
+        "Given a feature that is live today has no saved setting\nWhen anyone opens the site\nThen it is shown as today (released to everyone)",
+        "Given the Owner changes a feature audience\nWhen the change is saved\nThen the audit log has an entry naming the feature and its new audience"
+      ],
+      "issue": 57
+    },
+    {
+      "id": "REQ-038",
+      "title": "Restructured sidebar and one admin area",
+      "story": "As a learner I want the sidebar grouped by what I want to do, and as staff I want one Admin entry with a clear side menu, so that I find things faster.",
+      "priority": "Must",
+      "status": "Approved",
+      "source": "Requested by the Owner in chat on 2026-11-27",
+      "intent": "compass/intent/2026-11-27-admin-redesign-and-flags.md",
+      "design": "compass/design/2026-11-27-admin-redesign-and-flags.md",
+      "ac": [
+        "Given I am a learner\nWhen I open the sidebar\nThen I see Home and the groups Learn, Practise, Progress and My stuff with only the features released to me, and a group with no visible item is hidden",
+        "Given I am staff\nWhen I open the sidebar\nThen I see one Admin entry (no separate Knowledge admin or Prompt admin) that opens a side menu Overview, Content, People, Features, Activity showing only the sections my role may use, the knowledge base tools staying Owner only",
+        "Given an old link #/admin or #/pw-admin/…\nWhen I open it\nThen I land on the matching page of the new admin area",
+        "Given a 375 px screen\nWhen I open the sidebar or the admin area\nThen nothing scrolls sideways"
+      ],
+      "issue": 59
+    },
+    {
+      "id": "REQ-039",
+      "title": "Admin Overview of what needs attention",
+      "story": "As the Owner or staff I want an Overview of what needs my attention, so that I can act on it in two clicks or fewer.",
+      "priority": "Should",
+      "status": "Approved",
+      "source": "Requested by the Owner in chat on 2026-11-27",
+      "intent": "compass/intent/2026-11-27-admin-redesign-and-flags.md",
+      "design": "compass/design/2026-11-27-admin-redesign-and-flags.md",
+      "ac": [
+        "Given prompts waiting for review, new feedback or unreleased features\nWhen I open Admin → Overview\nThen each is a count card that links to its page",
+        "Given my role\nWhen I open Admin → Overview\nThen I see only the cards for sections my role can open",
+        "Given nothing is pending\nWhen I open Admin → Overview\nThen I see \"Nothing to do right now\""
+      ],
+      "issue": 60
     }
   ],
   "tests": [
@@ -1001,6 +1063,33 @@
       "title": "Product Manager role and learning path",
       "reqIds": [
         "REQ-036"
+      ],
+      "type": "manual",
+      "status": "Manual"
+    },
+    {
+      "id": "TC-037",
+      "title": "Every feature behind its own feature flag",
+      "reqIds": [
+        "REQ-037"
+      ],
+      "type": "manual",
+      "status": "Manual"
+    },
+    {
+      "id": "TC-038",
+      "title": "Restructured sidebar and one admin area",
+      "reqIds": [
+        "REQ-038"
+      ],
+      "type": "manual",
+      "status": "Manual"
+    },
+    {
+      "id": "TC-039",
+      "title": "Admin Overview of what needs attention",
+      "reqIds": [
+        "REQ-039"
       ],
       "type": "manual",
       "status": "Manual"
