@@ -30,6 +30,7 @@ export function useAction() {
 // The admin side menu (design SCR-4): [group, [[path, label, icon, who]]]; who: 'all' | 'reviewer' | 'owner'.
 // Icons come from src/components/icons.js (only the icons the app already uses).
 export const ADMIN_MENU = [
+  [null, [['/admin', 'Overview', 'LayoutList', 'all']]],
   ['CONTENT', [['/admin/prompts', 'Prompts', 'FileText', 'all'], ['/admin/review', 'Review queue', 'ListChecks', 'reviewer'],
     ['/admin/feedback', 'Feedback', 'MessageSquare', 'reviewer'], ['/admin/taxonomy', 'Taxonomy', 'Layers', 'owner'],
     ['/admin/knowledge', 'Knowledge base', 'Database', 'owner']]],
@@ -38,7 +39,7 @@ export const ADMIN_MENU = [
   ['ACTIVITY', [['/admin/insights', 'Insights', 'TrendingUp', 'owner'], ['/admin/audit', 'Audit log', 'History', 'owner']]],
 ];
 const allowed = (who, role) => who === 'all' || (who === 'reviewer' && isReviewer(role)) || (who === 'owner' && role === 'owner');
-const activeIn = (path, pathname) => pathname === path || pathname.startsWith(`${path}/`) || (path === '/admin/prompts' && pathname === '/admin');
+const activeIn = (path, pathname) => pathname === path || (path !== '/admin' && pathname.startsWith(`${path}/`));
 
 function useCounts(role) {
   const [counts, setCounts] = useState({});
@@ -72,8 +73,8 @@ export function AdminShell({ title, sub, actions, children }) {
       <div className="admin-layout">
         <nav className="admin-nav" aria-label="Admin">
           {groups.map(([g, list]) => (
-            <div key={g} className="col" style={{ gap: 2 }}>
-              <div className="nav-sec overline">{g}</div>
+            <div key={g || 'top'} className="col" style={{ gap: 2 }}>
+              {g && <div className="nav-sec overline">{g}</div>}
               {list.map(([to, label, icon]) => (
                 <NavLink key={to} to={to} className={`nav-item ${activeIn(to, pathname) ? 'active' : ''}`}>
                   <Icon name={icon} size={20} /><span className="grow">{label}</span>
@@ -84,7 +85,7 @@ export function AdminShell({ title, sub, actions, children }) {
           ))}
         </nav>
         <div className="admin-body">
-          <span className="caption faint">Admin{here ? ` › ${here[1]}` : ''}</span>
+          <span className="caption faint">Admin{here && here[0] !== '/admin' ? ` › ${here[1]}` : ''}</span>
           <PageHead title={title} sub={sub}>{actions}</PageHead>
           <span className="caption faint tab-role" style={{ alignSelf: 'flex-start', paddingBottom: 0 }}>Signed in as {me && me.name} · {ROLE_LABEL[role]}</span>
           <label className="col gap6 admin-pick"><span className="label">Admin section</span>

@@ -41,7 +41,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-036 | Product Manager role and learning path | — | Should | Done | TC-036 |
 | REQ-037 | Every feature behind its own feature flag | — | Must | Done | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Done | TC-038 |
-| REQ-039 | Admin Overview of what needs attention | — | Should | Approved | TC-039 |
+| REQ-039 | Admin Overview of what needs attention | — | Should | Done | TC-039 |
 
 ## REQ-001 — Browse prompts by phase or category
 
