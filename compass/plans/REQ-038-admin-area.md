@@ -24,6 +24,11 @@ not change in this PR (REQ-038 stays Approved, TC-038 manual) to stay within 12 
   old `/pw-admin/...` path redirects to its new page.
 - src/components/ui.jsx — one **Admin** item right under Home for staff (replaces *Prompt admin* and *Knowledge
   admin*); `Toggle` gets a real `disabled` (review note of #69).
+- src/styles.css — `.admin-layout`, `.admin-nav`, `.admin-body`, `.admin-pick` (side menu on wide screens, drop-down at
+  ≤ 900 px). Added during the build: no existing helper class could switch the two.
+- src/pages/PromptGate.jsx — the staff gate says "Admin" instead of "Prompt admin". Added during the build.
+- Icons: only icons already in src/components/icons.js are used (Shield, ListChecks, Layers, Send, TrendingUp,
+  History…), so icons.js does not change.
 - tests/e2e/navigation.spec.js (new) — TC-038b (one Admin entry; side menu per role; Knowledge base Owner only),
   TC-038c (old links land on the new pages), TC-038d (375 px: drop-down, no sideways scroll).
 - tests/e2e/prompt-admin.spec.js, tests/e2e/features.spec.js — new URLs, the "Admin" menu name, the audit log page.
