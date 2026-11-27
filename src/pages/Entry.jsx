@@ -172,7 +172,7 @@ function OnbFrame({ step, title, sub, children }) {
   return (
     <div className="focus" style={{ alignItems: 'center', padding: '48px 16px', gap: 32 }}>
       <div className="row center w760"><Logo /><div className="grow" /><Link to="/home" className="label faint">Skip for now</Link></div>
-      <div className="card w760" style={{ padding: 40, gap: 28, borderRadius: 24 }}>
+      <div className="card w760" style={{ padding: 'clamp(20px, 5vw, 40px)', gap: 28, borderRadius: 24 }}>
         <div className="col gap10"><span className="overline c-primary">Step {step} of 2</span>
           <div className="row gap8">{[1, 2].map((i) => <div key={i} className="grow" style={{ height: 6, borderRadius: 999, background: i <= step ? 'var(--primary)' : 'var(--border)' }} />)}</div></div>
         <div className="col gap6"><h1 className="h1">{title}</h1><p className="body muted">{sub}</p></div>
@@ -189,11 +189,11 @@ export function Onboarding1() {
     ['PM', 'Compass', 'accent', 'Product Manager', 'Find the right problems, set the product direction and measure what works.']].filter(([id]) => tracks.some((t) => t.id === id));
   return (
     <OnbFrame step={1} title="What would you like to learn?" sub="We will build your roadmap around your role and current level. You can change this any time.">
-      {opts.map(([id, i, t, h, d]) => (
-        <button key={id} className={`card row center ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left' }} aria-pressed={track === id} onClick={() => setTrack(id)}>
-          <IconBox name={i} tone={t} size={44} /><div className="col gap4 grow"><span className="h3">{h}</span><span className="small muted">{d}</span></div><span className={`box ${track === id ? 'on' : ''}`} style={{ borderRadius: 999 }}>{track === id && <Icon name="Check" size={14} color="#fff" />}</span>
+      <div className="col" style={{ gap: 12 }}>{opts.map(([id, i, t, h, d]) => (
+        <button key={id} className={`card row ${track === id ? 'selected' : ''}`} style={{ textAlign: 'left', flexDirection: 'row', gap: 16, padding: '18px 20px' }} aria-pressed={track === id} onClick={() => setTrack(id)}>
+          <IconBox name={i} tone={t} size={44} /><div className="col grow" style={{ gap: 2, minWidth: 0 }}><span className="h3">{h}</span><span className="small muted">{d}</span></div><span className={`box ${track === id ? 'on' : ''}`} style={{ borderRadius: 999 }}>{track === id && <Icon name="Check" size={14} color="#fff" />}</span>
         </button>
-      ))}
+      ))}</div>
       <div className="col gap10"><span className="label">Your current level</span>
         <div className="grid g4" style={{ gap: 10 }}>
           {[['Beginner', '0–1 year'], ['Intermediate', '1–3 years'], ['Advanced', '3–5 years'], ['Expert', '5+ years']].map(([n, d], i) => (
