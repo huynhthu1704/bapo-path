@@ -28,7 +28,8 @@ export function applyKnowledge(kb) {
   refill(TERMS, terms); remap(TERM_BY_ID, terms);
   if (kb.skills.length) { const sk = mergeById(BUNDLED.skills, kb.skills); refill(SKILLS, sk); remap(SKILL_BY_ID, sk); }
   if (kb.domains.length) { const dm = mergeById(BUNDLED.domains, kb.domains); refill(DOMAINS, dm); remap(DOMAIN_BY_ID, dm); }
-  if (Object.keys(kb.challenges).length) { for (const k of Object.keys(CHALLENGES)) delete CHALLENGES[k]; Object.assign(CHALLENGES, kb.challenges); }
+  // Like mergeById: cloud challenges replace bundled ones with the same key; bundled keys the cloud lacks stay (#52).
+  if (Object.keys(kb.challenges).length) { for (const k of Object.keys(CHALLENGES)) delete CHALLENGES[k]; Object.assign(CHALLENGES, structuredClone(BUNDLED.challenges), kb.challenges); }
   if (kb.story.length) refill(CHAPTERS, kb.story);
 }
 
