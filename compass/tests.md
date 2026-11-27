@@ -40,5 +40,5 @@ _Generated from `spec.json`. Process tests: `npm test` (`tests/compass/`). UI te
 | TC-034 | Shared memory for agents: lessons learned and working knowledge | REQ-034 | automated | Passing | tests/compass/memory.test.mjs |
 | TC-036 | Product Manager role and learning path | REQ-036 | automated | Passing | tests/e2e/pm-track.spec.js |
 | TC-037 | Every feature behind its own feature flag | REQ-037 | automated | Passing | tests/e2e/features.spec.js |
-| TC-038 | Restructured sidebar and one admin area | REQ-038 | manual | Manual | — |
+| TC-038 | Restructured sidebar and one admin area | REQ-038 | automated | Passing | tests/e2e/navigation.spec.js |
 | TC-039 | Admin Overview of what needs attention | REQ-039 | manual | Manual | — |

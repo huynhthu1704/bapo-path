@@ -34,6 +34,8 @@ the same PR. It is written by hand (not generated).
 - `src/firebase.js`: `LOCAL_MODE`. `src/firebase-config.js` is public by design (Firebase web config).
 - `src/data/`: **all learning content is plain data** (README row formats). Content edits need no plan file.
 - `src/data/prompts/`: the 90 prompts (`a-…` to `i-…`) and `meta.js`; checked by `scripts/check-prompts.mjs`.
+- Admin area (REQ-038): `#/admin/...`, `src/pages/AdminShell.jsx` (side menu per role, shared helpers), `AdminPages.jsx`,
+  `PromptAdmin.jsx` (prompt pages); old `#/pw-admin/...` links redirect (`MOVED` in `src/App.jsx`).
 - `src/data/promptApi.js`: Prompt Workbench data layer (Firestore + local behind one API; layout at the top).
 - `src/i18n.js`, `src/data/i18n/`: translations. `firestore.rules` + `tests/rules.test.mjs`: access control and its tests.
 - Style: plain JS + JSX, function components and hooks; reuse `src/components/ui.jsx` and `src/styles.css`; wrap long
@@ -73,8 +75,7 @@ the same PR. It is written by hand (not generated).
   appears, since, audience). A new feature gets audience `owner`; features live before flags default to `everyone`.
 - Check a feature with `useFeature('<key>')` / `useFeatures()` from `src/components/ui.jsx` in **every** place it shows
   (menu, Home, search, buttons) and map its routes in `ROUTE_FLAGS`; routes are wrapped in `FlagGate` ("Coming soon").
-- The Owner rolls features out on the **Features** page (`#/pw-admin/features`, Owner only; *Admin › Features* after
-  REQ-038): switch "Released to everyone", or keep it off and tick beta testers. Preview any flag with `?preview=<flag>`.
+- The Owner rolls features out in **Admin › Features** (`#/admin/features`, Owner only): switch "Released to everyone", or keep it off and tick beta testers. Preview any flag with `?preview=<flag>`.
 - Flags still at `owner`: `prompts`, `pmTrack` (Product Manager track, REQ-036; roll out after the Owner has read the lessons).
 
 ## 7. Tests and CI/CD

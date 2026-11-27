@@ -25,7 +25,7 @@ test('TC-037b a feature set to Owner and staff is hidden from learners everywher
   const menu = page.locator('aside[aria-label="Main menu"]');
   await expect(menu.getByRole('link', { name: 'Speed Round', includeHidden: true })).toBeAttached();
   await expect(menu.getByRole('link', { name: 'Story Mode', includeHidden: true })).toHaveCount(0);
-  await expect(menu.getByRole('link', { name: 'General Knowledge', includeHidden: true })).toHaveCount(0);
+  await expect(menu.getByRole('link', { name: 'Glossary', includeHidden: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Continue story' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Play' })).toBeVisible();
   // Phone bottom bar and search results
@@ -102,7 +102,7 @@ test('TC-037c features that are live today stay visible to everyone with no save
   await onboarded(page);
   await page.goto('#/home');
   const menu = page.locator('aside[aria-label="Main menu"]');
-  for (const name of ['Skill Roadmap', 'General Knowledge', 'BABOK & PMBOK', 'Domain Knowledge', 'Practice', 'Saved', 'Story Mode',
+  for (const name of ['Skill Roadmap', 'Glossary', 'BABOK & PMBOK', 'Domain Knowledge', 'Practice', 'Saved', 'Story Mode',
     'Speed Round', 'Collection', 'Study Circle', 'My Job Search', 'My Library', 'Achievements', 'References']) {
     await expect(menu.getByRole('link', { name, exact: true, includeHidden: true })).toBeAttached();
   }

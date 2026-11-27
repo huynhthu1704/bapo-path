@@ -89,6 +89,7 @@ export function AdminShell({ title, sub, actions, children }) {
           <span className="caption faint tab-role" style={{ alignSelf: 'flex-start', paddingBottom: 0 }}>Signed in as {me && me.name} · {ROLE_LABEL[role]}</span>
           <label className="col gap6 admin-pick"><span className="label">Admin section</span>
             <select className="input" aria-label="Admin section" value={here ? here[0] : ''} onChange={(e) => nav(e.target.value)}>
+              {!here && <option value="" disabled>Choose a section</option>}
               {items.map(([to, label]) => <option key={to} value={to}>{label}{counts[to] ? ` · ${counts[to]}` : ''}</option>)}
             </select>
           </label>

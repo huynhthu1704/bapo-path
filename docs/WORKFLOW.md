@@ -39,7 +39,7 @@ flowchart LR
 | 4 | **Verify** | CI | `ci.yml` (prompt check, build, e2e) · `rules-test.yml` (Firestore rules) · `compass.yml` (spec, guardrails, plan, test-first) | Required checks are green |
 | 5 | **Review** | Independent AI review (`compass/REVIEW.md`: a fresh agent or `claude-review.yml`), then a person | `## Independent review (Claude)` says APPROVE for the head commit | A person approves. The Owner decides rules, pipeline, deletions and dependencies |
 | 6 | **Release** | CI + Owner | Site to GitHub Pages; rules to Firebase after the `production` approval | Owner approves the rules deploy. The feature stays at flag audience `owner` |
-| 7 | **Roll out** | Owner | Flag audience moves owner → beta → everyone (Prompt admin → Insights → Features) | No new bugs from the previous audience |
+| 7 | **Roll out** | Owner | Flag audience moves owner → beta → everyone (Admin › Features) | No new bugs from the previous audience |
 | 8 | **Learn** | Owner + agent | Insights, ratings, feedback inbox, bug issues | Findings become new REQ or bug issues (back to stage 1) |
 
 Traceability runs through every stage: **intent → REQ in `compass/spec.json` + issue → design → plan file → TC test → PR "Requirements covered" table → independent review → commit with the agent session link.** Decisions made in chat become ADRs (`compass/decisions.md`).
@@ -103,7 +103,7 @@ For when more people join: developers, a QA or BA, content editors. Everyone wor
 | **Tech lead** | `CLAUDE.md`, architecture, `firestore.rules`, CI | Code owner for rules, `.github/` and `CLAUDE.md` |
 | **Developers** (each with AI agents) | Build and test REQs end to end | Open PRs; review each other's PRs |
 | **QA / BA** | TC quality, exploratory tests on preview builds, bug reports | Reviews the TC tests in PRs; files bugs from the template |
-| **Content editors** | Prompts and glossary content | Use **Prompt admin / Knowledge admin**, not code (Editor → Reviewer workflow) |
+| **Content editors** | Prompts and glossary content | Use **Admin** (Prompts, Knowledge base), not code (Editor → Reviewer workflow) |
 
 ### Sprint rhythm (2 weeks)
 
