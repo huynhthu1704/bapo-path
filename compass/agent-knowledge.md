@@ -73,8 +73,8 @@ the same PR. It is written by hand (not generated).
   appears, since, audience). A new feature gets audience `owner`; features live before flags default to `everyone`.
 - Check a feature with `useFeature('<key>')` / `useFeatures()` from `src/components/ui.jsx` in **every** place it shows
   (menu, Home, search, buttons) and map its routes in `ROUTE_FLAGS`; routes are wrapped in `FlagGate` ("Coming soon").
-- The Owner moves audiences owner → beta → everyone in the admin Features settings (today *Prompt admin → Insights →
-  Features*; its own *Admin › Features* page comes with REQ-037 part 2). Preview any flag with `?preview=<flag>`.
+- The Owner rolls features out on the **Features** page (`#/pw-admin/features`, Owner only; *Admin › Features* after
+  REQ-038): switch "Released to everyone", or keep it off and tick beta testers. Preview any flag with `?preview=<flag>`.
 - Flags still at `owner`: `prompts`, `pmTrack` (Product Manager track, REQ-036; roll out after the Owner has read the lessons).
 
 ## 7. Tests and CI/CD

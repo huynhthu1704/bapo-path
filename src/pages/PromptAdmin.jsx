@@ -1,14 +1,14 @@
 // Prompt admin (sprint 2 + 3): A1 list, A2 editor, preview, A3 review queue, A4 review,
-// A5 version history, A6 taxonomy, A7 staff, A8 feedback inbox, A9 insights + audit log + features.
+// A5 version history, A6 taxonomy, A7 staff, A8 feedback inbox, A9 insights + audit log, A10 features (REQ-037).
 // Roles: Owner (admins/{uid}), Reviewer, Editor (staff/{uid}). Firestore rules enforce the same.
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore, DEMO_PEOPLE } from '../store.jsx';
-import { Icon, Tag, PageHead, Loading, Spinner, track } from '../components/ui.jsx';
+import { Icon, Tag, PageHead, Loading, Spinner, Toggle, track } from '../components/ui.jsx';
 import { LOCAL_MODE } from '../firebase.js';
 import { PROMPTS as BUNDLED, ROLES } from '../data/prompts/index.js';
 import { DEFAULT_TAXONOMY, usePromptData, loadPromptData } from '../data/promptStore.js';
-import { FLAGS, AUDIENCES, audienceOf, remoteFlags, setRemoteFlags, useFlags } from '../data/flags.js';
+import { FLAGS, audienceOf, remoteFlags, setRemoteFlags, useFlags } from '../data/flags.js';
 import * as api from '../data/promptApi.js';
 import { PhaseChip, PromptDetailView, ago } from './Prompts.jsx';
 
@@ -42,6 +42,7 @@ function Shell({ title, sub, actions, children }) {
     ['/pw-admin/feedback', 'Feedback', isReviewer(role)],
     ['/pw-admin/taxonomy', 'Taxonomy', role === 'owner'],
     ['/pw-admin/staff', 'Staff', role === 'owner'],
+    ['/pw-admin/features', 'Features', role === 'owner'],
     ['/pw-admin/insights', 'Insights', role === 'owner'],
   ];
   return (
@@ -618,12 +619,84 @@ export function FeedbackInbox() {
   );
 }
 
-// ---------- A9 insights, audit log, features ----------
-export function Insights() {
+// ---------- A10 features (REQ-037, design SCR-5) ----------
+// Who sees each feature. Stored as settings/site.flags.<key> = { audience, beta }: the switch "Released to everyone"
+// sets audience 'everyone'; off means 'beta' when the feature has beta testers, else 'owner'.
+const FEATURE_FILTERS = [['all', 'All'], ['released', 'Released'], ['unreleased', 'Unreleased'], ['beta', 'Beta']];
+export function Features() {
   const { role, me } = useStore();
   useFlags();
+  const [dir, setDir] = useState([]); const [q, setQ] = useState(''); const [filter, setFilter] = useState('all');
+  const act = useAction();
+  useEffect(() => { if (role === 'owner') api.listDirectory().then(setDir).catch(() => {}); }, [role]);
+  if (role !== 'owner') return <Shell title="Features"><p className="body muted">Only the Owner can change features.</p></Shell>;
+
+  const betaOf = (key) => (remoteFlags()[key] || {}).beta || [];
+  const stateOf = (key) => { const a = audienceOf(key); return a === 'everyone' ? 'released' : a === 'beta' && betaOf(key).length ? 'beta' : 'owner'; };
+  const save = (key, patch) => act.run(async () => {
+    const next = { ...remoteFlags(), [key]: { audience: audienceOf(key), beta: betaOf(key), ...patch } };
+    await api.saveFlags(next, me, `${FLAGS[key].name}: ${next[key].audience}`); setRemoteFlags(next);
+  }, 'Feature setting saved.');
+  const setReleased = (key, on) => save(key, { audience: on ? 'everyone' : betaOf(key).length ? 'beta' : 'owner' });
+  const setBeta = (key, list) => save(key, { beta: list, ...(audienceOf(key) === 'everyone' ? {} : { audience: list.length ? 'beta' : 'owner' }) });
+
+  const keys = Object.keys(FLAGS);
+  const count = (f) => keys.filter((k) => f === 'all' || (f === 'unreleased' ? stateOf(k) !== 'released' : stateOf(k) === f)).length;
+  const ql = q.trim().toLowerCase();
+  const shown = keys.filter((k) => (filter === 'all' || (filter === 'unreleased' ? stateOf(k) !== 'released' : stateOf(k) === filter))
+    && (!ql || `${k} ${FLAGS[k].name} ${FLAGS[k].where}`.toLowerCase().includes(ql)));
+  const STATUS = { released: ['Everyone', 'success'], beta: [null, 'accent'], owner: ['Owner only', 'ink'] };
+
+  return (
+    <Shell title="Features" sub="Who sees each feature. Roll out to beta testers first, then to everyone.">
+      <p className="small muted">Turn a feature on for everyone, or keep it off and pick beta testers. Owner and staff always see every feature. Every change is written to the audit log.</p>
+      <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
+      <div className="row center wrap gap8">
+        <div className="search" style={{ flex: '1 1 240px', maxWidth: 'none', background: '#fff', border: '1px solid var(--border)' }}><Icon name="Search" size={18} color="#94A3B8" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search features" aria-label="Search features" /></div>
+        <div className="seg" role="group" aria-label="Filter features" style={{ flexWrap: 'wrap' }}>
+          {FEATURE_FILTERS.map(([k, l]) => <button key={k} type="button" className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} ({count(k)})</button>)}
+        </div>
+      </div>
+      {!shown.length && <p className="body muted">No feature matches.</p>}
+      {shown.map((key) => {
+        const f = FLAGS[key]; const st = stateOf(key); const beta = betaOf(key); const released = st === 'released';
+        const [label, tone] = STATUS[st];
+        return (
+          <section key={key} className="card flag-card" aria-label={f.name}>
+            <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
+              <span className="bg-primary-soft c-primary" style={{ width: 40, height: 40, borderRadius: 10, display: 'grid', placeItems: 'center', flex: 'none' }}><Icon name={f.icon || 'Flag'} size={20} /></span>
+              <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
+                <h2 className="label">{f.name}</h2>
+                <span className="small muted">{f.where}</span>
+                <span className="caption faint">{f.since ? `Since ${f.since}` : 'Live before flags'}</span>
+              </div>
+              <Tag tone={tone}>{label || `Beta · ${beta.length} ${beta.length === 1 ? 'person' : 'people'}`}</Tag>
+            </div>
+            <div className="row center wrap gap10">
+              <Toggle on={released} label={`Released to everyone: ${f.name}`} onChange={(v) => { if (!act.busy) setReleased(key, v); }} />
+              <span className="label">Released to everyone</span>
+              {!released && <span className="caption faint">Off: Owner and staff see it{beta.length ? ', plus the beta testers below' : ''}. Preview link: <code>?preview={key}</code></span>}
+            </div>
+            {!released && (
+              <div className="col gap6"><span className="caption muted">Beta testers · {beta.length}</span>
+                {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
+                  <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => setBeta(key, on ? beta.filter((x) => x !== d._id) : [...beta, d._id])} />{d.name || d.email} <span className="faint">{d.email}</span></label>
+                ); })}
+                {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </Shell>
+  );
+}
+
+// ---------- A9 insights, audit log ----------
+export function Insights() {
+  const { role, me } = useStore();
   const D = usePromptData();
-  const [stats, setStats] = useState(null); const [month, setMonth] = useState([]); const [logs, setLogs] = useState(null); const [dir, setDir] = useState([]);
+  const [stats, setStats] = useState(null); const [month, setMonth] = useState([]); const [logs, setLogs] = useState(null);
   const [sort, setSort] = useState('copies');
   const act = useAction();
   useEffect(() => {
@@ -631,7 +704,6 @@ export function Insights() {
     api.listStats().then(setStats).catch((e) => { act.setErr(friendly(e)); setStats([]); });
     api.listMonth().then(setMonth).catch(() => {});
     api.listLogs().then(setLogs).catch((e) => { act.setErr(friendly(e)); setLogs([]); });
-    api.listDirectory().then(setDir).catch(() => {});
   }, [role]); // eslint-disable-line
   if (role !== 'owner') return <Shell title="Insights"><p className="body muted">Only the Owner can see insights.</p></Shell>;
 
@@ -642,13 +714,6 @@ export function Insights() {
   const ratings = rows.reduce((n, r) => n + r.count, 0); const avg = ratings ? rows.reduce((n, r) => n + r.avg * r.count, 0) / ratings : 0;
   const sorted = [...rows].sort((a, b) => (sort === 'rating' ? b.avg - a.avg || b.count - a.count : b.copies - a.copies));
 
-  // One setting per feature in src/data/flags.js (bug #45: this used to cover only the Prompt Workbench).
-  const saveFlag = (key, patch, what) => act.run(async () => {
-    const cur = remoteFlags()[key] || {};
-    const next = { ...remoteFlags(), [key]: { audience: audienceOf(key), beta: cur.beta || [], ...patch } };
-    await api.saveFlags(next, me, what); setRemoteFlags(next);
-  }, 'Feature setting saved.');
-
   return (
     <Shell title="Insights" sub="How learners use the prompts. Counts only — no names or emails.">
       <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
@@ -657,35 +722,11 @@ export function Insights() {
           <div key={l} className="card"><span className="caption faint">{l}</span><span className="h1">{v}</span></div>
         ))}
       </div>
-      <div className="grid g2">
-        <section className="card p24">
+      <section className="card p24">
           <h2 className="h3">Top 10 this month</h2>
           {!top.length && <p className="small faint">No copies yet this month.</p>}
           <ol className="top-list">{top.map((m) => <li key={m.promptId}><span className="grow">{title(m.promptId)}</span><b>{m.copies}</b></li>)}</ol>
-        </section>
-        <section className="card p24">
-          <h2 className="h3">Features</h2>
-          <p className="small muted">Who sees each new feature. Staff always see them. Every change is written to the audit log.</p>
-          {Object.entries(FLAGS).map(([key, f]) => {
-            const audience = audienceOf(key); const beta = (remoteFlags()[key] || {}).beta || [];
-            return (
-              <div key={key} className="col gap6">
-                <label className="col gap6"><span className="label">{f.name}</span>
-                  <select className="input" aria-label={`Audience: ${f.name}`} value={audience} disabled={act.busy} onChange={(e) => saveFlag(key, { audience: e.target.value }, `${f.name}: ${e.target.value}`)}>{AUDIENCES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
-                </label>
-                {audience === 'beta' && (
-                  <div className="col gap6"><span className="caption muted">Beta testers · {beta.length}</span>
-                    {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
-                      <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => saveFlag(key, { beta: on ? beta.filter((x) => x !== d._id) : [...beta, d._id] }, `${f.name} beta: ${on ? 'removed' : 'added'} ${d.email || d.name}`)} />{d.name || d.email} <span className="faint">{d.email}</span></label>
-                    ); })}
-                    {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </section>
-      </div>
+      </section>
       <section className="card p0">
         <div className="row center list-head"><h2 className="h3 grow">All prompts</h2>
           <div className="seg" role="group" aria-label="Sort"><button type="button" className={sort === 'copies' ? 'on' : ''} onClick={() => setSort('copies')}>Most copied</button><button type="button" className={sort === 'rating' ? 'on' : ''} onClick={() => setSort('rating')}>Best rated</button></div></div>

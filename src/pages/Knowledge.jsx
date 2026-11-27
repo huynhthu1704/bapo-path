@@ -158,8 +158,8 @@ export function TermDetail() {
             <button className="row center gap6 label c-primary" style={{ border: 0, background: 'none', padding: 0 }} onClick={() => speak(t.example)}><Icon name="Volume2" size={16} />Hear the sentence</button></div>
           <Translations id={id} mode="full" className="card p24" />
           <div className="row gap10 wrap">
-            {!learned ? <button className="btn btn-primary" onClick={() => a.learnTerm(id)}>I know this term · +5 XP</button> : <span className="btn btn-secondary c-success"><Icon name="Check" size={16} />Learned</span>}
-            <button className="btn btn-secondary" disabled={inCards} onClick={() => a.addCards([id])}>{inCards ? 'In your flashcards' : 'Add to flashcards'}</button>
+            {!learned ? <button className="btn btn-primary" onClick={() => a.learnTerm(id)}>I know this term{on('rewards') ? ' · +5 XP' : ''}</button> : <span className="btn btn-secondary c-success"><Icon name="Check" size={16} />Learned</span>}
+            {on('practice') && <button className="btn btn-secondary" disabled={inCards} onClick={() => a.addCards([id])}>{inCards ? 'In your flashcards' : 'Add to flashcards'}</button>}
           </div>
         </div>
         <div className="col" style={{ width: 360, maxWidth: '100%', gap: 16 }}>
@@ -245,10 +245,10 @@ export function Saved() {
   const list = items.filter((t) => f === 'all' || t.cat === f);
   return (
     <>
-      <PageHead title="Saved terms" sub={`${items.length} term${items.length === 1 ? '' : 's'} you bookmarked. Practise them as flashcards any time.`}>
+      <PageHead title="Saved terms" sub={`${items.length} term${items.length === 1 ? '' : 's'} you bookmarked.${on('practice') ? ' Practise them as flashcards any time.' : ''}`}>
         {on('practice') && <button className="btn btn-primary" disabled={!items.length} onClick={() => nav('/flashcards?saved=1')}>Practise saved terms</button>}
       </PageHead>
-      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><FeatureLink to="/general" className="btn btn-primary">Browse the glossary</FeatureLink></div> : <>
+      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term to save it here.</span><FeatureLink to="/general" className="btn btn-primary">Browse the glossary</FeatureLink></div> : <>
         <div className="row wrap gap10"><button className={`chip ${f === 'all' ? 'on' : ''}`} onClick={() => setF('all')}>All ({items.length})</button>{cats.map((c) => <button key={c} className={`chip ${f === c ? 'on' : ''}`} onClick={() => setF(c)}>{CAT_BY_ID[c].short} ({items.filter((t) => t.cat === c).length})</button>)}</div>
         <div className="grid g3">{list.map((t) => (
           <FeatureLink keep key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><Translations id={t.id} mode="term" /><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></FeatureLink>))}</div>

@@ -24,7 +24,7 @@ const ADMIN_ROUTES = [
   ['/pw-admin', adm('AdminPrompts')], ['/pw-admin/new', adm('PromptEditor')], ['/pw-admin/edit/:id', adm('PromptEditor')],
   ['/pw-admin/preview/:id', adm('PromptPreview')], ['/pw-admin/review', adm('ReviewQueue')], ['/pw-admin/review/:id', adm('ReviewPrompt')],
   ['/pw-admin/history/:id', adm('VersionHistory')], ['/pw-admin/taxonomy', adm('Taxonomy')], ['/pw-admin/staff', adm('Staff')],
-  ['/pw-admin/feedback', adm('FeedbackInbox')], ['/pw-admin/insights', adm('Insights')],
+  ['/pw-admin/feedback', adm('FeedbackInbox')], ['/pw-admin/insights', adm('Insights')], ['/pw-admin/features', adm('Features')],
 ];
 
 function ScrollTop() {
@@ -40,6 +40,8 @@ const focus = (el) => <RequireOnboarding>{el}</RequireOnboarding>;
 // REQ-037: every feature page sits behind its feature flag. A glossary of a framework or domain category (and its terms)
 // belongs to that feature, not to the general glossary.
 const flagged = (path, el, flag) => <FlagGate flag={flag || ROUTE_FLAGS[path.split('/')[1]]}>{el}</FlagGate>;
+// Full-screen pages (no menu): "Coming soon" still shows inside the normal page frame.
+const flaggedFocus = (path, el) => <FlagGate flag={ROUTE_FLAGS[path.split('/')[1]]} framed>{el}</FlagGate>;
 
 export default function App({ kbVersion = 0 }) {
   return (
@@ -55,7 +57,7 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/home" element={inApp(<Home />)} />
           <Route path="/roadmap" element={inApp(flagged('/roadmap', <Roadmap />))} />
           <Route path="/skill/:id" element={inApp(flagged('/skill/:id', <SkillDetail />))} />
-          <Route path="/challenge/:track/:level" element={focus(flagged('/challenge/:track/:level', <Challenge />))} />
+          <Route path="/challenge/:track/:level" element={focus(flaggedFocus('/challenge/:track/:level', <Challenge />))} />
           <Route path="/general" element={inApp(flagged('/general', <General />))} />
           <Route path="/glossary/:cat" element={inApp(flagged('/glossary/:cat', <Glossary />, ({ cat }) => catFlag(cat)))} />
           <Route path="/term/:id" element={inApp(flagged('/term/:id', <TermDetail />, ({ id }) => termFlag(id)))} />
@@ -66,14 +68,14 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/domain/:id" element={inApp(flagged('/domain/:id', <DomainDetail />))} />
           <Route path="/saved" element={inApp(flagged('/saved', <Saved />))} />
           <Route path="/practice" element={inApp(flagged('/practice', <PracticeSetup />))} />
-          <Route path="/flashcards" element={focus(flagged('/flashcards', <Flashcards />))} />
-          <Route path="/quiz" element={focus(flagged('/quiz', <Quiz />))} />
+          <Route path="/flashcards" element={focus(flaggedFocus('/flashcards', <Flashcards />))} />
+          <Route path="/quiz" element={focus(flaggedFocus('/quiz', <Quiz />))} />
           <Route path="/results" element={inApp(flagged('/results', <Results />))} />
           <Route path="/profile" element={inApp(<Profile />)} />
           <Route path="/achievements" element={inApp(flagged('/achievements', <Achievements />))} />
           <Route path="/collection" element={inApp(flagged('/collection', <Collection />))} />
           <Route path="/story" element={inApp(flagged('/story', <Story />))} />
-          <Route path="/speed" element={focus(flagged('/speed', <Speed />))} />
+          <Route path="/speed" element={focus(flaggedFocus('/speed', <Speed />))} />
           <Route path="/circle" element={inApp(flagged('/circle', <Circle />))} />
           <Route path="/jobs" element={inApp(flagged('/jobs', <Jobs />))} />
           <Route path="/library" element={inApp(flagged('/library', <Library />))} />

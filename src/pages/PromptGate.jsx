@@ -3,13 +3,14 @@
 import { Suspense } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useStore } from '../store.jsx';
-import { Loading } from '../components/ui.jsx';
+import { Loading, Layout } from '../components/ui.jsx';
 import { LOCAL_MODE } from '../firebase.js';
 import { FLAGS, can, capturePreview, useFlags } from '../data/flags.js';
 
 /** Shows the page only when its feature is on for this visitor; otherwise "Coming soon".
- *  flag: a FLAGS key, or a function of the route params that returns one. */
-export function FlagGate({ flag = 'prompts', children }) {
+ *  flag: a FLAGS key, or a function of the route params that returns one.
+ *  framed: the page has no menu of its own (full-screen), so "Coming soon" is shown inside the normal page frame. */
+export function FlagGate({ flag = 'prompts', framed, children }) {
   const loc = useLocation();
   const params = useParams();
   capturePreview(loc.search);
@@ -19,13 +20,14 @@ export function FlagGate({ flag = 'prompts', children }) {
   if (!key || can(key, { role, uid: me && me.uid })) return <Suspense fallback={<Loading label="Loading…" />}>{children}</Suspense>;
   if (sync === 'loading') return <Loading label="Checking access…" />;
   const name = key === 'prompts' ? 'The Prompt Workbench' : FLAGS[key].name;
-  return (
+  const soon = (
     <div className="card p28" style={{ maxWidth: 560 }}>
       <h1 className="h2">Coming soon</h1>
       <p className="body muted">{name} is not available yet. It will open here once it is released.</p>
       <Link to="/home" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Back to Home</Link>
     </div>
   );
+  return framed ? <Layout>{soon}</Layout> : soon;
 }
 
 // Prompt admin area: Owner, Reviewers and Editors only (Firestore rules enforce the same).
