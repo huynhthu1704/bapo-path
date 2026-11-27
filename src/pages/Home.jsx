@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, useFeatures } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, useFeatures, FeatureLink } from '../components/ui.jsx';
 import { useStore, rankInfo, skillState, dueCards, dayStr, addDays } from '../store.jsx';
 import { SKILLS } from '../data/skills.js';
 import { TERMS } from '../data/terms.js';
@@ -25,6 +25,7 @@ export default function Home() {
   const q = quests(s);
   const allDone = q.every((x) => x.cur >= x.tot);
   const due = dueCards(s).length;
+  const cont = on('roadmap') || (due > 0 && on('practice')); // the "Continue learning" card has something to show
   const week = Array.from({ length: 7 }, (_, i) => addDays(dayStr(), i - 6));
   const board = circleBoard(s).slice(0, 4);
   const setTerms = TERMS.filter((t) => t.cat === 'team' && t.sub !== 'Ways of working');
@@ -68,22 +69,22 @@ export default function Home() {
         </div>
       </div>}
 
-      {(on('rewards') || on('roadmap') || (due > 0 && on('practice'))) && <div className="home-split" style={on('rewards') ? undefined : { gridTemplateColumns: 'minmax(0, 1fr)' }}>
+      {(on('rewards') || cont) && <div className="home-split" style={on('rewards') && cont ? undefined : { gridTemplateColumns: 'minmax(0, 1fr)' }}>
         {on('rewards') && <div className="card p24" style={{ gap: 4 }}>
           <div className="row center" style={{ paddingBottom: 8 }}><span className="h3 grow">Daily quests</span><span className="caption faint">Resets at midnight</span></div>
           {q.map((x) => { const done = x.cur >= x.tot; return (
-            <Link to={x.to} key={x.title} className="row center" style={{ gap: 14, padding: '12px 0' }}>
+            <FeatureLink keep to={x.to} key={x.title} className="row center" style={{ gap: 14, padding: '12px 0' }}>
               <IconBox name={done ? 'Check' : x.icon} tone={done ? 'success' : x.tone} />
               <div className="col grow gap6"><div className="row"><span className={`label grow ${done ? 'faint' : ''}`}>{x.title}</span><span className="caption faint">{x.cur} / {x.tot}</span></div><Progress value={(x.cur / x.tot) * 100} h={6} color={done ? 'var(--success)' : 'var(--primary)'} /></div>
               <Tag tone={done ? 'success' : 'accent'}>+{x.xp} XP</Tag>
-            </Link>); })}
+            </FeatureLink>); })}
           <div className="row center soft bg-accent-soft wrap" style={{ gap: 12, marginTop: 8 }}>
             <Icon name="Gift" size={22} color="#D97706" />
             <span className="small grow" style={{ minWidth: 200 }}>{s.daily.chest ? 'Bonus chest opened today. See you tomorrow!' : 'Finish all 3 quests to open the bonus chest: +50 XP'}</span>
             {!s.daily.chest && <button className="btn btn-primary" style={{ padding: '8px 14px' }} disabled={!allDone} onClick={a.claimChest}>Open chest</button>}
           </div>
         </div>}
-        {(on('roadmap') || (due > 0 && on('practice'))) && <div className="card p24">
+        {cont && <div className="card p24">
           <span className="overline c-primary">Continue learning</span>
           {!on('roadmap') ? null : next ? <>
             <div className="h2">{next.title}</div>

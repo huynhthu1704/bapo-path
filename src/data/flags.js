@@ -54,8 +54,13 @@ export const ROUTE_FLAGS = {
 const TYPE_FLAG = { framework: 'frameworks', domain: 'domains' };
 export const catFlag = (cat) => (CAT_BY_ID[cat] && TYPE_FLAG[CAT_BY_ID[cat].type]) || 'glossary';
 export const termFlag = (id) => (TERM_BY_ID[id] ? catFlag(TERM_BY_ID[id].cat) : 'glossary');
-/** The flag of a menu path such as '/story' (undefined for pages that are not a feature, e.g. Home). */
-export const flagOfPath = (to) => ROUTE_FLAGS[to.replace(/^\//, '').split(/[/?]/)[0]];
+/** The flag of a path such as '/story' or '/term/team-scrum?x=1' (undefined for pages that are not a feature, e.g. Home). */
+export function flagOfPath(to) {
+  const [first, second] = to.split('?')[0].replace(/^\//, '').split('/');
+  if (first === 'term' && second) return termFlag(second);
+  if (first === 'glossary' && second) return catFlag(second);
+  return ROUTE_FLAGS[first];
+}
 export const AUDIENCES = [
   ['owner', 'Owner and staff only'],
   ['beta', 'Beta testers'],

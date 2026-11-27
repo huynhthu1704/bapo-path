@@ -1,7 +1,7 @@
 import { Translations } from '../components/Translations.jsx';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, PageHead, FocusLayout, Check, LevelTag } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, PageHead, FocusLayout, Check, LevelTag, FeatureLink } from '../components/ui.jsx';
 import { useStore, dueCards, rankInfo, BADGES } from '../store.jsx';
 import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID } from '../data/terms.js';
 
@@ -186,7 +186,7 @@ export function Quiz() {
         })}
         {err && <span className="caption c-danger">{err}</span>}
         {checked && <div className="card row" style={{ gap: 14 }}><IconBox name="Lightbulb" tone={sel === q.answer ? 'success' : 'danger'} size={36} /><div className="col grow gap4"><span className={`label ${sel === q.answer ? 'c-success' : 'c-danger'}`}>{sel === q.answer ? 'Correct!' : 'Not quite.'} {q.term.term}{q.term.full ? ` (${q.term.full})` : ''}</span><span className="small muted">{q.term.def}</span><Translations id={q.term.id} mode="brief" /></div></div>}
-        <div className="row center"><Link to={`/term/${q.term.id}`} className="label c-primary" style={{ visibility: checked ? 'visible' : 'hidden' }}>Learn more: {q.term.term} →</Link><div className="grow" />
+        <div className="row center"><FeatureLink to={`/term/${q.term.id}`} className="label c-primary" style={{ visibility: checked ? 'visible' : 'hidden' }}>Learn more: {q.term.term} →</FeatureLink><div className="grow" />
           {!checked ? <button className="btn btn-primary" onClick={check}>Check answer</button> : <button className="btn btn-primary" onClick={next}>{i + 1 < qs.length ? 'Next question' : 'See results'}</button>}</div>
       </div>
     </FocusLayout>
@@ -251,7 +251,7 @@ export function Results() {
               {x.ok ? <span className="small muted">{x.right}</span> : <><span className="small c-danger">Your answer: {x.your}</span><span className="small c-success">Correct: {x.right}</span></>}
               {x.termId && <Translations id={x.termId} mode="term" />}
             </div>
-            <Link to={`/term/${x.termId}`} className="caption c-primary">Open term</Link>
+            <FeatureLink to={`/term/${x.termId}`} className="caption c-primary">Open term</FeatureLink>
           </div>))}
       </div>
     </>

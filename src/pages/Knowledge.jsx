@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, LevelTag } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, LevelTag, FeatureLink, useFeatures } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID, termsIn } from '../data/terms.js';
 import { DOMAINS, DOMAIN_BY_ID } from '../data/domains.js';
@@ -20,13 +20,13 @@ function CatCard({ c }) {
   const { s } = useStore();
   const all = termsIn(c.id); const got = all.filter((t) => s.learned.includes(t.id)).length; const pct = all.length ? Math.round((got / all.length) * 100) : 0;
   return (
-    <Link to={`/glossary/${c.id}`} className="card p24 hover" style={{ gap: 14 }}>
+    <FeatureLink to={`/glossary/${c.id}`} className="card p24 hover" style={{ gap: 14 }}>
       <div className="row center"><IconBox name={c.icon} tone={c.color} size={48} /><div className="grow" /><Tag tone={c.color === 'advanced' ? 'advanced' : c.color}>{all.length} terms</Tag></div>
       <div className="h2">{c.name}</div><p className="small muted grow">{c.desc}</p>
       <div className="row wrap gap6">{all.slice(0, 4).map((t) => <Tag key={t.id} tone="ink">{t.term}</Tag>)}</div>
       <Progress value={pct} h={6} color={`var(--${c.color})`} />
       <div className="row center"><span className="caption faint grow">{pct}% learned</span><span className="label c-primary row center gap6">Open <Icon name="ArrowRight" size={16} /></span></div>
-    </Link>
+    </FeatureLink>
   );
 }
 
@@ -49,6 +49,7 @@ export function VocabCard({ compact }) {
 }
 
 export function General() {
+  const { on, onPath } = useFeatures(); // REQ-037: links to other features show only when those are on
   const groups = [
     ['Workplace basics', 'Everyday language of an IT company.', ['team', 'corp']],
     ['Software engineering & testing', 'From the courses “Nhập môn Công nghệ Phần mềm” and “Lý thuyết Kiểm thử Phần mềm” (ISTQB Foundation).', ['se', 'qa']],
@@ -63,33 +64,34 @@ export function General() {
           <div className="grid g3">{ids.includes('team') && <VocabCard />}{ids.map((id) => CAT_BY_ID[id]).filter(Boolean).map((c) => <CatCard key={c.id} c={c} />)}</div>
         </section>
       ))}
-      <section className="col" style={{ gap: 14 }}>
+      {on('frameworks') && <section className="col" style={{ gap: 14 }}>
         <div className="row end stack-sm"><div className="col grow gap4"><h2 className="h2">Bodies of knowledge</h2><span className="small muted">The two standards every BA, PO and PM should know — summarised, with their own glossaries.</span></div><Link to="/frameworks" className="btn btn-secondary">BABOK & PMBOK overview</Link></div>
         <div className="grid g2">{['babok', 'pmbok'].map((id) => CAT_BY_ID[id]).map((c) => <CatCard key={c.id} c={c} />)}</div>
-      </section>
+      </section>}
       <div className="row stretch stack-sm gap24">
         <div className="card p24 grow"><h3 className="h3">Browse A – Z</h3>
-          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.cat !== 'it' && t.term[0].toUpperCase() === ch); return (
+          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.cat !== 'it' && onPath(`/term/${t.id}`) && t.term[0].toUpperCase() === ch); return (
             <Link key={ch} to={has ? `/glossary/all?letter=${ch}` : '#'} className="mark" style={{ background: has ? 'var(--bg)' : 'transparent', color: has ? 'var(--ink-2)' : 'var(--border)', fontWeight: 600, pointerEvents: has ? 'auto' : 'none' }}>{ch}</Link>); })}</div>
         </div>
         <div className="card p24" style={{ width: 460, maxWidth: '100%', gap: 4 }}>
           <div className="row center gap8" style={{ paddingBottom: 8 }}><Icon name="TrendingUp" size={18} color="#4F46E5" /><h3 className="h3">Popular this week</h3></div>
-          {popular.map((t) => <Link key={t.id} to={`/term/${t.id}`} className="row center gap8" style={{ padding: '10px 0' }}><span className="label grow">{t.term}</span><span className="caption faint">{CAT_BY_ID[t.cat].short}</span><Icon name="ChevronRight" size={16} color="#94A3B8" /></Link>)}
+          {popular.filter((t) => onPath(`/term/${t.id}`)).map((t) => <Link key={t.id} to={`/term/${t.id}`} className="row center gap8" style={{ padding: '10px 0' }}><span className="label grow">{t.term}</span><span className="caption faint">{CAT_BY_ID[t.cat].short}</span><Icon name="ChevronRight" size={16} color="#94A3B8" /></Link>)}
         </div>
       </div>
       <div className="row center soft bg-accent-soft" style={{ gap: 14, padding: 20, borderRadius: 16 }}><Icon name="Languages" size={22} color="#D97706" /><span className="body grow">Want translations under each term? Choose Vietnamese, Korean or French in your profile.</span><Link to="/profile#languages" className="label c-accent">Choose languages</Link></div>
-      <Link to="/references" className="row center small muted gap8"><Icon name="Library" size={16} />Where this content comes from: see References</Link>
+      <FeatureLink to="/references" className="row center small muted gap8"><Icon name="Library" size={16} />Where this content comes from: see References</FeatureLink>
     </>
   );
 }
 
 export function Glossary() {
+  const { on, onPath } = useFeatures();
   const { cat } = useParams();
   const [params] = useSearchParams();
   const { s } = useStore();
   const nav = useNavigate();
   const c = CAT_BY_ID[cat];
-  const base = cat === 'all' ? TERMS : termsIn(cat);
+  const base = cat === 'all' ? TERMS.filter((t) => onPath(`/term/${t.id}`)) : termsIn(cat); // REQ-037: only terms of features that are on
   const subs = ['All', ...new Set(base.map((t) => t.sub))];
   const [sub, setSub] = useState('All'); const [q, setQ] = useState(''); const [lv, setLv] = useState(0);
   const letter = params.get('letter');
@@ -100,7 +102,7 @@ export function Glossary() {
     <>
       <Crumbs items={[parent, [title]]} />
       <PageHead title={title} sub={`${base.length} terms · ${base.filter((t) => s.learned.includes(t.id)).length} learned · ${base.filter((t) => s.saved.includes(t.id)).length} saved`}>
-        <button className="btn btn-primary" onClick={() => nav(`/quiz?mode=mixed&terms=${list.map((t) => t.id).join(',')}&n=${Math.min(10, list.length)}`)} disabled={list.length < 4}>Practise these terms</button>
+        {on('practice') && <button className="btn btn-primary" onClick={() => nav(`/quiz?mode=mixed&terms=${list.map((t) => t.id).join(',')}&n=${Math.min(10, list.length)}`)} disabled={list.length < 4}>Practise these terms</button>}
       </PageHead>
       {cat === 'it' && <VocabCard compact />}
       <div className="row center wrap gap10">
@@ -127,6 +129,7 @@ export function Glossary() {
 export function TermDetail() {
   const { id } = useParams();
   const { s, a, tracks } = useStore();
+  const { on } = useFeatures(); // REQ-037: "Used in skills" only while the roadmap is on
   const t = TERM_BY_ID[id];
   if (!t) return <p>Term not found.</p>;
   const c = CAT_BY_ID[t.cat];
@@ -134,7 +137,7 @@ export function TermDetail() {
   const idx = siblings.findIndex((x) => x.id === id);
   const prev = siblings[idx - 1]; const next = siblings[idx + 1];
   const related = siblings.filter((x) => x.sub === t.sub && x.id !== id).slice(0, 6);
-  const usedIn = SKILLS.filter((k) => tracks.some((t) => t.id === k.track) && k.terms.includes(id));
+  const usedIn = (on('roadmap') ? SKILLS : []).filter((k) => tracks.some((t) => t.id === k.track) && k.terms.includes(id));
   const learned = s.learned.includes(id); const inCards = !!s.cards[id];
   return (
     <>
@@ -198,6 +201,7 @@ export function DomainDetail() {
   const { id } = useParams();
   const { s } = useStore();
   const nav = useNavigate();
+  const { on } = useFeatures(); // REQ-037
   const d = DOMAIN_BY_ID[id];
   const [tab, setTab] = useState('overview');
   if (!d) return <p>Domain not found.</p>;
@@ -208,7 +212,7 @@ export function DomainDetail() {
       <div className="panel-primary row center stack-sm" style={{ flexDirection: 'row', gap: 20 }}>
         <div className="badge-ic" style={{ width: 64, height: 64, background: '#fff', borderRadius: 16 }}><Icon name={d.icon} size={32} color="#4F46E5" /></div>
         <div className="col grow gap6"><h1 className="h1">{d.name}</h1><p className="body">{d.overview}</p></div>
-        <div className="col" style={{ width: 220, gap: 8 }}><span className="label">{Math.round((got / terms.length) * 100)}% learned</span><Progress value={(got / terms.length) * 100} h={6} color="#fff" track="rgba(255,255,255,.25)" /><button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${id}&n=${Math.min(10, terms.length)}`)}>Practise {d.name.split(' ')[0]} terms</button></div>
+        <div className="col" style={{ width: 220, gap: 8 }}><span className="label">{Math.round((got / terms.length) * 100)}% learned</span><Progress value={(got / terms.length) * 100} h={6} color="#fff" track="rgba(255,255,255,.25)" />{on('practice') && <button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${id}&n=${Math.min(10, terms.length)}`)}>Practise {d.name.split(' ')[0]} terms</button>}</div>
       </div>
       <div className="row" style={{ gap: 28, borderBottom: '1px solid var(--border)' }}>
         {[['overview', 'Overview'], ['processes', 'Key processes'], ['glossary', `Glossary (${terms.length})`]].map(([k, l]) => (
@@ -232,6 +236,7 @@ export function DomainDetail() {
 }
 
 export function Saved() {
+  const { on } = useFeatures();
   const { s } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState('all');
@@ -241,12 +246,12 @@ export function Saved() {
   return (
     <>
       <PageHead title="Saved terms" sub={`${items.length} term${items.length === 1 ? '' : 's'} you bookmarked. Practise them as flashcards any time.`}>
-        <button className="btn btn-primary" disabled={!items.length} onClick={() => nav('/flashcards?saved=1')}>Practise saved terms</button>
+        {on('practice') && <button className="btn btn-primary" disabled={!items.length} onClick={() => nav('/flashcards?saved=1')}>Practise saved terms</button>}
       </PageHead>
-      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><Link to="/general" className="btn btn-primary">Browse the glossary</Link></div> : <>
+      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><FeatureLink to="/general" className="btn btn-primary">Browse the glossary</FeatureLink></div> : <>
         <div className="row wrap gap10"><button className={`chip ${f === 'all' ? 'on' : ''}`} onClick={() => setF('all')}>All ({items.length})</button>{cats.map((c) => <button key={c} className={`chip ${f === c ? 'on' : ''}`} onClick={() => setF(c)}>{CAT_BY_ID[c].short} ({items.filter((t) => t.cat === c).length})</button>)}</div>
         <div className="grid g3">{list.map((t) => (
-          <Link key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><Translations id={t.id} mode="term" /><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></Link>))}</div>
+          <FeatureLink keep key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><Translations id={t.id} mode="term" /><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></FeatureLink>))}</div>
       </>}
     </>
   );

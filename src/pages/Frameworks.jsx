@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Crumbs, PageHead, Progress } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Crumbs, PageHead, Progress, FeatureLink, useFeature } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { CAT_BY_ID, TERM_BY_ID, termsIn } from '../data/terms.js';
 import { FRAMEWORKS } from '../data/frameworks.js';
@@ -13,7 +13,7 @@ export function SourceNote({ cat, compact }) {
   if (!refs.length) return null;
   return (
     <div className={compact ? 'card' : 'card p24'} style={{ gap: 8 }}>
-      <div className="row center gap8"><Icon name="Library" size={16} color="#475569" /><span className="label grow">Sources</span><Link to="/references" className="caption c-primary">All references</Link></div>
+      <div className="row center gap8"><Icon name="Library" size={16} color="#475569" /><span className="label grow">Sources</span><FeatureLink to="/references" className="caption c-primary">All references</FeatureLink></div>
       {refs.map((r) => (
         <span key={r.id} className="caption muted">
           {r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="c-primary">{r.title}</a> : <i>{r.title}</i>} — {r.author}, {r.year}.
@@ -64,6 +64,7 @@ export function FrameworkDetail() {
   const { id } = useParams();
   const f = FRAMEWORKS[id];
   const nav = useNavigate();
+  const practice = useFeature('practice'); // REQ-037
   const [tab, setTab] = useState('overview');
   if (!f) return <p>Framework not found.</p>;
   const terms = termsIn(f.glossary);
@@ -77,7 +78,7 @@ export function FrameworkDetail() {
         <div className="badge-ic" style={{ width: 64, height: 64, background: '#fff', borderRadius: 16 }}><Icon name={f.icon} size={32} color="#4F46E5" /></div>
         <div className="col grow gap6"><h1 className="h1">{f.name}</h1><p className="body">{f.intro}</p></div>
         <div className="col" style={{ gap: 8, minWidth: 200 }}>
-          <button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${f.glossary}&n=10`)}>Test yourself · 10 questions</button>
+          {practice && <button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${f.glossary}&n=10`)}>Test yourself · 10 questions</button>}
           <Link to={`/glossary/${f.glossary}`} className="btn" style={{ color: '#fff', background: 'rgba(255,255,255,.14)' }}>Glossary ({terms.length})</Link>
         </div>
       </div>
