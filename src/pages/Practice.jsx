@@ -194,9 +194,9 @@ export function Quiz() {
 }
 
 export function Results() {
-  const { s, a } = useStore();
+  const { s, a, unsavedResult, signedIn } = useStore();
   const nav = useNavigate();
-  const r = s.lastResult;
+  const r = (!signedIn && unsavedResult) || s.lastResult; // unsavedResult: a visitor's score, shown but not saved (REQ-035)
   const [showAll, setShowAll] = useState(false);
   const seen = useRef(false);
   useEffect(() => { if (r && r.fresh && !seen.current) { seen.current = true; const t = setTimeout(a.seenResult, 6000); return () => clearTimeout(t); } }, []); // eslint-disable-line
@@ -219,7 +219,7 @@ export function Results() {
           <h1 className="h1">{pct >= 90 ? 'Outstanding' : pct >= 70 ? 'Great job' : 'Good effort'}, {s.name || 'there'}!</h1>
           <p className="body muted">{r.mistakes.length ? `Your ${r.mistakes.length} mistake${r.mistakes.length > 1 ? 's are' : ' is'} now in your flashcards, ready for review.` : 'No mistakes — perfect run!'}</p>
           <div className="row wrap gap8">
-            <span className="pill bg-primary-soft c-primary"><Icon name="Star" size={16} />+{r.xp} XP</span>
+            {r.unsaved ? <span className="pill bg-accent-soft c-accent"><Icon name="CloudOff" size={16} />Not saved · sign in to keep your results</span> : <span className="pill bg-primary-soft c-primary"><Icon name="Star" size={16} />+{r.xp} XP</span>}
             {r.quest && <span className="pill bg-success-soft c-success"><Icon name="Check" size={16} />Quest: pass 1 quiz</span>}
             <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} />{s.streak.count}-day streak</span>
           </div>

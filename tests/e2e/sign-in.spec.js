@@ -54,3 +54,23 @@ test('TC-035d after signing in from the prompt, I stay on the page and the save 
   await page.reload();
   await expect(page.getByRole('button', { name: 'Remove from saved' }).first()).toBeVisible();
 });
+
+test('TC-035c a visitor who says Not now still sees their quiz score, marked as not saved', async ({ page }) => {
+  await page.goto('#/quiz?mode=mcq&n=2&cats=team&preview=googleOnly');
+  for (let i = 0; i < 2; i++) {
+    await page.locator('button.option').first().click();
+    await page.getByRole('button', { name: 'Check answer' }).click();
+    await page.getByRole('button', { name: /Next question|See results/ }).click();
+  }
+  const dialog = page.getByRole('dialog', { name: 'Sign in to save' });
+  await dialog.getByRole('button', { name: 'Not now' }).click();
+  await expect(page).toHaveURL(/#\/results/);
+  await expect(page.getByText('Not saved · sign in to keep your results')).toBeVisible();
+  await expect(page.getByText('No test results yet')).toHaveCount(0);
+});
+
+test('TC-035d signing in from the top bar while browsing leads to the setup, not back to sign-in', async ({ page }) => {
+  await page.goto(withFlag('/home'));
+  await page.getByRole('banner').getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/#\/onboarding\/1/);
+});

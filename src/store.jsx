@@ -117,8 +117,10 @@ export function StoreProvider({ children }) {
   const [askSignIn, setAskSignIn] = useState(false);
   const ready = useRef(false);
   // REQ-035: with the googleOnly flag on, a visitor who is not signed in can look around but nothing is saved.
-  // A save opens the "Sign in to save" prompt; the change waits in `pending` and is applied after sign-in.
-  const pending = useRef(null);
+  // A save opens the "Sign in to save" prompt; the changes wait in `pending` and are applied after sign-in.
+  const pending = useRef([]);
+  // A finished quiz shows its score even when the visitor chooses not to sign in (it is not saved).
+  const [unsavedResult, setUnsavedResult] = useState(null);
   const gated = useRef(() => false);
   useEffect(() => { const { toasts, ...rest } = state; localStorage.setItem(KEY, JSON.stringify(rest)); }, [state]);
 
@@ -139,7 +141,7 @@ export function StoreProvider({ children }) {
       });
       applyPending();
       ready.current = true; setSync('saved');
-    } catch (e) { console.warn(e); setSync('error'); }
+    } catch (e) { console.warn(e); setSync('error'); applyPending(); } // keep the held change on this device rather than lose it
   }), []);
   useEffect(() => {
     if (!user || !ready.current) return;
@@ -173,15 +175,15 @@ export function StoreProvider({ children }) {
   }), []);
   // Saves go through here. When saving needs sign-in, hold the change and ask the visitor to sign in.
   const update = useCallback((fn) => {
-    if (gated.current()) { pending.current = fn; setAskSignIn(true); return; }
+    if (gated.current()) { pending.current = [...pending.current, fn]; setAskSignIn(true); return; }
     apply(fn);
   }, [apply]);
   // After sign-in from the prompt: apply the held change and keep the visitor where they are
   // (they were already learning on the default path, so the setup steps are skipped).
   function applyPending() {
-    const fn = pending.current; if (!fn) return;
-    pending.current = null; setAskSignIn(false);
-    apply((s) => { fn(s); s.onboarded = true; });
+    const fns = pending.current; if (!fns.length) return;
+    pending.current = []; setAskSignIn(false); setUnsavedResult(null);
+    apply((s) => { for (const fn of fns) fn(s); s.onboarded = true; });
   }
   const signIn = useCallback(async () => {
     if (!LOCAL_MODE) return signInWithGoogle(); // the auth listener above loads progress, then applies the held change
@@ -196,7 +198,7 @@ export function StoreProvider({ children }) {
     try { localStorage.removeItem(DEMO_SIGNED_KEY); } catch (e) { /* ignore */ }
     setDemoSignedIn(false); return Promise.resolve();
   }, []);
-  const cancelSignIn = useCallback(() => { pending.current = null; setAskSignIn(false); }, []);
+  const cancelSignIn = useCallback(() => { pending.current = []; setAskSignIn(false); }, []);
 
   // shared mutations used inside update()
   const touch = (s) => {
@@ -238,15 +240,21 @@ export function StoreProvider({ children }) {
       gain(s, 2);
       if (rating === 'good' || rating === 'easy') learn(s, id);
     }),
-    recordAttempt: (r) => update((s) => {
-      const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
-      s.attempts.push({ date: dayStr(), score: r.score, total: r.total, mode: r.mode, cats: r.cats });
-      if (r.total && r.score / r.total >= 0.7) s.daily.quizPassed += 1;
-      for (const id of r.correctIds) learn(s, id);
-      for (const id of r.mistakes) s.cards[id] = { box: 1, due: dayStr() };
-      gain(s, xp);
-      s.lastResult = { ...r, xp, fresh: true, newBadges: [], quest: r.total && r.score / r.total >= 0.7 };
-    }),
+    recordAttempt: (r) => {
+      if (gated.current()) {
+        const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
+        setUnsavedResult({ ...r, xp, fresh: false, newBadges: [], quest: false, unsaved: true });
+      }
+      update((s) => {
+        const xp = r.score * 10 + (r.score === r.total && r.total >= 5 ? 20 : 0);
+        s.attempts.push({ date: dayStr(), score: r.score, total: r.total, mode: r.mode, cats: r.cats });
+        if (r.total && r.score / r.total >= 0.7) s.daily.quizPassed += 1;
+        for (const id of r.correctIds) learn(s, id);
+        for (const id of r.mistakes) s.cards[id] = { box: 1, due: dayStr() };
+        gain(s, xp);
+        s.lastResult = { ...r, xp, fresh: true, newBadges: [], quest: r.total && r.score / r.total >= 0.7 };
+      });
+    },
     seenResult: () => apply((s) => { if (s.lastResult) s.lastResult.fresh = false; }),
     passChallenge: (key) => update((s) => { if (!s.challengesPassed.includes(key)) { s.challengesPassed.push(key); gain(s, 300); } }),
     claimChest: () => update((s) => { if (!s.daily.chest) { s.daily.chest = true; gain(s, 50); } }),
@@ -283,7 +291,7 @@ export function StoreProvider({ children }) {
   const googleOnly = can('googleOnly', { role: signedIn ? role : null, uid: me && me.uid });
   gated.current = () => googleOnly && !signedIn;
   return <Ctx.Provider value={{ s: state, a: actions, user, admin: LOCAL_MODE ? role === 'owner' : admin, sync, role, me, setDemoPerson,
-    signedIn, googleOnly, signIn, signOut, askSignIn, cancelSignIn }}>{children}</Ctx.Provider>;
+    signedIn, googleOnly, signIn, signOut, askSignIn, cancelSignIn, unsavedResult }}>{children}</Ctx.Provider>;
 }
 
 export const useStore = () => useContext(Ctx);

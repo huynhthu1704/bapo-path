@@ -174,7 +174,16 @@ export function SignInPrompt() {
     if (!askSignIn) return undefined;
     const prev = document.activeElement;
     box.current?.querySelector('button')?.focus();
-    const onKey = (e) => { if (e.key === 'Escape') cancelSignIn(); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { cancelSignIn(); return; }
+      if (e.key !== 'Tab' || !box.current) return; // keep keyboard focus inside the dialog
+      const items = [...box.current.querySelectorAll('button:not([disabled])')];
+      if (!items.length) return;
+      const first = items[0]; const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!box.current.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    };
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('keydown', onKey); if (prev && prev.focus) prev.focus(); };
   }, [askSignIn, cancelSignIn]);

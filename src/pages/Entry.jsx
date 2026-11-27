@@ -244,6 +244,6 @@ export function RequireOnboarding({ children }) {
   const { s, user, sync, googleOnly, signedIn } = useStore();
   if (googleOnly && !signedIn) return children; // REQ-035: visitors look around on the default path without signing in
   if (!s.onboarded && user && sync === 'loading') return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><span className="body muted"><Spinner size={22} color="#4F46E5" label="Loading your progress…" /></span></div>;
-  if (!s.onboarded) return <Navigate to="/signup" replace />;
+  if (!s.onboarded) return <Navigate to={googleOnly ? '/onboarding/1' : '/signup'} replace />; // signed in but not set up yet
   return children;
 }
