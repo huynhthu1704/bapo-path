@@ -21,6 +21,13 @@ export function useFeatures() {
   const on = (key) => can(key, { role, uid: me && me.uid });
   return { on, onPath: (to) => { const k = flagOfPath(to); return !k || on(k); } };
 }
+/** A Link to another feature's page: nothing when that feature is off for this visitor (REQ-037), or with `keep` its
+ *  children as plain text (for cards whose content the page still needs). Same props as Link otherwise. */
+export function FeatureLink({ to, keep, children, ...rest }) {
+  const { onPath } = useFeatures();
+  if (onPath(typeof to === 'string' ? to : to.pathname || '')) return <Link to={to} {...rest}>{children}</Link>;
+  return keep ? <span className={rest.className} style={rest.style}>{children}</span> : null;
+}
 
 export const Icon = ({ name, size = 20, color, ...p }) => {
   const C = L[name] || L.Circle;

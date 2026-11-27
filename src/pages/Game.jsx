@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, PageHead, FocusLayout, Toggle, COLOR } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, PageHead, FocusLayout, Toggle, COLOR, FeatureLink, useFeature } from '../components/ui.jsx';
 import { useStore, rankInfo, BADGES, weekKey } from '../store.jsx';
 import { RANK_XP } from '../data/skills.js';
 import { CATEGORIES, TERMS, RARITY, termsIn } from '../data/terms.js';
@@ -44,6 +44,7 @@ export function Collection() {
   const { s } = useStore();
   const nav = useNavigate();
   const [set, setSet] = useState('team');
+  const practice = useFeature('practice'); // REQ-037
   const total = TERMS.length; const got = TERMS.filter((t) => s.learned.includes(t.id));
   const cards = termsIn(set); const have = cards.filter((t) => s.learned.includes(t.id)).length;
   const cat = CATEGORIES.find((c) => c.id === set);
@@ -51,7 +52,7 @@ export function Collection() {
   return (
     <>
       <PageHead title="Term Collection" sub="Every term you learn becomes a card. Complete a set to earn the Collector badge. Harder terms are rarer cards.">
-        <button className="btn btn-primary" disabled={!missing.length} onClick={() => nav(`/flashcards?terms=${missing.map((t) => t.id).join(',')}&n=${missing.length}`)}>Collect missing cards</button>
+        {practice && <button className="btn btn-primary" disabled={!missing.length} onClick={() => nav(`/flashcards?terms=${missing.map((t) => t.id).join(',')}&n=${missing.length}`)}>Collect missing cards</button>}
       </PageHead>
       <div className="grid g4">
         {[[`${got.length} / ${total}`, 'Cards collected', 'primary'], [got.filter((t) => t.level === 1).length, 'Common', 'ink'], [got.filter((t) => t.level === 2).length, 'Rare', 'intermediate'], [got.filter((t) => t.level === 3).length, 'Epic', 'advanced']].map(([n, l, c]) => (
@@ -68,12 +69,12 @@ export function Collection() {
       <div className="row center"><h2 className="h2 grow">{cat.name} · {have} / {cards.length}</h2><span className="label c-primary">{cards.length - have ? `${cards.length - have} cards left to complete the set` : 'Set complete!'}</span></div>
       <div className="grid g6">
         {cards.map((t) => { const g = s.learned.includes(t.id); return g ? (
-          <Link key={t.id} to={`/term/${t.id}`} className={`collect-card r${t.level}`}>
+          <FeatureLink keep key={t.id} to={`/term/${t.id}`} className={`collect-card r${t.level}`}>
             <div className="stripe" style={{ background: t.level === 1 ? 'var(--ink-3)' : t.level === 2 ? 'var(--intermediate)' : 'var(--advanced)' }} />
             <span className="h3">{t.term}</span><span className="caption muted grow">{t.def.length > 70 ? t.def.slice(0, 68) + '…' : t.def}</span>
             <span className="overline" style={{ color: t.level === 1 ? 'var(--ink-3)' : t.level === 2 ? 'var(--intermediate)' : 'var(--advanced)' }}>{RARITY[t.level]}</span>
-          </Link>) : (
-          <Link key={t.id} to={`/term/${t.id}`} className="collect-card lock"><Icon name="Lock" size={24} /><span className="caption">Learn to unlock</span><span className="overline">{RARITY[t.level]}</span></Link>); })}
+          </FeatureLink>) : (
+          <FeatureLink keep key={t.id} to={`/term/${t.id}`} className="collect-card lock"><Icon name="Lock" size={24} /><span className="caption">Learn to unlock</span><span className="overline">{RARITY[t.level]}</span></FeatureLink>); })}
       </div>
     </>
   );

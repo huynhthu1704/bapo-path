@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, Tag, IconBox, PageHead, GoogleButton, Spinner, Loading, track } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, PageHead, GoogleButton, Spinner, Loading, track, FeatureLink } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { enabled, signInWithGoogle, listJobs, saveJob, deleteJob, listSearches, clearSearches, publishKnowledge, kbInfo, saveTerm, deleteTerm } from '../firebase.js';
 import { BUNDLED, KB_SOURCE } from '../knowledge.js';
@@ -164,15 +164,15 @@ export function Library() {
                 {list.map((x) => (
                   <div key={x.id} className="list-row" style={{ padding: '12px 24px' }}>
                     <Icon name="Search" size={16} color="#94A3B8" /><span className="small faint" style={{ width: 140 }}>“{x.q}”</span>
-                    {x.result ? <Link to={x.result.to} className="label c-primary grow">{x.result.label}</Link> : <span className="small muted grow">No result opened</span>}
+                    {x.result ? <FeatureLink keep to={x.result.to} className="label c-primary grow">{x.result.label}</FeatureLink> : <span className="small muted grow">No result opened</span>}
                     <span className="caption faint">{x.result?.meta}</span><span className="caption faint">{x.at.slice(11, 16)}</span>
                   </div>))}
               </div>))}
         </div>
         <div className="col" style={{ width: 340, maxWidth: '100%', gap: 16 }}>
           <div className="card"><span className="label">Most looked-up</span>{top.length ? <div className="row wrap gap6">{top.map(([l, n]) => <Tag key={l} tone="po">{l} · {n}</Tag>)}</div> : <span className="small muted">Appears after a few searches.</span>}</div>
-          <Link to="/saved" className="card hover row center" style={{ flexDirection: 'row' }}><IconBox name="Bookmark" /><div className="col grow" style={{ gap: 0 }}><span className="label">Saved terms</span><span className="caption faint">{s.saved.length} terms</span></div><Icon name="ChevronRight" color="#94A3B8" /></Link>
-          <Link to="/jobs" className="card hover row center" style={{ flexDirection: 'row' }}><IconBox name="Briefcase" tone="accent" /><div className="col grow" style={{ gap: 0 }}><span className="label">My Job Search</span><span className="caption faint">Private tracker</span></div><Icon name="ChevronRight" color="#94A3B8" /></Link>
+          <FeatureLink to="/saved" className="card hover row center" style={{ flexDirection: 'row' }}><IconBox name="Bookmark" /><div className="col grow" style={{ gap: 0 }}><span className="label">Saved terms</span><span className="caption faint">{s.saved.length} terms</span></div><Icon name="ChevronRight" color="#94A3B8" /></FeatureLink>
+          <FeatureLink to="/jobs" className="card hover row center" style={{ flexDirection: 'row' }}><IconBox name="Briefcase" tone="accent" /><div className="col grow" style={{ gap: 0 }}><span className="label">My Job Search</span><span className="caption faint">Private tracker</span></div><Icon name="ChevronRight" color="#94A3B8" /></FeatureLink>
         </div>
       </div>
     </>

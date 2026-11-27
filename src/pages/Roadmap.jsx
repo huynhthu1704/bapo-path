@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, Check, LevelTag, FocusLayout } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, Check, LevelTag, FocusLayout, useFeatures } from '../components/ui.jsx';
 import { useStore, skillState, challengeState, levelUnlocked } from '../store.jsx';
 import { SKILLS, LEVELS, TRACKS, SKILL_BY_ID, skillsFor } from '../data/skills.js';
 import { TERM_BY_ID } from '../data/terms.js';
@@ -129,6 +129,7 @@ export function SkillDetail() {
   const { id } = useParams();
   const { s, a } = useStore();
   const nav = useNavigate();
+  const feat = useFeatures(); // REQ-037: practice and term links only when those features are on
   const k = SKILL_BY_ID[id];
   if (!k) return <p>Skill not found. <Link to="/roadmap" className="c-primary">Back to roadmap</Link></p>;
   const st = skillState(s, k);
@@ -136,6 +137,7 @@ export function SkillDetail() {
   const doneN = levelList.filter((x) => s.completedSkills.includes(x.id)).length;
   const nextSkill = levelList[k.order + 1];
   const terms = k.terms.map((t) => TERM_BY_ID[t]).filter(Boolean);
+  const keyTerms = terms.filter((t) => feat.onPath(`/term/${t.id}`));
   const lvl = LEVELS[k.level - 1];
   return (
     <>
@@ -147,7 +149,7 @@ export function SkillDetail() {
           <p className="body muted">{k.summary}</p>
         </div>
         <div className="row gap10">
-          <button className="btn btn-secondary" disabled={!terms.length} onClick={() => nav(`/quiz?mode=mcq&terms=${k.terms.join(',')}&n=${Math.min(5, terms.length)}`)}>Practise this skill</button>
+          {feat.on('practice') && <button className="btn btn-secondary" disabled={!terms.length} onClick={() => nav(`/quiz?mode=mcq&terms=${k.terms.join(',')}&n=${Math.min(5, terms.length)}`)}>Practise this skill</button>}
           {st === 'done' ? <span className="btn btn-secondary c-success"><Icon name="Check" size={16} />Completed</span>
             : <button className="btn btn-primary" disabled={st === 'locked'} onClick={() => a.completeSkill(k.id)}>Mark as complete</button>}
         </div>
@@ -175,7 +177,7 @@ export function SkillDetail() {
         </div>
         <div className="col" style={{ width: 340, maxWidth: '100%', gap: 16 }}>
           <div className="card"><span className="label">Your {lvl.name} progress</span><Progress value={(doneN / levelList.length) * 100} color={LV_COLOR[k.level]} /><span className="caption faint">{doneN} of {levelList.length} skills</span></div>
-          {terms.length > 0 && <div className="card"><span className="label">Key terms</span><div className="row wrap gap6">{terms.map((t) => <Link key={t.id} to={`/term/${t.id}`}><Tag tone="po">{t.term}</Tag></Link>)}</div></div>}
+          {keyTerms.length > 0 && <div className="card"><span className="label">Key terms</span><div className="row wrap gap6">{keyTerms.map((t) => <Link key={t.id} to={`/term/${t.id}`}><Tag tone="po">{t.term}</Tag></Link>)}</div></div>}
           {nextSkill && <Link to={`/skill/${nextSkill.id}`} className="card hover"><span className="overline faint">Next skill</span><span className="h3">{nextSkill.title}</span><span className="row center gap6 label c-primary">Open <Icon name="ArrowRight" size={16} /></span></Link>}
           {!nextSkill && <ChallengeBanner track={k.track} level={k.level} />}
         </div>

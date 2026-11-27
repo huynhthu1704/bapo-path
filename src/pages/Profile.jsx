@@ -1,7 +1,6 @@
 import { LangPicker } from '../components/Translations.jsx';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, Toggle, LevelTag, Spinner } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, Toggle, LevelTag, Spinner, FeatureLink, useFeature } from '../components/ui.jsx';
 import { useStore, rankInfo, dayStr, addDays } from '../store.jsx';
 import { LEVELS, TRACKS, skillsFor } from '../data/skills.js';
 import { CATEGORIES, termsIn } from '../data/terms.js';
@@ -12,6 +11,7 @@ export default function Profile() {
   const { s, a, user, sync, signedIn, signOut, googleOnly, tracks } = useStore();
   const demoIn = !user && signedIn; // demo-mode sign-in (REQ-035)
   const r = rankInfo(s.xp, s.track);
+  const rewards = useFeature('rewards'); // REQ-037: rank and streak only while XP, rank and streak are on
   const [name, setName] = useState(s.name); const [edit, setEdit] = useState(false); const [confirm, setConfirm] = useState(false);
   const avg = s.attempts.length ? Math.round((s.attempts.reduce((t, x) => t + x.score / x.total, 0) / s.attempts.length) * 100) : 0;
   const week = Array.from({ length: 7 }, (_, i) => addDays(dayStr(), i - 6));
@@ -25,7 +25,7 @@ export default function Profile() {
         <span className="mark" style={{ width: 72, height: 72, borderRadius: 99, background: 'var(--primary-soft)', color: 'var(--primary)', fontSize: 30 }}>{(s.name || 'Y')[0].toUpperCase()}</span>
         <div className="col grow gap6">
           {edit ? <div className="row gap8"><input className="input" value={name} onChange={(e) => setName(e.target.value)} style={{ maxWidth: 320 }} /><button className="btn btn-primary" onClick={() => { a.set({ name: name.trim() || s.name }); setEdit(false); }}>Save</button></div> : <h1 className="h1">{s.name || 'Learner'}</h1>}
-          <div className="row wrap gap8"><Tag>{TRACKS[s.track].name}</Tag><LevelTag level={s.startLevel} /><Tag tone="ink">{r.name}</Tag></div>
+          <div className="row wrap gap8"><Tag>{TRACKS[s.track].name}</Tag><LevelTag level={s.startLevel} />{rewards && <Tag tone="ink">{r.name}</Tag>}</div>
         </div>
         {!edit && <button className="btn btn-secondary" onClick={() => setEdit(true)}>Edit profile</button>}
       </div>
@@ -39,7 +39,7 @@ export default function Profile() {
           : <GoogleButton primary label="Sign in with Google" />}
       </div>
       <div className="grid g4">
-        {[['Flame', 'accent', `${s.streak.count} days`, 'Current streak'], ['Route', 'primary', `${doneTotal} / ${allTrack}`, 'Skills completed'], ['BookOpen', 'po', s.learned.length, 'Terms learned'], ['Target', 'success', `${avg}%`, 'Average score']].map(([i, t, n, l]) => (
+        {[...(rewards ? [['Flame', 'accent', `${s.streak.count} days`, 'Current streak']] : []), ['Route', 'primary', `${doneTotal} / ${allTrack}`, 'Skills completed'], ['BookOpen', 'po', s.learned.length, 'Terms learned'], ['Target', 'success', `${avg}%`, 'Average score']].map(([i, t, n, l]) => (
           <div key={l} className="card"><IconBox name={i} tone={t} /><span className="h1">{n}</span><span className="small muted">{l}</span></div>))}
       </div>
       <div className="row stretch stack-sm gap24">
@@ -59,7 +59,7 @@ export default function Profile() {
       </div>
       <div className="row stretch stack-sm gap24">
         <div className="card p24 grow" style={{ gap: 14 }}><h3 className="h3">Knowledge strength</h3>
-          {strengths.map(([c, p]) => <div key={c.id} className="row center" style={{ gap: 12 }}><Link to={`/glossary/${c.id}`} className="small" style={{ width: 190 }}>{c.name}</Link><div className="grow"><Progress value={p} color={p >= 70 ? 'var(--success)' : p >= 40 ? 'var(--primary)' : p > 0 ? 'var(--accent-bright)' : 'var(--border)'} /></div><span className="caption faint" style={{ width: 36 }}>{p}%</span></div>)}
+          {strengths.map(([c, p]) => <div key={c.id} className="row center" style={{ gap: 12 }}><FeatureLink keep to={`/glossary/${c.id}`} className="small" style={{ width: 190 }}>{c.name}</FeatureLink><div className="grow"><Progress value={p} color={p >= 70 ? 'var(--success)' : p >= 40 ? 'var(--primary)' : p > 0 ? 'var(--accent-bright)' : 'var(--border)'} /></div><span className="caption faint" style={{ width: 36 }}>{p}%</span></div>)}
         </div>
         <div className="card p24" style={{ width: 440, maxWidth: '100%', gap: 4 }}><h3 className="h3" style={{ paddingBottom: 8 }}>Settings</h3>
           <Row label="Learning track"><div className="seg">{tracks.map((t) => <button key={t.id} className={s.track === t.id ? 'on' : ''} onClick={() => a.set({ track: t.id })}>{t.id}</button>)}</div></Row>
@@ -79,7 +79,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
-      <Link to="/achievements" className="card row center hover" style={{ flexDirection: 'row' }}><IconBox name="Award" tone="accent" /><span className="label grow">See your rank and badges</span><Icon name="ChevronRight" color="#94A3B8" /></Link>
+      <FeatureLink to="/achievements" className="card row center hover" style={{ flexDirection: 'row' }}><IconBox name="Award" tone="accent" /><span className="label grow">See your rank and badges</span><Icon name="ChevronRight" color="#94A3B8" /></FeatureLink>
     </>
   );
 }
