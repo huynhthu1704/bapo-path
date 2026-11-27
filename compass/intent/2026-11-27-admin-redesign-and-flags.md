@@ -1,6 +1,6 @@
 # Intent: A clearer sidebar and admin area, and every feature behind its own feature flag
 
-Status: Draft
+Status: Approved (by Christine, 2026-11-27)
 Requested: 2026-11-27 by Christine (Owner), in a Claude Code session
 
 ## What we want
