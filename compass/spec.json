@@ -699,7 +699,7 @@
       "title": "Admin Overview of what needs attention",
       "story": "As the Owner or staff I want an Overview of what needs my attention, so that I can act on it in two clicks or fewer.",
       "priority": "Should",
-      "status": "Approved",
+      "status": "Done",
       "source": "Requested by the Owner in chat on 2026-11-27",
       "intent": "compass/intent/2026-11-27-admin-redesign-and-flags.md",
       "design": "compass/design/2026-11-27-admin-redesign-and-flags.md",
@@ -1094,8 +1094,9 @@
       "reqIds": [
         "REQ-039"
       ],
-      "type": "manual",
-      "status": "Manual"
+      "type": "automated",
+      "status": "Passing",
+      "file": "tests/e2e/admin-overview.spec.js"
     }
   ]
 }

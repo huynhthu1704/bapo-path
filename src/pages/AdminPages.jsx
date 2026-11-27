@@ -1,5 +1,5 @@
 // Admin pages other than Prompts (REQ-038, moved out of PromptAdmin.jsx): A6 taxonomy, A7 staff, A8 feedback inbox,
-// A9 insights, A10 features (REQ-037), A11 audit log. All render inside AdminShell.
+// A9 insights, A10 features (REQ-037), A11 audit log, A0 overview (REQ-039). All render inside AdminShell.
 // Roles: Owner (admins/{uid}), Reviewer, Editor (staff/{uid}). Firestore rules enforce the same.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -318,6 +318,56 @@ export function AuditLog() {
           </div>
         ))}
         {logs && !logs.length && <p className="body muted" style={{ padding: 24 }}>No admin actions yet.</p>}
+      </section>
+    </AdminShell>
+  );
+}
+
+// ---------- A0 overview (REQ-039, design SCR-4) ----------
+// What needs attention, as count cards that link to their page. Each role only gets cards for pages it can open
+// (the same rule as the admin side menu); a card with nothing to do is left out.
+export function Overview() {
+  const { role, me } = useStore();
+  useFlags();
+  const [prompts, setPrompts] = useState(null); const [feedback, setFeedback] = useState(null);
+  const act = useAction();
+  useEffect(() => {
+    if (!role) return;
+    api.listPrompts().then(setPrompts).catch((e) => { act.setErr(friendly(e)); setPrompts([]); });
+    if (isReviewer(role)) api.listFeedback().then(setFeedback).catch((e) => { act.setErr(friendly(e)); setFeedback([]); }); else setFeedback([]);
+  }, [role]); // eslint-disable-line
+  const loading = prompts === null || feedback === null;
+  const mine = (prompts || []).filter((p) => p.status === 'draft' && p.createdBy && me && p.createdBy.uid === me.uid);
+  const cards = [
+    ['Prompts waiting for review', (prompts || []).filter((p) => p.status === 'review').length, 'ListChecks', 'primary', 'Open review queue', '/admin/review', isReviewer(role)],
+    ['New feedback', (feedback || []).filter((f) => f.status !== 'done').length, 'MessageSquare', 'po', 'Open feedback', '/admin/feedback', isReviewer(role)],
+    ['Features not released to everyone', Object.keys(FLAGS).filter((k) => audienceOf(k) !== 'everyone').length, 'Send', 'success', 'Open features', '/admin/features', role === 'owner'],
+    ['Your drafts', mine.length, 'FileText', 'accent', 'Open prompts', '/admin/prompts', role === 'editor'],
+    ['Sent back for changes', mine.filter((p) => p.reviewNote).length, 'ArrowLeft', 'danger', 'Open prompts', '/admin/prompts', role === 'editor'],
+  ].filter((c) => c[6] && c[1] > 0);
+  const quick = [['New prompt', '/admin/prompts/new', true], ['Review queue', '/admin/review', isReviewer(role)], ['Feedback', '/admin/feedback', isReviewer(role)],
+    ['Knowledge base', '/admin/knowledge', role === 'owner'], ['Staff', '/admin/staff', role === 'owner'], ['Insights', '/admin/insights', role === 'owner']].filter((q) => q[2]);
+  return (
+    <AdminShell title="Admin" sub="What needs your attention today.">
+      <Err>{act.err}</Err>
+      {loading ? <Loading label="Checking what needs attention…" /> : !cards.length ? (
+        <section className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}>
+          <Icon name="Check" size={28} color="#16A34A" /><h2 className="h3">Nothing to do right now</h2>
+          <p className="small muted">{role === 'editor' ? 'No drafts waiting and nothing sent back to you.' : `No prompts waiting and no new feedback${role === 'owner' ? ', and every feature is released' : ''}.`}</p>
+        </section>
+      ) : (
+        <div className="grid g3">
+          {cards.map(([label, n, icon, tone, btn, to]) => (
+            <Link key={label} to={to} className="card hover" aria-label={`${label}: ${n}. ${btn}`}>
+              <div className="row center gap10"><span className={`bg-${tone}-soft c-${tone}`} style={{ width: 40, height: 40, borderRadius: 10, display: 'grid', placeItems: 'center' }}><Icon name={icon} size={20} /></span><span className="h1">{n}</span></div>
+              <span className="label">{label}</span>
+              <span className="small c-primary row center gap6">{btn}<Icon name="ChevronRight" size={16} /></span>
+            </Link>
+          ))}
+        </div>
+      )}
+      <section className="card p24"><h2 className="h3">Quick links</h2>
+        <div className="row wrap gap8">{quick.map(([l, to]) => <Link key={to} to={to} className="btn btn-secondary">{l}</Link>)}</div>
       </section>
     </AdminShell>
   );

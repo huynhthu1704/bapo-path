@@ -27,7 +27,7 @@ const ADMIN_ROUTES = [
   ['/admin/review', adm('ReviewQueue')], ['/admin/review/:id', adm('ReviewPrompt')],
   ['/admin/feedback', admMore('FeedbackInbox')], ['/admin/taxonomy', admMore('Taxonomy')], ['/admin/knowledge', Admin],
   ['/admin/staff', admMore('Staff')], ['/admin/features', admMore('Features')], ['/admin/insights', admMore('Insights')],
-  ['/admin/audit', admMore('AuditLog')],
+  ['/admin/audit', admMore('AuditLog')], ['/admin', admMore('Overview')],
 ];
 // Old Prompt admin and Knowledge admin links keep working (REQ-038).
 const MOVED = [
@@ -37,7 +37,6 @@ const MOVED = [
   ['/pw-admin/review/:id', ({ id }) => `/admin/review/${id}`], ['/pw-admin/taxonomy', () => '/admin/taxonomy'],
   ['/pw-admin/staff', () => '/admin/staff'], ['/pw-admin/feedback', () => '/admin/feedback'],
   ['/pw-admin/insights', () => '/admin/insights'], ['/pw-admin/features', () => '/admin/features'],
-  ['/admin', () => '/admin/prompts'], // the Admin overview comes with REQ-039
 ];
 function Moved({ to }) {
   const params = useParams(); const { search } = useLocation();
