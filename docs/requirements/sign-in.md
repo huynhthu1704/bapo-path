@@ -12,7 +12,7 @@ Status: **Covered** = every criterion has an automated test · **Partial** = som
 
 | REQ | Title | Pri | Sprint | Issue | TC → test | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| REQ-035 | Google is the only way to sign in; browsing stays open | Must | 3 | #42 | TC-035a–d → `sign-in.spec.js` | Partial (tested in demo mode; the real Google pop-up and cloud merge need the live site) |
+| REQ-035 | Google is the only way to sign in; browsing stays open | Must | 3 | #42 | TC-035a–d, #45 → `sign-in.spec.js` | Partial (tested in demo mode; the real Google pop-up and cloud merge need the live site) |
 
 ## Requirements
 

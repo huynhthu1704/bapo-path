@@ -74,3 +74,16 @@ test('TC-035d signing in from the top bar while browsing leads to the setup, not
   await page.getByRole('banner').getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/#\/onboarding\/1/);
 });
+
+// Bug #45: the Features panel only listed the Prompt Workbench, so Google-only sign-in could not be switched on.
+test('#45 the Owner can release Google-only sign-in from the Features panel', async ({ page }) => {
+  await page.goto('#/pw-admin/insights');
+  const features = page.locator('section', { has: page.getByRole('heading', { name: 'Features' }) });
+  await features.getByLabel('Audience: Google-only sign-in').selectOption('everyone');
+  await expect(page.getByText('Feature setting saved.')).toBeVisible();
+  await expect(features.getByLabel('Audience: Prompt Workbench')).toHaveValue('owner');
+  await page.goto('#/signup');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+  await expect(page.getByLabel('Full name')).toHaveCount(0);
+});
