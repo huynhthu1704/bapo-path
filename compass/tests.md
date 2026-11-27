@@ -38,3 +38,4 @@ _Generated from `spec.json`. Process tests: `npm test` (`tests/compass/`). UI te
 | TC-032 | Failing test committed before every bug fix | REQ-032 | automated | Passing | tests/compass/testFirst.test.mjs |
 | TC-033 | Record decisions as ADRs | REQ-033 | automated | Passing | tests/compass/spec.test.mjs |
 | TC-034 | Shared memory for agents: lessons learned and working knowledge | REQ-034 | automated | Passing | tests/compass/memory.test.mjs |
+| TC-036 | Product Manager role and learning path | REQ-036 | manual | Manual | — |
