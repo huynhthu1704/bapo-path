@@ -50,7 +50,7 @@ jobs:
       - name: Skip when no Claude credential is set
         if: env.HAS_OAUTH != 'true' && env.HAS_API_KEY != 'true'
         run: echo "::notice::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set; AI review skipped."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.HAS_OAUTH == 'true' || env.HAS_API_KEY == 'true'
         with:
           fetch-depth: 1
