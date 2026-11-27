@@ -61,8 +61,24 @@ test('TC-039b an Editor sees their drafts and what was sent back', async ({ page
   await expect(card(page, 'Sent back for changes')).toContainText('1');
   await expect(card(page, 'Prompts waiting for review')).toHaveCount(0);
   await expect(card(page, 'New feedback')).toHaveCount(0);
+  await expect(card(page, 'Features not released')).toHaveCount(0);
   await card(page, 'Sent back for changes').click();
   await expect(page).toHaveURL(/#\/admin\/prompts$/);
+});
+
+test('TC-039a a feature with beta testers counts as not released', async ({ page }) => {
+  await actAs(page, 'owner');
+  await seed(page, { 'settings/site': { flags: { story: { audience: 'beta', beta: ['demo-learner'] } } } });
+  await page.goto('#/admin');
+  await expect(card(page, 'Features not released to everyone')).toContainText('4');
+});
+
+test('TC-039c an Editor with nothing pending sees "Nothing to do right now"', async ({ page }) => {
+  await actAs(page, 'editor');
+  await seed(page, Object.fromEntries([prompt('X-01', 'review')]));
+  await page.goto('#/admin');
+  await expect(page.getByText('Nothing to do right now')).toBeVisible();
+  await expect(page.getByText('No drafts waiting and nothing sent back to you.')).toBeVisible();
 });
 
 test('TC-039c with nothing pending the Overview says "Nothing to do right now"', async ({ page }) => {
