@@ -57,7 +57,7 @@ export function General() {
   const popular = ['team-definition-of-done', 'team-blocker', 'qa-boundary-value-analysis', 'babok-baccm', 'se-use-case', 'pmbok-raci-matrix'].map((id) => TERM_BY_ID[id]).filter(Boolean);
   return (
     <>
-      <PageHead title="General Knowledge" sub="The words you hear every day in an IT company — explained in plain English with real workplace examples." />
+      <PageHead title="Glossary" sub="The words you hear every day in an IT company — explained in plain English with real workplace examples." />
       {groups.map(([title, sub, ids]) => (
         <section key={title} className="col" style={{ gap: 14 }}>
           <div className="col gap4"><h2 className="h2">{title}</h2><span className="small muted">{sub}</span></div>
@@ -97,7 +97,7 @@ export function Glossary() {
   const letter = params.get('letter');
   const list = base.filter((t) => (sub === 'All' || t.sub === sub) && (!lv || t.level === lv) && (!letter || t.term[0].toUpperCase() === letter) && (t.term + ' ' + t.full + ' ' + t.def).toLowerCase().includes(q.toLowerCase()));
   const title = cat === 'all' ? (letter ? `Terms starting with “${letter}”` : 'All terms') : c?.name;
-  const parent = c?.type === 'domain' ? ['Domain Knowledge', '/domains'] : c?.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['General Knowledge', '/general'];
+  const parent = c?.type === 'domain' ? ['Domain Knowledge', '/domains'] : c?.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['Glossary', '/general'];
   return (
     <>
       <Crumbs items={[parent, [title]]} />
@@ -141,7 +141,7 @@ export function TermDetail() {
   const learned = s.learned.includes(id); const inCards = !!s.cards[id];
   return (
     <>
-      <Crumbs items={[c.type === 'domain' ? ['Domain Knowledge', '/domains'] : c.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['General Knowledge', '/general'], [c.name, `/glossary/${c.id}`], [t.term]]} />
+      <Crumbs items={[c.type === 'domain' ? ['Domain Knowledge', '/domains'] : c.type === 'framework' ? ['BABOK & PMBOK', '/frameworks'] : ['Glossary', '/general'], [c.name, `/glossary/${c.id}`], [t.term]]} />
       <div className="row stack-sm gap24">
         <div className="col grow" style={{ gap: 16 }}>
           <div className="card p28">

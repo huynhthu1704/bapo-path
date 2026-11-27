@@ -63,6 +63,7 @@ test('TC-037b links inside other pages to a switched-off feature disappear @mobi
   await page.goto('#/profile');
   await expect(page.getByText('Terms learned')).toBeVisible();
   await expect(page.getByText('Current streak')).toHaveCount(0);
+  await expect(page.locator('.grid', { has: page.getByText('Terms learned') })).toHaveClass(/\bg3\b/); // no empty slot
   await expect(page.getByRole('link', { name: /See your rank and badges/ })).toHaveCount(0);
   await expect(page.getByText('Intern', { exact: true })).toHaveCount(0); // rank tag
   // A domain page: no "Practise … terms" button
@@ -108,6 +109,8 @@ test('TC-037c features that are live today stay visible to everyone with no save
   }
   await expect(menu.getByRole('link', { name: 'Prompt Workbench', includeHidden: true })).toHaveCount(0); // still Owner and staff only
   await expect(page.getByText('Daily quests')).toBeVisible();
+  await page.goto('#/general');
+  await expect(page.getByRole('heading', { name: 'Glossary', level: 1 })).toBeVisible(); // same name as the menu
   for (const route of LIVE) {
     await page.goto(route);
     await expect(page.getByRole('main')).toBeVisible();

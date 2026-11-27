@@ -38,7 +38,7 @@ export default function Profile() {
         {user || demoIn ? <button className="btn btn-secondary" onClick={signOut}><Icon name="LogOut" size={16} />Sign out</button>
           : <GoogleButton primary label="Sign in with Google" />}
       </div>
-      <div className="grid g4">
+      <div className={`grid ${rewards ? 'g4' : 'g3'}`}>
         {[...(rewards ? [['Flame', 'accent', `${s.streak.count} days`, 'Current streak']] : []), ['Route', 'primary', `${doneTotal} / ${allTrack}`, 'Skills completed'], ['BookOpen', 'po', s.learned.length, 'Terms learned'], ['Target', 'success', `${avg}%`, 'Average score']].map(([i, t, n, l]) => (
           <div key={l} className="card"><IconBox name={i} tone={t} /><span className="h1">{n}</span><span className="small muted">{l}</span></div>))}
       </div>

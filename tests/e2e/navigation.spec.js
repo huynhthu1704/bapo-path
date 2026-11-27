@@ -31,6 +31,9 @@ test('TC-038b staff see one Admin entry that opens the Admin area', async ({ pag
   await adminMenu(page).getByRole('link', { name: 'Knowledge base' }).click();
   await expect(page.getByRole('heading', { name: 'Knowledge base', level: 1 })).toBeVisible();
   await expect(page.getByText('Admin › Knowledge base')).toBeVisible();
+  // Demo mode has no database: a plain note instead of a raw Firebase error (review of #70)
+  await expect(page.getByText('Publishing works on the live site only.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish to Firestore' })).toBeDisabled();
   await adminMenu(page).getByRole('link', { name: 'Audit log' }).click();
   await expect(page.getByRole('heading', { name: 'Audit log', level: 1 })).toBeVisible();
   noErrors();

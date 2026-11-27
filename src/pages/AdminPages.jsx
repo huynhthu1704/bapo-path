@@ -1,16 +1,19 @@
 // Admin pages other than Prompts (REQ-038, moved out of PromptAdmin.jsx): A6 taxonomy, A7 staff, A8 feedback inbox,
-// A9 insights, A10 features (REQ-037), A11 audit log, A0 overview (REQ-039). All render inside AdminShell.
+// A9 insights, A10 features (REQ-037), A11 audit log, A0 overview (REQ-039), A12 knowledge base. All render inside AdminShell.
 // Roles: Owner (admins/{uid}), Reviewer, Editor (staff/{uid}). Firestore rules enforce the same.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore, DEMO_PEOPLE } from '../store.jsx';
-import { Icon, Tag, Loading, Spinner, Toggle } from '../components/ui.jsx';
-import { LOCAL_MODE } from '../firebase.js';
+import { Icon, Tag, IconBox, Loading, Spinner, Toggle, track } from '../components/ui.jsx';
+import { LOCAL_MODE, publishKnowledge, kbInfo, saveTerm, deleteTerm } from '../firebase.js';
+import { BUNDLED as KB_BUNDLED, KB_SOURCE } from '../knowledge.js';
+import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID } from '../data/terms.js';
 import { DEFAULT_TAXONOMY, usePromptData, loadPromptData } from '../data/promptStore.js';
 import { FLAGS, audienceOf, remoteFlags, setRemoteFlags, useFlags } from '../data/flags.js';
 import * as api from '../data/promptApi.js';
 import { PROMPTS as BUNDLED, ROLES } from '../data/prompts/index.js';
 import { PhaseChip, ago } from './Prompts.jsx';
+import { SignInCard } from './Account.jsx';
 import { AdminShell, useAction, friendly, Err, Ok, when, isReviewer, ROLE_LABEL } from './AdminShell.jsx';
 
 // ---------- A6 taxonomy ----------
@@ -350,7 +353,7 @@ export function Overview() {
   return (
     <AdminShell title="Admin" sub="What needs your attention today.">
       <Err>{act.err}</Err>
-      {loading ? <Loading label="Checking what needs attention…" /> : !cards.length ? (
+      {loading ? <Loading label="Checking what needs attention…" /> : act.err ? null : !cards.length ? (
         <section className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}>
           <Icon name="Check" size={28} color="#16A34A" /><h2 className="h3">Nothing to do right now</h2>
           <p className="small muted">{role === 'editor' ? 'No drafts waiting and nothing sent back to you.' : `No prompts waiting and no new feedback${role === 'owner' ? ', and every feature is released' : ''}.`}</p>
@@ -369,6 +372,91 @@ export function Overview() {
       <section className="card p24"><h2 className="h3">Quick links</h2>
         <div className="row wrap gap8">{quick.map(([l, to]) => <Link key={to} to={to} className="btn btn-secondary">{l}</Link>)}</div>
       </section>
+    </AdminShell>
+  );
+}
+
+// ---------- A12 knowledge base (Owner only; moved here from Account.jsx so the Admin shell stays out of the main bundle) ----------
+const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const emptyTerm = () => ({ id: '', cat: 'team', sub: '', level: 1, term: '', full: '', def: '', example: '', vi: '' });
+export function KnowledgeBase() {
+  const { user, admin } = useStore();
+  const [info, setInfo] = useState(null); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(''); const [err, setErr] = useState('');
+  const [confirmPub, setConfirmPub] = useState(false); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null); const [, force] = useState(0);
+  useEffect(() => { if (admin) track(kbInfo()).then(setInfo).catch(() => {}); }, [admin]);
+  const list = useMemo(() => TERMS.filter((t) => (t.term + ' ' + t.def).toLowerCase().includes(q.toLowerCase())), [q, msg]); // eslint-disable-line
+  if (!user && !admin) return <AdminShell title="Knowledge base"><p className="body muted">Only the Owner can manage the knowledge base.</p>{!LOCAL_MODE && <SignInCard why="Sign in with the admin Google account to manage the knowledge base." />}</AdminShell>;
+  if (!admin) return (
+    <AdminShell title="Knowledge base">
+      <p className="body muted">Only the Owner can manage the knowledge base.</p>
+      <div className="card p24"><span className="h3">You are not an admin yet</span>
+        <p className="body muted">To make this account an admin, open Firebase console → Firestore Database → Start collection <b>admins</b>, and add a document whose ID is your user ID below (no fields needed). Then reload this page.</p>
+        <div className="row center gap10"><code className="soft bg-bg" style={{ fontSize: 14 }}>{user.uid}</code><button className="btn btn-secondary" onClick={() => navigator.clipboard?.writeText(user.uid).catch(() => {})}>Copy ID</button></div></div></AdminShell>
+  );
+  const publish = async () => {
+    setBusy(true); setErr(''); setMsg('');
+    try { const n = await track(publishKnowledge(KB_BUNDLED)); setMsg(`Published ${n} knowledge items to Firestore. Reload the site to read from the cloud.`); setInfo(await kbInfo()); } catch (x) { setErr(`Publish failed: ${x.message}`); }
+    setBusy(false); setConfirmPub(false);
+  };
+  const saveT = async (e) => {
+    e.preventDefault();
+    if (!edit.term.trim() || !edit.def.trim()) { setErr('Term and definition are required.'); return; }
+    const t = { ...edit, level: Number(edit.level), id: edit.id || `${edit.cat}-${slug(edit.term)}` };
+    if (!edit.id && TERM_BY_ID[t.id]) { setErr('A term with this name already exists in that category.'); return; }
+    setBusy('term');
+    try {
+      const idx = TERMS.findIndex((x) => x.id === t.id);
+      await track(saveTerm(t, idx < 0 ? TERMS.length : idx));
+      if (idx < 0) TERMS.push(t); else TERMS[idx] = t; TERM_BY_ID[t.id] = t;
+      setEdit(null); setErr(''); setMsg(`Saved “${t.term}”.`); force((x) => x + 1);
+    } catch (x) { setErr(`Save failed: ${x.message}`); }
+    setBusy(false);
+  };
+  const del = async (t) => {
+    setBusy('term');
+    try { await track(deleteTerm(t.id)); TERMS.splice(TERMS.findIndex((x) => x.id === t.id), 1); delete TERM_BY_ID[t.id]; setEdit(null); setMsg(`Deleted “${t.term}”.`); } catch (x) { setErr(`Delete failed: ${x.message}`); }
+    setBusy(false);
+  };
+  return (
+    <AdminShell title="Knowledge base" sub="Manage the public knowledge base stored in Firestore. Learners always read the latest published content.">
+      {LOCAL_MODE && <div className="soft bg-accent-soft small" role="note">Publishing works on the live site only. In demo mode there is no database, so Publish, Save and Delete are turned off.</div>}
+      {msg && <div className="soft bg-success-soft small c-success">{msg}</div>}
+      {err && !edit && <div className="soft bg-danger-soft small c-danger">{err}</div>}
+      <div className="grid g4">
+        {[['Database', 'primary', KB_SOURCE.value === 'cloud' ? 'Cloud' : 'Bundled', 'Content source now'], ['BookOpen', 'po', TERMS.length, 'Glossary terms'], ['Route', 'accent', KB_BUNDLED.skills.length, 'Skills'], ['Clock', 'success', info?.publishedAt ? info.publishedAt.toDate().toLocaleDateString() : 'Never', 'Last full publish']].map(([i, t, n, l]) => (
+          <div key={l} className="card"><IconBox name={i} tone={t} /><span className="h2">{n}</span><span className="small muted">{l}</span></div>))}
+      </div>
+      <div className="card p24 row center stack-sm" style={{ flexDirection: 'row' }}>
+        <div className="col grow gap4"><span className="h3">Publish the full knowledge base</span><span className="small muted">Copies all bundled terms, skills, domains, challenges and Story Mode chapters into Firestore. Run it once at the start, and again after content changes in the code. It overwrites items with the same ID.</span></div>
+        {confirmPub ? <><button className="btn btn-secondary" onClick={() => setConfirmPub(false)}>Cancel</button><button className="btn btn-primary" disabled={busy} onClick={publish}>{busy ? <Spinner label="Publishing…" /> : 'Yes, publish'}</button></> : <button className="btn btn-primary" disabled={LOCAL_MODE} onClick={() => setConfirmPub(true)}>Publish to Firestore</button>}
+      </div>
+      {edit && (
+        <form className="card p24" onSubmit={saveT} style={{ gap: 14 }}>
+          <div className="row center"><span className="h3 grow">{edit.id ? `Edit · ${edit.term}` : 'New term'}</span><button type="button" className="icon-btn" onClick={() => setEdit(null)} aria-label="Close"><Icon name="X" size={18} /></button></div>
+          <div className="grid g3">
+            <label className="col gap6"><span className="label">Category</span><select className="input" disabled={!!edit.id} value={edit.cat} onChange={(e) => setEdit({ ...edit, cat: e.target.value })}>{CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+            <label className="col gap6"><span className="label">Sub-category</span><input className="input" value={edit.sub} onChange={(e) => setEdit({ ...edit, sub: e.target.value })} /></label>
+            <label className="col gap6"><span className="label">Level</span><select className="input" value={edit.level} onChange={(e) => setEdit({ ...edit, level: e.target.value })}><option value={1}>Beginner</option><option value={2}>Intermediate</option><option value={3}>Advanced</option></select></label>
+            <label className="col gap6"><span className="label">Term *</span><input className="input" disabled={!!edit.id} value={edit.term} onChange={(e) => { setEdit({ ...edit, term: e.target.value }); setErr(''); }} /></label>
+            <label className="col gap6"><span className="label">Full name</span><input className="input" value={edit.full} onChange={(e) => setEdit({ ...edit, full: e.target.value })} /></label>
+            <label className="col gap6"><span className="label">Vietnamese hint</span><input className="input" value={edit.vi} onChange={(e) => setEdit({ ...edit, vi: e.target.value })} /></label>
+          </div>
+          <label className="col gap6"><span className="label">Plain-English definition *</span><textarea className="input" style={{ height: 70, padding: 12 }} value={edit.def} onChange={(e) => { setEdit({ ...edit, def: e.target.value }); setErr(''); }} /></label>
+          <label className="col gap6"><span className="label">Example at work</span><textarea className="input" style={{ height: 70, padding: 12 }} value={edit.example} onChange={(e) => setEdit({ ...edit, example: e.target.value })} /></label>
+          {err && <span className="caption c-danger">{err}</span>}
+          <div className="row gap10">{edit.id && <button type="button" className="btn btn-danger" disabled={LOCAL_MODE} onClick={() => del(edit)}>Delete term</button>}<div className="grow" /><button type="button" className="btn btn-secondary" onClick={() => setEdit(null)}>Cancel</button><button className="btn btn-primary" disabled={!!busy || LOCAL_MODE}>{busy === 'term' ? <Spinner label="Saving…" /> : 'Save to Firestore'}</button></div>
+        </form>
+      )}
+      <div className="row center wrap gap10">
+        <div className="search" style={{ width: 320, background: '#fff', border: '1px solid var(--border)' }}><Icon name="Search" size={18} color="#94A3B8" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a term to edit" /></div>
+        <div className="grow" /><button className="btn btn-primary" onClick={() => { setEdit(emptyTerm()); setErr(''); }}>Add a term</button>
+      </div>
+      <div className="card p0">{list.slice(0, 60).map((t) => (
+        <button key={t.id} className="list-row" style={{ width: '100%', border: 0, borderBottom: '1px solid var(--border)', background: 'none', textAlign: 'left' }} onClick={() => { setEdit({ ...emptyTerm(), ...t }); setErr(''); window.scrollTo(0, 0); }}>
+          <span className="label" style={{ width: 200 }}>{t.term}</span><span className="small muted grow">{t.def}</span><Tag tone="ink">{CAT_BY_ID[t.cat]?.short}</Tag><Icon name="ChevronRight" size={16} color="#94A3B8" />
+        </button>))}
+        {list.length > 60 && <p className="caption faint" style={{ padding: 16 }}>Showing 60 of {list.length}. Search to narrow down.</p>}
+      </div>
     </AdminShell>
   );
 }
