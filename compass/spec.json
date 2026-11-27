@@ -107,6 +107,18 @@
         "REQ-026",
         "REQ-027"
       ]
+    },
+    {
+      "id": "ADR-008",
+      "date": "2026-11-27",
+      "title": "\"PM\" in the learning roadmap means Product Manager",
+      "status": "Accepted",
+      "context": "\"PM\" can mean Project Manager or Product Manager. The site already has PMBOK terms and Project Kickoff prompts.",
+      "decision": "The Owner chose Product Manager for the new track (REQ-036), at the same depth as the BA and PO tracks, behind the pmTrack flag (audience owner).",
+      "consequences": "The PM track teaches discovery, strategy, metrics and launch. Project-management topics stay in the PMBOK glossary. A Project Manager track would be a separate requirement.",
+      "reqIds": [
+        "REQ-036"
+      ]
     }
   ],
   "requirements": [
@@ -618,6 +630,23 @@
         "Given the repo skills in .claude/skills/\nWhen the process tests run\nThen each has a 'Use when' description and names the check that enforces it"
       ],
       "issue": 41
+    },
+    {
+      "id": "REQ-036",
+      "title": "Product Manager role and learning path",
+      "story": "As a starter Product Manager I want to choose \"Product Manager\" when I join and follow a PM skill roadmap from Beginner to Expert, so that I learn the skills for my role and not only BA or PO ones.",
+      "priority": "Should",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-27",
+      "intent": "compass/intent/2026-11-27-product-manager-path.md",
+      "design": "compass/design/2026-11-27-product-manager-path.md",
+      "ac": [
+        "Given the pmTrack flag is on for me\nWhen I open onboarding step 1\nThen I see three role cards (Business Analyst, Product Owner, Product Manager), and picking Product Manager and a level then Continue saves PM as my track",
+        "Given my track is Product Manager\nWhen I open the Skill Roadmap\nThen the Product Manager tab is selected and shows four levels (Beginner → Expert) with full Beginner lessons, short skills above and a challenge at the end of each level, my starting level unlocked",
+        "Given I am on the PM track\nWhen I gain XP\nThen my rank uses PM names: Intern → Associate PM → Product Manager → Senior PM → Lead PM",
+        "Given the pmTrack flag is off for me\nWhen I open onboarding, the Roadmap, search or a term page\nThen I see only BA and PO, as today"
+      ],
+      "issue": 44
     }
   ],
   "tests": [
@@ -966,6 +995,15 @@
       "type": "automated",
       "file": "tests/compass/memory.test.mjs",
       "status": "Passing"
+    },
+    {
+      "id": "TC-036",
+      "title": "Product Manager role and learning path",
+      "reqIds": [
+        "REQ-036"
+      ],
+      "type": "manual",
+      "status": "Manual"
     }
   ]
 }
