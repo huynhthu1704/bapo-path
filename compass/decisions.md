@@ -10,7 +10,7 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 | ADR-004 | 2026-11-24 | Hash routing, so no in-page #anchors | Accepted | — |
 | ADR-005 | 2026-11-26 | Adopt the Compass Framework, as used in travel-map | Accepted | REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-033, REQ-034 |
 | ADR-006 | 2026-11-26 | Agents merge their own PRs once CI is green and the independent review approves | Accepted | REQ-028 |
-| ADR-007 | 2026-11-26 | Compass checks run as a separate CI workflow; existing job names stay | Proposed | REQ-026, REQ-027 |
+| ADR-007 | 2026-11-26 | Compass checks run as a separate CI workflow; existing job names stay | Accepted | REQ-026, REQ-027 |
 | ADR-008 | 2026-11-27 | "PM" in the learning roadmap means Product Manager | Accepted | REQ-036 |
 
 ## ADR-001 — Static site on GitHub Pages with Firebase as the only backend
@@ -75,13 +75,13 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 
 ## ADR-007 — Compass checks run as a separate CI workflow; existing job names stay
 
-**Status:** Proposed · **Date:** 2026-11-26 · **Requirements:** REQ-026, REQ-027
+**Status:** Accepted · **Date:** 2026-11-26 · **Requirements:** REQ-026, REQ-027
 
 **Context.** Branch protection may already require the checks "Content, build and end-to-end tests" and "rules"; renaming them would block every PR.
 
 **Decision.** Add .github/workflows/compass.yml with a job named "Compass checks" (spec, guardrails, plan, test-first, process tests) and leave ci.yml and rules-test.yml as they are.
 
-**Consequences.** The Owner adds "Compass checks" to the required checks in branch protection. merge-pr requires all three.
+**Consequences.** The Owner added "Compass checks" to the required checks on main (2026-11-27) and accepted this ADR in chat ("Accept ADR-007"). merge-pr requires all three checks.
 
 ## ADR-008 — "PM" in the learning roadmap means Product Manager
 
