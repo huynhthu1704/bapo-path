@@ -112,7 +112,7 @@ function Sidebar({ open, onClose }) {
 
 function SearchBox() {
   useFlags();
-  const { user, role, me } = useStore();
+  const { user, role, me, tracks } = useStore();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
@@ -123,7 +123,7 @@ function SearchBox() {
   useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/promptStore.js').then((m) => { setPrompts(m.promptData().prompts); m.loadPromptData().then(() => setPrompts(m.promptData().prompts)); }); }, [pwOn, ql, prompts]);
   const results = ql.length < 2 ? [] : [
     ...TERMS.filter((t) => (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
-    ...SKILLS.filter((k) => k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
+    ...SKILLS.filter((k) => tracks.some((t) => t.id === k.track) && k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
     ...(pwOn && prompts ? prompts.filter((p) => (p.title + ' ' + p.tags.join(' ')).toLowerCase().includes(ql)).slice(0, 4).map((p) => ({ to: `/prompts/${p.id}`, label: p.title, meta: 'Prompt' })) : []),
   ];
   return (

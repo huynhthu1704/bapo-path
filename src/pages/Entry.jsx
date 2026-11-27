@@ -25,7 +25,7 @@ const scrollToSection = (id) => {
 };
 
 export function Landing() {
-  const { s, user, googleOnly, signedIn } = useStore();
+  const { s, user, googleOnly, signedIn, tracks } = useStore();
   const nav = useNavigate();
   // googleOnly (REQ-035): anyone can go straight in and look around; signing in is only needed to save.
   const start = googleOnly || s.onboarded ? '/home' : '/signup';
@@ -63,7 +63,7 @@ export function Landing() {
         </div>
       </section>
       <section className="section" style={{ paddingTop: 40, paddingBottom: 40 }}><div className="grid g4" style={{ gap: 24 }}>
-        {[[`${SKILLS.length}`, 'skills across BA & PO tracks'], [`${TERMS.length}+`, 'IT, teamwork & business terms'], ['8', 'business domains'], ['3', 'practice modes + games']].map(([n, l]) => (
+        {[[`${SKILLS.filter((k) => tracks.some((t) => t.id === k.track)).length}`, `skills across ${tracks.map((t) => t.id).join(' & ').replace(/ & (?=.* & )/g, ', ')} tracks`], [`${TERMS.length}+`, 'IT, teamwork & business terms'], ['8', 'business domains'], ['3', 'practice modes + games']].map(([n, l]) => (
           <div key={l} className="col gap4"><div className="h1 c-primary">{n}</div><div className="small muted">{l}</div></div>
         ))}
       </div></section>

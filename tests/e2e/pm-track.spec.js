@@ -68,4 +68,17 @@ test('TC-036d without the flag, learners see only BA and PO', async ({ page }) =
   await page.goto('#/roadmap?view=list');
   await expect(page.getByRole('button', { name: 'Product Owner', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Product Manager', exact: true })).toHaveCount(0);
+  // PM lessons don't leak through search or a term's "Used in skills" list.
+  await page.getByPlaceholder(/Search terms, skills/).fill('launch basics');
+  await expect(page.getByText('Launch basics')).toHaveCount(0);
+  await page.goto('#/term/it-go-live');
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByRole('link', { name: /Launch basics/ })).toHaveCount(0);
+});
+
+test('TC-036d with the flag on, PM lessons show in search and on term pages', async ({ page }) => {
+  await actAs(page, 'owner');
+  await setProgress(page, {});
+  await page.goto('#/term/it-go-live');
+  await expect(page.getByRole('link', { name: /Launch basics/ })).toBeVisible();
 });

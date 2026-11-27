@@ -126,7 +126,7 @@ export function Glossary() {
 
 export function TermDetail() {
   const { id } = useParams();
-  const { s, a } = useStore();
+  const { s, a, tracks } = useStore();
   const t = TERM_BY_ID[id];
   if (!t) return <p>Term not found.</p>;
   const c = CAT_BY_ID[t.cat];
@@ -134,7 +134,7 @@ export function TermDetail() {
   const idx = siblings.findIndex((x) => x.id === id);
   const prev = siblings[idx - 1]; const next = siblings[idx + 1];
   const related = siblings.filter((x) => x.sub === t.sub && x.id !== id).slice(0, 6);
-  const usedIn = SKILLS.filter((k) => k.terms.includes(id));
+  const usedIn = SKILLS.filter((k) => tracks.some((t) => t.id === k.track) && k.terms.includes(id));
   const learned = s.learned.includes(id); const inCards = !!s.cards[id];
   return (
     <>

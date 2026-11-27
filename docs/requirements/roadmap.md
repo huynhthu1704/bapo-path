@@ -12,7 +12,7 @@ Status: **Covered** = every criterion has an automated test · **Partial** = som
 
 | REQ | Title | Pri | Sprint | Issue | TC → test | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| REQ-036 | Product Manager role and learning path | Should | next | #44 | TC-036a–d → `pm-track.spec.js` | Covered (demo mode; the flag audience from the live settings is not tested) |
+| REQ-036 | Product Manager role and learning path | Should | next | #44 | TC-036a–d → `pm-track.spec.js` | Covered (demo mode; the flag audience from the live settings and the cloud knowledge merge are not tested) |
 
 ## Requirements
 
