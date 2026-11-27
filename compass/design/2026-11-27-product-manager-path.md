@@ -2,7 +2,7 @@
 
 Status: Approved (by Christine, 2026-11-27)
 Requirements: REQ-036
-Design tool: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca (page "03 · Screens"; frames are screenshots from `npm run dev:demo`)
+Design tool: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca (page "03 · Screens"; the original screens are updated in place)
 
 ## Approach
 No new screens or components. The PM track reuses the existing onboarding cards, roadmap tabs, level cards, skill
@@ -16,7 +16,7 @@ cards, challenge page and profile settings. Everything appears only while the `p
 - Elements: a third card "Product Manager" ("Find the right problems, set the product direction and measure what
   works."), below Business Analyst and Product Owner; same card style and check circle; level buttons unchanged.
 - States: flag on → 3 cards · flag off → 2 cards (as today) · selected card highlighted (`aria-pressed`).
-- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=37-2288
+- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=5-477 (S03 · Onboarding — Role & Level, with the Product Manager row; compact rows fixed in #58)
 
 ### SCR-2 · Skill Roadmap (list and map) — REQ-036 (TC-036b, TC-036d)
 - Purpose: follow the PM path.
@@ -25,7 +25,7 @@ cards, challenge page and profile settings. Everything appears only while the `p
   while the flag is on.
 - States: starting level unlocked, other levels locked until the previous challenge is passed (as BA and PO) · flag off
   → no PM tab.
-- Frame: https://www.figma.com/design/JswcODuAH6xx2QPipDHAca?node-id=37-2289
+- Frame: none (S06 · Skill Roadmap is unchanged in Figma; the PM tab reuses its tab and level-card layout)
 
 ### SCR-3 · Skill lesson and level challenge — REQ-036 (TC-036b)
 - Purpose: learn a PM skill, then pass the level challenge.
@@ -44,3 +44,5 @@ cards, challenge page and profile settings. Everything appears only while the `p
 - 375 px: three onboarding cards stack; track tabs fit at 375 px (checked in e2e `@mobile`).
 - PM lessons are English only for now.
 - Someone who already chose PM keeps seeing their track even if the flag is turned off again.
+- 2026-11-27: the first frames were screenshots taken after the build. At the Owner's request they were deleted and the
+  original screen S03 was updated in place instead.
