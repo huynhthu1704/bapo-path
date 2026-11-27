@@ -1,70 +1,17 @@
-// Prompt admin (sprint 2 + 3): A1 list, A2 editor, preview, A3 review queue, A4 review,
-// A5 version history, A6 taxonomy, A7 staff, A8 feedback inbox, A9 insights + audit log, A10 features (REQ-037).
+// Admin › Prompts (REQ-038; Prompt Workbench sprint 2 + 3): A1 list, A2 editor, preview, A3 review queue, A4 review,
+// A5 version history. Taxonomy, staff, feedback, features, insights and the audit log are in AdminPages.jsx.
 // Roles: Owner (admins/{uid}), Reviewer, Editor (staff/{uid}). Firestore rules enforce the same.
 import { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useStore, DEMO_PEOPLE } from '../store.jsx';
-import { Icon, Tag, PageHead, Loading, Spinner, Toggle, track } from '../components/ui.jsx';
-import { LOCAL_MODE } from '../firebase.js';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useStore } from '../store.jsx';
+import { Icon, Tag, Loading, Spinner } from '../components/ui.jsx';
 import { PROMPTS as BUNDLED, ROLES } from '../data/prompts/index.js';
 import { DEFAULT_TAXONOMY, usePromptData, loadPromptData } from '../data/promptStore.js';
-import { FLAGS, audienceOf, remoteFlags, setRemoteFlags, useFlags } from '../data/flags.js';
 import * as api from '../data/promptApi.js';
 import { PhaseChip, PromptDetailView, ago } from './Prompts.jsx';
+import { AdminShell, useAction, friendly, Err, Ok, when, isReviewer } from './AdminShell.jsx';
 
-const isReviewer = (role) => role === 'reviewer' || role === 'owner';
-const ROLE_LABEL = { owner: 'Owner', reviewer: 'Reviewer', editor: 'Editor' };
-const when = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
 const StatusTag = ({ status }) => { const s = api.STATUS[status] || { label: status, tone: 'ink' }; return <Tag tone={s.tone}>{s.label}</Tag>; };
-const Err = ({ children }) => (children ? <div className="soft bg-danger-soft small c-danger" role="alert">{children}</div> : null);
-const Ok = ({ children }) => <span className="small c-success" aria-live="polite">{children}</span>;
-
-// Runs an async action with busy/error state. Returns the result (true if none), or undefined on failure.
-function useAction() {
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState(''); const [msg, setMsg] = useState('');
-  const run = async (fn, okMsg) => {
-    setBusy(true); setErr(''); setMsg('');
-    try { const r = await track(fn()); if (okMsg) setMsg(typeof okMsg === 'function' ? okMsg(r) : okMsg); setBusy(false); return r === undefined ? true : r; }
-    catch (e) { console.warn(e); setErr(friendly(e)); setBusy(false); return undefined; }
-  };
-  return { busy, err, msg, run, setErr, setMsg };
-}
-const friendly = (e) => (e && e.code === 'permission-denied' ? 'You do not have permission to do this (blocked by the database rules).' : (e && e.message) || 'Something went wrong. Try again.');
-
-// ---------- shell ----------
-function Shell({ title, sub, actions, children }) {
-  const { role, me, setDemoPerson } = useStore();
-  const [queue, setQueue] = useState(null);
-  useEffect(() => { if (isReviewer(role)) api.listPrompts().then((l) => setQueue(l.filter((p) => p.status === 'review').length)).catch(() => {}); }, [role]);
-  const tabs = [
-    ['/pw-admin', 'Prompts', true],
-    ['/pw-admin/review', `Review queue${queue ? ` · ${queue}` : ''}`, isReviewer(role)],
-    ['/pw-admin/feedback', 'Feedback', isReviewer(role)],
-    ['/pw-admin/taxonomy', 'Taxonomy', role === 'owner'],
-    ['/pw-admin/staff', 'Staff', role === 'owner'],
-    ['/pw-admin/features', 'Features', role === 'owner'],
-    ['/pw-admin/insights', 'Insights', role === 'owner'],
-  ];
-  return (
-    <>
-      {LOCAL_MODE && (
-        <div className="soft bg-accent-soft row center wrap gap8 small demo-bar">
-          <Icon name="Info" size={16} color="#D97706" /><b>Demo mode</b><span className="muted grow">Data stays in this browser. Act as:</span>
-          <select className="input pw-select" aria-label="Act as" value={me ? me.uid : ''} onChange={(e) => setDemoPerson(e.target.value)}>
-            {DEMO_PEOPLE.map((p) => <option key={p.uid} value={p.uid}>{p.name}</option>)}
-          </select>
-          <button type="button" className="btn btn-ghost" onClick={() => { api.clearLocalData(); window.location.reload(); }}>Reset demo data</button>
-        </div>
-      )}
-      <PageHead title={title} sub={sub}>{actions}</PageHead>
-      <div className="tabs" role="navigation" aria-label="Prompt admin">
-        {tabs.filter((t) => t[2]).map(([to, l]) => <NavLink key={to} end to={to} className={({ isActive }) => `tab-link ${isActive ? 'on' : ''}`}>{l}</NavLink>)}
-        <span className="grow" /><span className="caption faint tab-role">Signed in as {me && me.name} · {ROLE_LABEL[role]}</span>
-      </div>
-      {children}
-    </>
-  );
-}
 
 // ---------- A1 prompt list ----------
 export function AdminPrompts() {
@@ -83,7 +30,7 @@ export function AdminPrompts() {
   const counts = useMemo(() => Object.fromEntries(Object.keys(api.STATUS).map((k) => [k, (list || []).filter((p) => p.status === k).length])), [list]);
 
   return (
-    <Shell title="Prompt admin" sub="Create, review and publish prompts. Learners only see published prompts." actions={<Link to="/pw-admin/new" className="btn btn-primary"><Icon name="Plus" size={16} />New prompt</Link>}>
+    <AdminShell title="Prompts" sub="Create, review and publish prompts. Learners only see published prompts." actions={<Link to="/admin/prompts/new" className="btn btn-primary"><Icon name="Plus" size={16} />New prompt</Link>}>
       <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
       {list === null ? <Loading label="Loading prompts…" /> : (
         <>
@@ -106,19 +53,19 @@ export function AdminPrompts() {
               <div key={p.id} className="list-row admin-row">
                 <span className="caption faint mono" style={{ width: 52 }}>{p.id}</span>
                 <div className="col grow" style={{ gap: 2 }}>
-                  <Link to={`/pw-admin/edit/${p.id}`} className="label">{p.title || '(untitled)'}</Link>
+                  <Link to={`/admin/prompts/${p.id}/edit`} className="label">{p.title || '(untitled)'}</Link>
                   <span className="caption faint">v{p.version} · updated {p.updatedAt ? ago(p.updatedAt) : ''} by {p.updatedBy && p.updatedBy.name}{p.reviewNote && p.status === 'draft' ? ' · returned with a comment' : ''}</span>
                 </div>
                 <span className="hide-sm"><PhaseChip phase={p.phase} /></span>
                 <StatusTag status={p.status} />{p.live && p.status !== 'published' && <Tag tone="success">Live v{p.published && p.published.version}</Tag>}
-                <Link to={`/pw-admin/history/${p.id}`} className="icon-btn" aria-label={`History of ${p.title}`} title="History"><Icon name="History" size={16} /></Link>
+                <Link to={`/admin/prompts/${p.id}/history`} className="icon-btn" aria-label={`History of ${p.title}`} title="History"><Icon name="History" size={16} /></Link>
               </div>
             ))}
             {!rows.length && list.length > 0 && <p className="body muted" style={{ padding: 24 }}>No prompts match.</p>}
           </section>
         </>
       )}
-    </Shell>
+    </AdminShell>
   );
 }
 
@@ -144,7 +91,7 @@ export function PromptEditor() {
     api.getPrompt(id).then((p) => { if (!p) { act.setErr(`Prompt ${id} was not found in the database.`); return; } setDoc(p); setF({ ...blank(), ...api.contentOf(p), tr: normTr(p.tr) }); setDirty(false); }).catch((e) => act.setErr(friendly(e)));
   }, [id]); // eslint-disable-line
 
-  if (!f || !tax) return <Shell title={id ? 'Edit prompt' : 'New prompt'}><Err>{act.err}</Err>{!act.err && <Loading />}</Shell>;
+  if (!f || !tax) return <AdminShell title={id ? 'Edit prompt' : 'New prompt'}><Err>{act.err}</Err>{!act.err && <Loading />}</AdminShell>;
   const set = (k, v) => { setF((x) => ({ ...x, [k]: v })); setDirty(true); };
   // Placeholders come from the prompt text; labels and examples are kept by name.
   const setBody = (body) => {
@@ -167,7 +114,7 @@ export function PromptEditor() {
   const save = async () => {
     if (!f.title.trim()) { act.setErr('Add a title before saving.'); return null; }
     const r = await act.run(() => api.savePrompt(content(), me), (x) => `Saved as draft v${x.version}.`);
-    if (r) { setDirty(false); const p = await api.getPrompt(r.id); setDoc(p); setF((x) => ({ ...x, id: r.id })); if (!id) nav(`/pw-admin/edit/${r.id}`, { replace: true }); }
+    if (r) { setDirty(false); const p = await api.getPrompt(r.id); setDoc(p); setF((x) => ({ ...x, id: r.id })); if (!id) nav(`/admin/prompts/${r.id}/edit`, { replace: true }); }
     return r;
   };
   const submit = async () => {
@@ -181,10 +128,10 @@ export function PromptEditor() {
   };
 
   return (
-    <Shell title={id ? f.title || id : 'New prompt'} sub={doc ? `${f.id} · v${doc.version} · last saved ${when(doc.updatedAt)} by ${doc.updatedBy && doc.updatedBy.name}` : 'Fill in the fields, save as a draft, then submit it for review.'}
+    <AdminShell title={id ? f.title || id : 'New prompt'} sub={doc ? `${f.id} · v${doc.version} · last saved ${when(doc.updatedAt)} by ${doc.updatedBy && doc.updatedBy.name}` : 'Fill in the fields, save as a draft, then submit it for review.'}
       actions={<div className="row center gap8 wrap">{doc && <StatusTag status={status} />}{doc && doc.live && <Tag tone="success">Live v{doc.published && doc.published.version}</Tag>}</div>}>
       {doc && doc.reviewNote && status === 'draft' && <div className="soft bg-accent-soft small"><b>Returned by the reviewer:</b> {doc.reviewNote}</div>}
-      {status === 'review' && <div className="soft bg-primary-soft small">This prompt is in review{doc.submittedBy ? ` (submitted by ${doc.submittedBy.name})` : ''}. {isReviewer(role) ? <Link className="c-primary" to={`/pw-admin/review/${f.id}`}>Open the review</Link> : 'Saving a change moves it back to Draft.'}</div>}
+      {status === 'review' && <div className="soft bg-primary-soft small">This prompt is in review{doc.submittedBy ? ` (submitted by ${doc.submittedBy.name})` : ''}. {isReviewer(role) ? <Link className="c-primary" to={`/admin/review/${f.id}`}>Open the review</Link> : 'Saving a change moves it back to Draft.'}</div>}
       <Err>{act.err}</Err>
       <div className="detail-split">
         <div className="col" style={{ gap: 20 }}>
@@ -248,10 +195,10 @@ export function PromptEditor() {
             <button type="button" className="btn btn-primary" disabled={act.busy || !canEdit} onClick={save}>{act.busy ? <Spinner label="Saving…" /> : 'Save draft'}</button>
             {dirty && <span className="caption c-accent">Unsaved changes</span>}
             {act.msg && <Ok>{act.msg}</Ok>}
-            <button type="button" className="btn btn-secondary" disabled={!f.id || dirty} onClick={() => nav(`/pw-admin/preview/${f.id}`)}><Icon name="BookOpen" size={16} />Preview</button>
+            <button type="button" className="btn btn-secondary" disabled={!f.id || dirty} onClick={() => nav(`/admin/prompts/${f.id}/preview`)}><Icon name="BookOpen" size={16} />Preview</button>
             <button type="button" className="btn btn-secondary" disabled={!f.id || dirty || status !== 'draft' || problems.length > 0 || act.busy} onClick={submit}><Icon name="Send" size={16} />Submit for review</button>
             {(!f.id || dirty) && <span className="caption faint">Save first to preview or submit.</span>}
-            {f.id && <Link to={`/pw-admin/history/${f.id}`} className="small c-primary">Version history</Link>}
+            {f.id && <Link to={`/admin/prompts/${f.id}/history`} className="small c-primary">Version history</Link>}
           </section>
           <section className="card p24">
             <h2 className="h3">Ready to publish?</h2>
@@ -274,7 +221,7 @@ export function PromptEditor() {
           )}
         </aside>
       </div>
-    </Shell>
+    </AdminShell>
   );
 }
 const Field = ({ label, hint, id, children }) => (
@@ -288,7 +235,7 @@ export function PromptPreview() {
   useEffect(() => { api.getPrompt(id).then((x) => (x ? setP(x) : setErr('Not found.'))).catch((e) => setErr(friendly(e))); }, [id]);
   return (
     <>
-      <div className="soft bg-primary-soft row center wrap gap8 small"><Icon name="Info" size={16} color="#4F46E5" /><span className="grow"><b>Preview</b> — this is how learners will see version {p && p.version}. {p && p.status !== 'published' ? 'They do not see it yet.' : ''}</span><Link to={`/pw-admin/edit/${id}`} className="btn btn-secondary">Back to the editor</Link></div>
+      <div className="soft bg-primary-soft row center wrap gap8 small"><Icon name="Info" size={16} color="#4F46E5" /><span className="grow"><b>Preview</b> — this is how learners will see version {p && p.version}. {p && p.status !== 'published' ? 'They do not see it yet.' : ''}</span><Link to={`/admin/prompts/${id}/edit`} className="btn btn-secondary">Back to the editor</Link></div>
       <Err>{err}</Err>
       {p ? <PromptDetailView p={p} preview /> : !err && <Loading />}
     </>
@@ -300,9 +247,9 @@ export function ReviewQueue() {
   const { role, me } = useStore();
   const [list, setList] = useState(null); const [err, setErr] = useState('');
   useEffect(() => { api.listPrompts().then((l) => setList(l.filter((p) => p.status === 'review').sort((a, b) => (a.updatedAt || '').localeCompare(b.updatedAt || '')))).catch((e) => { setErr(friendly(e)); setList([]); }); }, []);
-  if (!isReviewer(role)) return <Shell title="Review queue"><p className="body muted">Only Reviewers and the Owner can review prompts.</p></Shell>;
+  if (!isReviewer(role)) return <AdminShell title="Review queue"><p className="body muted">Only Reviewers and the Owner can review prompts.</p></AdminShell>;
   return (
-    <Shell title="Review queue" sub="Prompts waiting for a quality check, oldest first.">
+    <AdminShell title="Review queue" sub="Prompts waiting for a quality check, oldest first.">
       <Err>{err}</Err>
       {list === null ? <Loading /> : (
         <section className="card p0">
@@ -313,14 +260,14 @@ export function ReviewQueue() {
                 <span className="caption faint mono" style={{ width: 52 }}>{p.id}</span>
                 <div className="col grow" style={{ gap: 2 }}><span className="label">{p.title}</span><span className="caption faint">v{p.version} · submitted by {p.submittedBy && p.submittedBy.name} · {ago(p.updatedAt)}{p.live ? ' · update to a live prompt' : ' · new prompt'}</span></div>
                 {own && role !== 'owner' && <span className="caption faint hide-sm">Your submission</span>}
-                <Link to={`/pw-admin/review/${p.id}`} className="btn btn-secondary">Review</Link>
+                <Link to={`/admin/review/${p.id}`} className="btn btn-secondary">Review</Link>
               </div>
             );
           })}
           {!list.length && <p className="body muted" style={{ padding: 24 }}>Nothing to review. 🎉</p>}
         </section>
       )}
-    </Shell>
+    </AdminShell>
   );
 }
 
@@ -339,17 +286,17 @@ export function ReviewPrompt() {
   const [checks, setChecks] = useState({}); const [comment, setComment] = useState('');
   const act = useAction();
   useEffect(() => { api.getPrompt(id).then(setP).catch((e) => act.setErr(friendly(e))); }, [id]); // eslint-disable-line
-  if (!isReviewer(role)) return <Shell title="Review"><p className="body muted">Only Reviewers and the Owner can review prompts.</p></Shell>;
-  if (!p) return <Shell title="Review"><Err>{act.err}</Err>{!act.err && <Loading />}</Shell>;
+  if (!isReviewer(role)) return <AdminShell title="Review"><p className="body muted">Only Reviewers and the Owner can review prompts.</p></AdminShell>;
+  if (!p) return <AdminShell title="Review"><Err>{act.err}</Err>{!act.err && <Loading />}</AdminShell>;
   const problems = api.validate(p);
   const own = p.submittedBy && p.submittedBy.uid === me.uid && role !== 'owner';
   const allChecked = CHECKS.every(([k]) => checks[k]);
   const canPublish = p.status === 'review' && !own && !problems.length && allChecked;
-  const publish = async () => { const ok = await act.run(() => api.publishPrompt(p.id, me, { isOwner: role === 'owner' })); if (ok !== undefined) { loadPromptData(true); nav('/pw-admin/review', { replace: true }); } };
-  const ret = async () => { const ok = await act.run(() => api.returnToDraft(p.id, me, comment)); if (ok !== undefined) nav('/pw-admin/review', { replace: true }); };
+  const publish = async () => { const ok = await act.run(() => api.publishPrompt(p.id, me, { isOwner: role === 'owner' })); if (ok !== undefined) { loadPromptData(true); nav('/admin/review', { replace: true }); } };
+  const ret = async () => { const ok = await act.run(() => api.returnToDraft(p.id, me, comment)); if (ok !== undefined) nav('/admin/review', { replace: true }); };
 
   return (
-    <Shell title={`Review · ${p.title}`} sub={`${p.id} · v${p.version} · submitted by ${p.submittedBy ? p.submittedBy.name : '—'}${p.live ? ` · replaces live v${p.published && p.published.version}` : ''}`}>
+    <AdminShell title={`Review · ${p.title}`} sub={`${p.id} · v${p.version} · submitted by ${p.submittedBy ? p.submittedBy.name : '—'}${p.live ? ` · replaces live v${p.published && p.published.version}` : ''}`}>
       {p.status !== 'review' && <div className="soft bg-bg small">This prompt is {api.STATUS[p.status].label.toLowerCase()}, not in review.</div>}
       <div className="detail-split review-split">
         <div className="col" style={{ gap: 20 }}><PromptDetailView p={p} preview /></div>
@@ -357,7 +304,7 @@ export function ReviewPrompt() {
           <section className="card p24">
             <h2 className="h3">Automatic checks</h2>
             {problems.length ? <ul className="bullets c-danger">{problems.map((x) => <li key={x}>{x}</li>)}</ul> : <span className="small c-success"><Icon name="Check" size={16} /> Required fields filled, placeholders match.</span>}
-            {p.live && <Link to={`/pw-admin/history/${p.id}?a=${p.published.version}&b=${p.version}`} className="small c-primary">Compare with the live version</Link>}
+            {p.live && <Link to={`/admin/prompts/${p.id}/history?a=${p.published.version}&b=${p.version}`} className="small c-primary">Compare with the live version</Link>}
           </section>
           <section className="card p24">
             <h2 className="h3">Quality checklist</h2>
@@ -381,7 +328,7 @@ export function ReviewPrompt() {
           <Err>{act.err}</Err>
         </aside>
       </div>
-    </Shell>
+    </AdminShell>
   );
 }
 
@@ -418,10 +365,10 @@ export function VersionHistory() {
     const q = new URLSearchParams(); if (x) q.set('a', x); if (y) q.set('b', y); setSp(q, { replace: true });
   };
   const va = list && list.find((v) => v.version === a); const vb = list && list.find((v) => v.version === b);
-  const restore = async (n) => { const r = await act.run(() => api.restoreVersion(id, n, me)); if (r) nav(`/pw-admin/edit/${id}`); };
+  const restore = async (n) => { const r = await act.run(() => api.restoreVersion(id, n, me)); if (r) nav(`/admin/prompts/${id}/edit`); };
 
   return (
-    <Shell title={`History · ${p ? p.title : id}`} sub="Every saved version, newest first. Pick two to compare. Restoring creates a new draft that goes through review." actions={<Link to={`/pw-admin/edit/${id}`} className="btn btn-secondary">Back to the editor</Link>}>
+    <AdminShell title={`History · ${p ? p.title : id}`} sub="Every saved version, newest first. Pick two to compare. Restoring creates a new draft that goes through review." actions={<Link to={`/admin/prompts/${id}/edit`} className="btn btn-secondary">Back to the editor</Link>}>
       <Err>{act.err}</Err>
       {list === null ? <Loading /> : (
         <section className="card p0">
@@ -453,304 +400,7 @@ export function VersionHistory() {
           {Object.keys(FIELD_LABEL).every((k) => show(k, va.content[k]) === show(k, vb.content[k])) && <p className="small muted">No differences.</p>}
         </section>
       ) : list && list.length > 1 && <p className="small faint">Tick two versions to compare them.</p>}
-    </Shell>
+    </AdminShell>
   );
 }
 
-// ---------- A6 taxonomy ----------
-const move = (arr, i, d) => { const a = [...arr]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; };
-export function Taxonomy() {
-  const { role, me } = useStore();
-  const [t, setT] = useState(null); const [counts, setCounts] = useState({}); const [dirty, setDirty] = useState(false);
-  const [newCol, setNewCol] = useState('');
-  const act = useAction();
-  useEffect(() => {
-    api.getTaxonomy().then((x) => setT(x ? { ...DEFAULT_TAXONOMY, ...x } : structuredClone(DEFAULT_TAXONOMY))).catch((e) => act.setErr(friendly(e)));
-    api.listPrompts().then((l) => { const src = l.length ? l : BUNDLED; const c = {}; for (const p of src) if (p.status !== 'archived') c[p.cat] = (c[p.cat] || 0) + 1; setCounts(c); }).catch(() => {});
-  }, []); // eslint-disable-line
-  if (role !== 'owner') return <Shell title="Taxonomy"><p className="body muted">Only the Owner can change the taxonomy.</p></Shell>;
-  if (!t) return <Shell title="Taxonomy"><Err>{act.err}</Err>{!act.err && <Loading />}</Shell>;
-  const up = (k, v) => { setT((x) => ({ ...x, [k]: v })); setDirty(true); };
-  const edit = (k, i, patch) => up(k, t[k].map((x, j) => (j === i ? { ...x, ...patch } : x)));
-  const save = async () => { const ok = await act.run(() => api.saveTaxonomy(t, me, 'Phases, categories and collections updated'), 'Saved. The library uses the new names and order now.'); if (ok !== undefined) { setDirty(false); loadPromptData(true); } };
-  const nextCatId = String.fromCharCode(Math.max(...t.categories.map((c) => c.id.charCodeAt(0))) + 1);
-
-  return (
-    <Shell title="Taxonomy" sub="Phases, categories, subcategories and collections. Changes apply to the library when you save."
-      actions={<button type="button" className="btn btn-primary" disabled={!dirty || act.busy} onClick={save}>{act.busy ? <Spinner label="Saving…" /> : 'Save changes'}</button>}>
-      <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
-      <section className="card p24">
-        <h2 className="h3">Phases</h2>
-        <p className="small muted">Rename or reorder. Phase colours belong to the design system, so phases can't be added or removed here.</p>
-        {t.phases.map((p, i) => (
-          <div key={p.id} className="tax-row">
-            <PhaseChip phase={p.id} />
-            <input className="input" aria-label={`${p.id} name`} value={p.name} onChange={(e) => edit('phases', i, { name: e.target.value })} />
-            <input className="input grow" aria-label={`${p.id} description`} value={p.sub} onChange={(e) => edit('phases', i, { sub: e.target.value })} />
-            <Order onUp={() => up('phases', move(t.phases, i, -1))} onDown={() => up('phases', move(t.phases, i, 1))} label={p.name} />
-          </div>
-        ))}
-      </section>
-      <section className="card p24">
-        <h2 className="h3">Categories and subcategories</h2>
-        <p className="small muted">A category that has prompts can't be deleted, only hidden. Hidden categories and their prompts disappear from the library.</p>
-        {t.categories.map((c, i) => (
-          <div key={c.id} className="col gap8 tax-block">
-            <div className="tax-row">
-              <span className="label mono">{c.id}</span>
-              <input className="input grow" aria-label={`Category ${c.id} name`} value={c.name} onChange={(e) => edit('categories', i, { name: e.target.value })} />
-              <span className="caption faint">{counts[c.id] || 0} prompts</span>
-              <label className="row center gap6 small"><input type="checkbox" checked={!!c.hidden} onChange={(e) => edit('categories', i, { hidden: e.target.checked })} />Hidden</label>
-              <Order onUp={() => up('categories', move(t.categories, i, -1))} onDown={() => up('categories', move(t.categories, i, 1))} label={c.name} />
-              <button type="button" className="icon-btn" aria-label={`Delete category ${c.id}`} title={counts[c.id] ? 'Has prompts — hide it instead' : 'Delete'} disabled={!!counts[c.id]} onClick={() => up('categories', t.categories.filter((_, j) => j !== i))}><Icon name="X" size={16} /></button>
-            </div>
-            <div className="row wrap gap6 subs">
-              {(c.subs || []).map((s, k) => (
-                <span key={k} className="sub-pill"><input aria-label={`Subcategory ${k + 1} of ${c.id}`} value={s} onChange={(e) => edit('categories', i, { subs: c.subs.map((x, m) => (m === k ? e.target.value : x)) })} size={Math.max(8, s.length)} />
-                  <button type="button" aria-label={`Remove ${s}`} onClick={() => edit('categories', i, { subs: c.subs.filter((_, m) => m !== k) })}><Icon name="X" size={12} /></button></span>
-              ))}
-              <button type="button" className="btn btn-ghost" onClick={() => edit('categories', i, { subs: [...(c.subs || []), 'New subcategory'] })}><Icon name="Plus" size={14} />Subcategory</button>
-            </div>
-          </div>
-        ))}
-        {nextCatId <= 'Z' && <button type="button" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }} onClick={() => up('categories', [...t.categories, { id: nextCatId, name: 'New category', hidden: false, subs: [] }])}><Icon name="Plus" size={16} />Add category {nextCatId}</button>}
-      </section>
-      <section className="card p24">
-        <h2 className="h3">Collections</h2>
-        {t.collections.map((c, i) => (
-          <div key={c.id} className="col gap8 tax-block">
-            <div className="tax-row">
-              <input className="input" aria-label="Collection name" value={c.name} onChange={(e) => edit('collections', i, { name: e.target.value })} />
-              <input className="input grow" aria-label={`${c.name} description`} value={c.desc} onChange={(e) => edit('collections', i, { desc: e.target.value })} />
-              <label className="row center gap6 small"><input type="checkbox" checked={!!c.hidden} onChange={(e) => edit('collections', i, { hidden: e.target.checked })} />Hidden</label>
-              <Order onUp={() => up('collections', move(t.collections, i, -1))} onDown={() => up('collections', move(t.collections, i, 1))} label={c.name} />
-              <button type="button" className="icon-btn" aria-label={`Delete collection ${c.name}`} onClick={() => up('collections', t.collections.filter((_, j) => j !== i))}><Icon name="X" size={16} /></button>
-            </div>
-            <div className="row center wrap gap6">
-              <span className="caption faint">Roles:</span>
-              {ROLES.map((r) => { const on = (c.roles || []).includes(r); return <button key={r} type="button" className={`check-chip small-chip ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => edit('collections', i, { roles: on ? c.roles.filter((x) => x !== r) : [...(c.roles || []), r] })}>{r}</button>; })}
-              <span className="caption faint" style={{ marginLeft: 8 }}>Steps (in order):</span>
-              <input className="input grow" aria-label={`${c.name} steps`} value={c.steps.join(', ')} onChange={(e) => edit('collections', i, { steps: e.target.value.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter(Boolean) })} />
-            </div>
-          </div>
-        ))}
-        <div className="row center gap8 wrap">
-          <input className="input" style={{ maxWidth: 320 }} aria-label="New collection name" placeholder="New collection name" value={newCol} onChange={(e) => setNewCol(e.target.value)} />
-          <button type="button" className="btn btn-secondary" disabled={!newCol.trim()} onClick={() => { const id = newCol.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); if (t.collections.some((c) => c.id === id)) { act.setErr('A collection with that name exists.'); return; } up('collections', [...t.collections, { id, name: newCol.trim(), desc: '', roles: [], steps: [], hidden: false }]); setNewCol(''); }}><Icon name="Plus" size={16} />Add collection</button>
-        </div>
-      </section>
-    </Shell>
-  );
-}
-const Order = ({ onUp, onDown, label }) => (
-  <span className="row gap4"><button type="button" className="icon-btn" aria-label={`Move ${label} up`} onClick={onUp}><Icon name="ChevronUp" size={16} /></button><button type="button" className="icon-btn" aria-label={`Move ${label} down`} onClick={onDown}><Icon name="ChevronDown" size={16} /></button></span>
-);
-
-// ---------- A7 staff ----------
-export function Staff() {
-  const { role, me } = useStore();
-  const [people, setPeople] = useState(null); const [q, setQ] = useState('');
-  const act = useAction();
-  const load = async () => {
-    try {
-      let [dir, staff] = await Promise.all([api.listDirectory(), api.listStaff()]);
-      if (LOCAL_MODE && !dir.length) { await Promise.all(DEMO_PEOPLE.filter((p) => p.role !== 'owner').map((p) => api.touchDirectory({ uid: p.uid, displayName: p.name, email: p.email }))); dir = await api.listDirectory(); }
-      const roles = Object.fromEntries(staff.map((s) => [s._id, s.role]));
-      setPeople(dir.map((d) => ({ uid: d._id, name: d.name, email: d.email, lastSeen: d.lastSeen, role: roles[d._id] || '' })).sort((a, b) => (b.role ? 1 : 0) - (a.role ? 1 : 0) || (b.lastSeen || '').localeCompare(a.lastSeen || '')));
-    } catch (e) { act.setErr(friendly(e)); setPeople([]); }
-  };
-  useEffect(() => { if (role === 'owner') load(); }, [role]); // eslint-disable-line
-  if (role !== 'owner') return <Shell title="Staff"><p className="body muted">Only the Owner can manage staff.</p></Shell>;
-  const assign = async (person, r) => { const ok = await act.run(() => api.setStaffRole(person, r || null, me), `${person.name || person.email} is now ${r ? ROLE_LABEL[r] : 'a learner (no role)'}.`); if (ok !== undefined) load(); };
-  const rows = (people || []).filter((p) => p.uid !== me.uid && (!q || `${p.name} ${p.email}`.toLowerCase().includes(q.toLowerCase())));
-  return (
-    <Shell title="Staff" sub="People appear here after they sign in with Google once. Editors write and submit prompts; Reviewers also publish, return and take down prompts. Roles apply at their next page load.">
-      <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
-      <label className="search pw-search"><Icon name="Search" size={18} color="#94A3B8" /><input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or email" aria-label="Search people" /></label>
-      {people === null ? <Loading /> : (
-        <section className="card p0">
-          <div className="list-row admin-row"><div className="col grow" style={{ gap: 2 }}><span className="label">{me.name}</span><span className="caption faint">{me.email}</span></div><Tag tone="primary">Owner</Tag></div>
-          {rows.map((p) => (
-            <div key={p.uid} className="list-row admin-row">
-              <div className="col grow" style={{ gap: 2 }}><span className="label">{p.name || p.email}</span><span className="caption faint">{p.email}{p.lastSeen ? ` · last seen ${ago(p.lastSeen)}` : ''}</span></div>
-              <select className="input pw-select" aria-label={`Role for ${p.name || p.email}`} value={p.role} disabled={act.busy} onChange={(e) => assign(p, e.target.value)}>
-                <option value="">Learner (no role)</option><option value="editor">Editor</option><option value="reviewer">Reviewer</option>
-              </select>
-            </div>
-          ))}
-          {!rows.length && <p className="body muted" style={{ padding: 24 }}>Nobody else has signed in yet.</p>}
-        </section>
-      )}
-    </Shell>
-  );
-}
-
-// ---------- A8 feedback inbox ----------
-export function FeedbackInbox() {
-  const { role } = useStore();
-  const [list, setList] = useState(null); const [tab, setTab] = useState('new'); const [err, setErr] = useState('');
-  const load = () => api.listFeedback().then(setList).catch((e) => { setErr(friendly(e)); setList([]); });
-  useEffect(() => { if (isReviewer(role)) load(); }, [role]);
-  if (!isReviewer(role)) return <Shell title="Feedback"><p className="body muted">Only Reviewers and the Owner can read feedback.</p></Shell>;
-  const rows = (list || []).filter((f) => (tab === 'new' ? f.status !== 'done' : f.status === 'done'));
-  const mark = async (f, status) => { try { await api.setFeedbackStatus(f._id, status); load(); } catch (e) { setErr(friendly(e)); } };
-  return (
-    <Shell title="Feedback inbox" sub="Private improvement suggestions from learners. Only staff see these.">
-      <Err>{err}</Err>
-      <div className="seg" role="group" aria-label="Filter">
-        <button type="button" className={tab === 'new' ? 'on' : ''} aria-pressed={tab === 'new'} onClick={() => setTab('new')}>New · {(list || []).filter((f) => f.status !== 'done').length}</button>
-        <button type="button" className={tab === 'done' ? 'on' : ''} aria-pressed={tab === 'done'} onClick={() => setTab('done')}>Done</button>
-      </div>
-      {list === null ? <Loading /> : (
-        <section className="card p0">
-          {rows.map((f) => (
-            <div key={f._id} className="list-row admin-row" style={{ alignItems: 'flex-start' }}>
-              <div className="col grow" style={{ gap: 4 }}>
-                <span className="caption faint"><Link to={`/pw-admin/edit/${f.promptId}`} className="c-primary">{f.promptId} · {f.title}</Link> · {f.name} · {ago(f.at)}</span>
-                <p className="small" style={{ whiteSpace: 'pre-wrap' }}>{f.text}</p>
-              </div>
-              <button type="button" className="btn btn-secondary" onClick={() => mark(f, f.status === 'done' ? 'new' : 'done')}>{f.status === 'done' ? 'Reopen' : 'Mark done'}</button>
-            </div>
-          ))}
-          {!rows.length && <p className="body muted" style={{ padding: 24 }}>{tab === 'new' ? 'No new feedback.' : 'Nothing marked done yet.'}</p>}
-        </section>
-      )}
-    </Shell>
-  );
-}
-
-// ---------- A10 features (REQ-037, design SCR-5) ----------
-// Who sees each feature. Stored as settings/site.flags.<key> = { audience, beta }: the switch "Released to everyone"
-// sets audience 'everyone'; off means 'beta' when the feature has beta testers, else 'owner'.
-const FEATURE_FILTERS = [['all', 'All'], ['released', 'Released'], ['unreleased', 'Unreleased'], ['beta', 'Beta']];
-export function Features() {
-  const { role, me } = useStore();
-  useFlags();
-  const [dir, setDir] = useState([]); const [q, setQ] = useState(''); const [filter, setFilter] = useState('all');
-  const act = useAction();
-  useEffect(() => { if (role === 'owner') api.listDirectory().then(setDir).catch(() => {}); }, [role]);
-  if (role !== 'owner') return <Shell title="Features"><p className="body muted">Only the Owner can change features.</p></Shell>;
-
-  const betaOf = (key) => (remoteFlags()[key] || {}).beta || [];
-  const stateOf = (key) => { const a = audienceOf(key); return a === 'everyone' ? 'released' : a === 'beta' && betaOf(key).length ? 'beta' : 'owner'; };
-  // `what` is the audit-log line; by default "<feature>: <audience>".
-  const save = (key, patch, what) => act.run(async () => {
-    const next = { ...remoteFlags(), [key]: { audience: audienceOf(key), beta: betaOf(key), ...patch } };
-    await api.saveFlags(next, me, what || `${FLAGS[key].name}: ${next[key].audience}`); setRemoteFlags(next);
-  }, 'Feature setting saved.');
-  const setReleased = (key, on) => save(key, { audience: on ? 'everyone' : betaOf(key).length ? 'beta' : 'owner' });
-  const setBeta = (key, list, who, added) => {
-    const audience = audienceOf(key) === 'everyone' ? 'everyone' : list.length ? 'beta' : 'owner';
-    return save(key, { beta: list, audience }, `${FLAGS[key].name} beta: ${added ? 'added' : 'removed'} ${who} (${audience})`);
-  };
-
-  const keys = Object.keys(FLAGS);
-  const count = (f) => keys.filter((k) => f === 'all' || (f === 'unreleased' ? stateOf(k) !== 'released' : stateOf(k) === f)).length;
-  const ql = q.trim().toLowerCase();
-  const shown = keys.filter((k) => (filter === 'all' || (filter === 'unreleased' ? stateOf(k) !== 'released' : stateOf(k) === filter))
-    && (!ql || `${k} ${FLAGS[k].name} ${FLAGS[k].where}`.toLowerCase().includes(ql)));
-  const STATUS = { released: ['Everyone', 'success'], beta: [null, 'accent'], owner: ['Owner only', 'ink'] };
-
-  return (
-    <Shell title="Features" sub="Who sees each feature. Roll out to beta testers first, then to everyone.">
-      <p className="small muted">Turn a feature on for everyone, or keep it off and pick beta testers. Owner and staff always see every feature. Every change is written to the audit log.</p>
-      <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
-      <div className="row center wrap gap8">
-        <div className="search" style={{ flex: '1 1 240px', maxWidth: 'none', background: '#fff', border: '1px solid var(--border)' }}><Icon name="Search" size={18} color="#94A3B8" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search features" aria-label="Search features" /></div>
-        <div className="seg" role="group" aria-label="Filter features" style={{ flexWrap: 'wrap' }}>
-          {FEATURE_FILTERS.map(([k, l]) => <button key={k} type="button" className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} ({count(k)})</button>)}
-        </div>
-      </div>
-      {!shown.length && <p className="body muted">No feature matches.</p>}
-      {shown.map((key) => {
-        const f = FLAGS[key]; const st = stateOf(key); const beta = betaOf(key); const released = st === 'released';
-        const [label, tone] = STATUS[st];
-        return (
-          <section key={key} className="card flag-card" aria-label={f.name}>
-            <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
-              <span className="bg-primary-soft c-primary" style={{ width: 40, height: 40, borderRadius: 10, display: 'grid', placeItems: 'center', flex: 'none' }}><Icon name={f.icon || 'Flag'} size={20} /></span>
-              <div className="col grow" style={{ gap: 2, minWidth: 0 }}>
-                <h2 className="label">{f.name}</h2>
-                <span className="small muted">{f.where}</span>
-                <span className="caption faint">{f.since ? `Since ${f.since}` : 'Live before flags'}</span>
-              </div>
-              <Tag tone={tone}>{label || `Beta · ${beta.length} ${beta.length === 1 ? 'person' : 'people'}`}</Tag>
-            </div>
-            <div className="row center wrap gap10">
-              <span style={{ opacity: act.busy ? 0.5 : 1 }} aria-busy={act.busy}><Toggle on={released} label={`Released to everyone: ${f.name}`} onChange={(v) => { if (!act.busy) setReleased(key, v); }} /></span>
-              <span className="label">Released to everyone</span>
-              {!released && <span className="caption faint">Off: Owner and staff see it{beta.length ? ', plus the beta testers below' : ''}. Preview link: <code>?preview={key}</code></span>}
-            </div>
-            {!released && (
-              <div className="col gap6"><span className="caption muted">Beta testers · {beta.length}</span>
-                {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
-                  <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => setBeta(key, on ? beta.filter((x) => x !== d._id) : [...beta, d._id], d.email || d.name, !on)} />{d.name || d.email} <span className="faint">{d.email}</span></label>
-                ); })}
-                {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
-              </div>
-            )}
-          </section>
-        );
-      })}
-    </Shell>
-  );
-}
-
-// ---------- A9 insights, audit log ----------
-export function Insights() {
-  const { role, me } = useStore();
-  const D = usePromptData();
-  const [stats, setStats] = useState(null); const [month, setMonth] = useState([]); const [logs, setLogs] = useState(null);
-  const [sort, setSort] = useState('copies');
-  const act = useAction();
-  useEffect(() => {
-    if (role !== 'owner') return;
-    api.listStats().then(setStats).catch((e) => { act.setErr(friendly(e)); setStats([]); });
-    api.listMonth().then(setMonth).catch(() => {});
-    api.listLogs().then(setLogs).catch((e) => { act.setErr(friendly(e)); setLogs([]); });
-  }, [role]); // eslint-disable-line
-  if (role !== 'owner') return <Shell title="Insights"><p className="body muted">Only the Owner can see insights.</p></Shell>;
-
-  const title = (id) => (D.byId[id] ? D.byId[id].title : id);
-  const rows = (stats || []).map((s) => ({ id: s._id, copies: s.copies || 0, count: s.ratingCount || 0, avg: s.ratingCount ? s.ratingSum / s.ratingCount : 0 }));
-  const top = [...month].sort((a, b) => b.copies - a.copies).slice(0, 10);
-  const totalCopies = rows.reduce((n, r) => n + r.copies, 0); const monthCopies = month.reduce((n, r) => n + (r.copies || 0), 0);
-  const ratings = rows.reduce((n, r) => n + r.count, 0); const avg = ratings ? rows.reduce((n, r) => n + r.avg * r.count, 0) / ratings : 0;
-  const sorted = [...rows].sort((a, b) => (sort === 'rating' ? b.avg - a.avg || b.count - a.count : b.copies - a.copies));
-
-  return (
-    <Shell title="Insights" sub="How learners use the prompts. Counts only — no names or emails.">
-      <Err>{act.err}</Err>{act.msg && <Ok>{act.msg}</Ok>}
-      <div className="grid g4">
-        {[['Copies, all time', totalCopies], ['Copies this month', monthCopies], ['Ratings', ratings], ['Average rating', ratings ? `★ ${avg.toFixed(1)}` : '—']].map(([l, v]) => (
-          <div key={l} className="card"><span className="caption faint">{l}</span><span className="h1">{v}</span></div>
-        ))}
-      </div>
-      <section className="card p24">
-          <h2 className="h3">Top 10 this month</h2>
-          {!top.length && <p className="small faint">No copies yet this month.</p>}
-          <ol className="top-list">{top.map((m) => <li key={m.promptId}><span className="grow">{title(m.promptId)}</span><b>{m.copies}</b></li>)}</ol>
-      </section>
-      <section className="card p0">
-        <div className="row center list-head"><h2 className="h3 grow">All prompts</h2>
-          <div className="seg" role="group" aria-label="Sort"><button type="button" className={sort === 'copies' ? 'on' : ''} onClick={() => setSort('copies')}>Most copied</button><button type="button" className={sort === 'rating' ? 'on' : ''} onClick={() => setSort('rating')}>Best rated</button></div></div>
-        {stats === null ? <Loading /> : sorted.map((r) => (
-          <div key={r.id} className="list-row admin-row"><span className="caption faint mono" style={{ width: 52 }}>{r.id}</span><span className="small grow">{title(r.id)}</span><span className="small" style={{ width: 90 }}>{r.copies} copies</span><span className="small c-accent" style={{ width: 110 }}>{r.count ? `★ ${r.avg.toFixed(1)} (${r.count})` : '—'}</span></div>
-        ))}
-        {stats && !sorted.length && <p className="body muted" style={{ padding: 24 }}>No usage yet.</p>}
-      </section>
-      <section className="card p0">
-        <div className="list-head"><h2 className="h3">Audit log</h2><p className="small faint">The latest 200 admin actions.</p></div>
-        {logs === null ? <Loading /> : logs.map((l) => (
-          <div key={l._id} className="list-row admin-row">
-            <span className="caption faint" style={{ width: 140 }}>{when(l.at)}</span>
-            <span className="small" style={{ width: 150 }}>{l.name}</span>
-            <Tag tone="ink">{l.action}</Tag>
-            <span className="small grow">{l.promptId ? `${l.promptId} · ${l.title}` : ''}{l.detail ? <span className="faint"> {l.promptId ? '— ' : ''}{l.detail}</span> : null}</span>
-          </div>
-        ))}
-        {logs && !logs.length && <p className="body muted" style={{ padding: 24 }}>No admin actions yet.</p>}
-      </section>
-    </Shell>
-  );
-}

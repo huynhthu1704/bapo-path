@@ -390,3 +390,11 @@ textarea.mono { font-size: 13.5px; line-height: 21px; }
 /* REQ-035: "Sign in to save" dialog */
 .signin-scrim { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 90; display: grid; place-items: center; padding: 16px; }
 .signin-box { width: 100%; max-width: 440px; gap: 14px; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+
+/* REQ-038: the Admin area — side menu on the left; a drop-down instead on small screens */
+.admin-layout { display: flex; gap: 32px; align-items: flex-start; }
+.admin-nav { width: 220px; flex: none; position: sticky; top: 96px; display: flex; flex-direction: column; gap: 6px; }
+.admin-nav .nav-sec { padding-top: 8px; }
+.admin-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.admin-pick { display: none; }
+@media (max-width: 900px) { .admin-nav { display: none; } .admin-pick { display: flex; } }

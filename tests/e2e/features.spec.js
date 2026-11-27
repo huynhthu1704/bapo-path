@@ -120,7 +120,7 @@ test('TC-037a the Features page lists every feature with search, filters and sta
   const noErrors = failOnPageErrors(page);
   await actAs(page, 'owner');
   await onboarded(page);
-  await page.goto('#/pw-admin/features');
+  await page.goto('#/admin/features');
   await expect(page.getByRole('heading', { name: 'Features', level: 1 })).toBeVisible();
   const cards = page.locator('.flag-card');
   await expect(cards).toHaveCount(18);
@@ -157,7 +157,7 @@ test('TC-037a beta testers: status, Beta filter and ticking a tester', async ({ 
     db['directory/demo-reviewer'] = { name: 'Minh', email: 'minh@demo.local' };
     localStorage.setItem('bapo-path-local-db', JSON.stringify(db));
   });
-  await page.goto('#/pw-admin/features');
+  await page.goto('#/admin/features');
   const cards = page.locator('.flag-card');
   const story = cards.filter({ hasText: 'Story Mode' });
   await expect(story).toContainText('Beta · 1 person');
@@ -172,16 +172,16 @@ test('TC-037a beta testers: status, Beta filter and ticking a tester', async ({ 
   await expect(story).toContainText('Beta · 1 person');
   await story.getByRole('checkbox', { name: /Hoa/ }).uncheck();
   await expect(story).toContainText('Owner only');
-  await page.goto('#/pw-admin/insights');
+  await page.goto('#/admin/audit');
   await expect(page.getByText('Story Mode beta: added minh@demo.local (beta)')).toBeVisible();
 });
 
 test('TC-037a only the Owner sees the Features tab', async ({ page }) => {
   await actAs(page, 'reviewer');
   await onboarded(page);
-  await page.goto('#/pw-admin');
-  await expect(page.getByRole('navigation', { name: 'Prompt admin' }).getByRole('link', { name: 'Features' })).toHaveCount(0);
-  await page.goto('#/pw-admin/features');
+  await page.goto('#/admin');
+  await expect(page.getByRole('navigation', { name: 'Admin' }).getByRole('link', { name: 'Features' })).toHaveCount(0);
+  await page.goto('#/admin/features');
   await expect(page.getByText('Only the Owner can change features.')).toBeVisible();
 });
 
@@ -197,13 +197,12 @@ test('TC-037b "Coming soon" on a full-screen feature page keeps the menu', async
 test('TC-037d changing a feature audience is written to the audit log', async ({ page }) => {
   await actAs(page, 'owner');
   await onboarded(page);
-  await page.goto('#/pw-admin/features');
+  await page.goto('#/admin/features');
   const story = page.locator('.flag-card').filter({ hasText: 'Story Mode' });
   await expect(story.getByRole('button', { name: 'Released to everyone: Story Mode' })).toHaveAttribute('aria-pressed', 'true');
   await story.getByRole('button', { name: 'Released to everyone: Story Mode' }).click();
   await expect(page.getByText('Feature setting saved.')).toBeVisible();
   await expect(story).toContainText('Owner only');
-  await page.goto('#/pw-admin/insights');
-  const log = page.locator('section', { has: page.getByRole('heading', { name: 'Audit log' }) });
-  await expect(log.getByText('Story Mode: owner')).toBeVisible();
+  await page.goto('#/admin/audit'); // REQ-038: the audit log has its own page
+  await expect(page.getByRole('main').getByText('Story Mode: owner')).toBeVisible();
 });

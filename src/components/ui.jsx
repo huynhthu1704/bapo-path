@@ -1,5 +1,5 @@
 import * as L from './icons.js';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useStore, rankInfo } from '../store.jsx';
 import { logSearch, enabled as authEnabled, signInErrorText, LOCAL_MODE } from '../firebase.js';
@@ -73,8 +73,8 @@ export const Progress = ({ value, color = 'var(--primary)', h = 8, track }) => (
 export const IconBox = ({ name, tone = 'primary', size = 40, iconSize = 20 }) => (
   <div className={`badge-ic ${COLOR[tone].soft}`} style={{ width: size, height: size }}><Icon name={name} size={iconSize} color={COLOR[tone].hex} /></div>
 );
-export const Toggle = ({ on, onChange, label }) => (
-  <button className={`toggle ${on ? 'on' : ''}`} onClick={() => onChange(!on)} aria-pressed={on} aria-label={label}><span /></button>
+export const Toggle = ({ on, onChange, label, disabled }) => (
+  <button type="button" className={`toggle ${on ? 'on' : ''}`} onClick={() => onChange(!on)} aria-pressed={on} aria-label={label} disabled={disabled}><span /></button>
 );
 export const Check = ({ on, done }) => <span className={`box ${on ? (done ? 'done' : 'on') : ''}`}>{on && <Icon name="Check" size={14} color="#fff" />}</span>;
 export const Crumbs = ({ items }) => (
@@ -119,13 +119,15 @@ function Sidebar({ open, onClose }) {
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
           {items.map(([to, label, icon]) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
+            <Fragment key={to}>
+              <NavLink to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
+              {/* REQ-038: one Admin entry for staff, right under Home (opens the Admin area) */}
+              {to === '/home' && role && <NavLink to="/admin" className={() => `nav-item ${/^#\/admin(\/|$)/.test(location.hash) ? 'active' : ''}`}><Icon name="Shield" size={20} />Admin</NavLink>}
+            </Fragment>
           ))}
         </div>
         );
       })}
- {role && <NavLink to="/pw-admin" className={({ isActive }) => `nav-item ${isActive || /^#\/pw-admin/.test(location.hash) ? 'active' : ''}`}><Icon name="ClipboardList" size={20} />Prompt admin</NavLink>}
-      {admin && <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name="Database" size={20} />Knowledge admin</NavLink>}
       {on('rewards') && <RankBox {...(on('achievements') ? { to: '/achievements' } : {})} className="rank-card">
         <div className="row center gap8"><Icon name="Award" size={18} color="#4F46E5" /><span className="label grow" style={{ color: 'var(--primary-dark)' }}>{r.name}</span><span className="caption c-primary">Rank {r.index + 1}</span></div>
         <Progress value={r.pct} h={6} track="#fff" />

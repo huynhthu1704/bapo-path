@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Icon, Tag, IconBox, PageHead, GoogleButton, Spinner, Loading, track, FeatureLink } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
-import { enabled, signInWithGoogle, listJobs, saveJob, deleteJob, listSearches, clearSearches, publishKnowledge, kbInfo, saveTerm, deleteTerm } from '../firebase.js';
+import { LOCAL_MODE, enabled, signInWithGoogle, listJobs, saveJob, deleteJob, listSearches, clearSearches, publishKnowledge, kbInfo, saveTerm, deleteTerm } from '../firebase.js';
 import { BUNDLED, KB_SOURCE } from '../knowledge.js';
+import { AdminShell } from './AdminShell.jsx';
 import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID } from '../data/terms.js';
 
 const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -178,7 +179,7 @@ export function Library() {
   );
 }
 
-// ---------- Knowledge base admin ----------
+// ---------- Admin › Knowledge base (Owner only; REQ-038 moved it into the Admin area) ----------
 const emptyTerm = () => ({ id: '', cat: 'team', sub: '', level: 1, term: '', full: '', def: '', example: '', vi: '' });
 export function Admin() {
   const { user, admin } = useStore();
@@ -186,12 +187,13 @@ export function Admin() {
   const [confirmPub, setConfirmPub] = useState(false); const [q, setQ] = useState(''); const [edit, setEdit] = useState(null); const [, force] = useState(0);
   useEffect(() => { if (admin) track(kbInfo()).then(setInfo).catch(() => {}); }, [admin]);
   const list = useMemo(() => TERMS.filter((t) => (t.term + ' ' + t.def).toLowerCase().includes(q.toLowerCase())), [q, msg]); // eslint-disable-line
-  if (!user) return <><PageHead title="Knowledge base admin" /><SignInCard why="Sign in with the admin Google account to manage the knowledge base." /></>;
+  if (!user && !admin) return <AdminShell title="Knowledge base"><p className="body muted">Only the Owner can manage the knowledge base.</p>{!LOCAL_MODE && <SignInCard why="Sign in with the admin Google account to manage the knowledge base." />}</AdminShell>;
   if (!admin) return (
-    <><PageHead title="Knowledge base admin" />
+    <AdminShell title="Knowledge base">
+      <p className="body muted">Only the Owner can manage the knowledge base.</p>
       <div className="card p24"><span className="h3">You are not an admin yet</span>
         <p className="body muted">To make this account an admin, open Firebase console → Firestore Database → Start collection <b>admins</b>, and add a document whose ID is your user ID below (no fields needed). Then reload this page.</p>
-        <div className="row center gap10"><code className="soft bg-bg" style={{ fontSize: 14 }}>{user.uid}</code><button className="btn btn-secondary" onClick={() => navigator.clipboard?.writeText(user.uid).catch(() => {})}>Copy ID</button></div></div></>
+        <div className="row center gap10"><code className="soft bg-bg" style={{ fontSize: 14 }}>{user.uid}</code><button className="btn btn-secondary" onClick={() => navigator.clipboard?.writeText(user.uid).catch(() => {})}>Copy ID</button></div></div></AdminShell>
   );
   const publish = async () => {
     setBusy(true); setErr(''); setMsg('');
@@ -218,8 +220,7 @@ export function Admin() {
     setBusy(false);
   };
   return (
-    <>
-      <PageHead title="Knowledge base admin" sub="Manage the public knowledge base stored in Firestore. Learners always read the latest published content." />
+    <AdminShell title="Knowledge base" sub="Manage the public knowledge base stored in Firestore. Learners always read the latest published content.">
       {msg && <div className="soft bg-success-soft small c-success">{msg}</div>}
       {err && !edit && <div className="soft bg-danger-soft small c-danger">{err}</div>}
       <div className="grid g4">
@@ -257,6 +258,6 @@ export function Admin() {
         </button>))}
         {list.length > 60 && <p className="caption faint" style={{ padding: 16 }}>Showing 60 of {list.length}. Search to narrow down.</p>}
       </div>
-    </>
+    </AdminShell>
   );
 }
