@@ -642,8 +642,12 @@ export function Insights() {
   const ratings = rows.reduce((n, r) => n + r.count, 0); const avg = ratings ? rows.reduce((n, r) => n + r.avg * r.count, 0) / ratings : 0;
   const sorted = [...rows].sort((a, b) => (sort === 'rating' ? b.avg - a.avg || b.count - a.count : b.copies - a.copies));
 
-  const flag = remoteFlags().prompts || {}; const audience = audienceOf('prompts'); const beta = flag.beta || [];
-  const saveFlag = (patch, what) => act.run(async () => { const next = { ...remoteFlags(), prompts: { audience, beta, ...patch } }; await api.saveFlags(next, me, what); setRemoteFlags(next); }, 'Feature setting saved.');
+  // One setting per feature in src/data/flags.js (bug #45: this used to cover only the Prompt Workbench).
+  const saveFlag = (key, patch, what) => act.run(async () => {
+    const cur = remoteFlags()[key] || {};
+    const next = { ...remoteFlags(), [key]: { audience: audienceOf(key), beta: cur.beta || [], ...patch } };
+    await api.saveFlags(next, me, what); setRemoteFlags(next);
+  }, 'Feature setting saved.');
 
   return (
     <Shell title="Insights" sub="How learners use the prompts. Counts only — no names or emails.">
@@ -661,18 +665,25 @@ export function Insights() {
         </section>
         <section className="card p24">
           <h2 className="h3">Features</h2>
-          <p className="small muted">Who sees the {FLAGS.prompts.name}. Staff always see it. Every change is written to the audit log.</p>
-          <label className="col gap6"><span className="label">Audience</span>
-            <select className="input" value={audience} disabled={act.busy} onChange={(e) => saveFlag({ audience: e.target.value }, `${FLAGS.prompts.name}: ${e.target.value}`)}>{AUDIENCES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
-          </label>
-          {audience === 'beta' && (
-            <div className="col gap6"><span className="label">Beta testers · {beta.length}</span>
-              {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
-                <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => saveFlag({ beta: on ? beta.filter((x) => x !== d._id) : [...beta, d._id] }, `${FLAGS.prompts.name} beta: ${on ? 'removed' : 'added'} ${d.email || d.name}`)} />{d.name || d.email} <span className="faint">{d.email}</span></label>
-              ); })}
-              {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
-            </div>
-          )}
+          <p className="small muted">Who sees each new feature. Staff always see them. Every change is written to the audit log.</p>
+          {Object.entries(FLAGS).map(([key, f]) => {
+            const audience = audienceOf(key); const beta = (remoteFlags()[key] || {}).beta || [];
+            return (
+              <div key={key} className="col gap6">
+                <label className="col gap6"><span className="label">{f.name}</span>
+                  <select className="input" aria-label={`Audience: ${f.name}`} value={audience} disabled={act.busy} onChange={(e) => saveFlag(key, { audience: e.target.value }, `${f.name}: ${e.target.value}`)}>{AUDIENCES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+                </label>
+                {audience === 'beta' && (
+                  <div className="col gap6"><span className="caption muted">Beta testers · {beta.length}</span>
+                    {dir.filter((d) => d._id !== me.uid).map((d) => { const on = beta.includes(d._id); return (
+                      <label key={d._id} className="row center gap8 small"><input type="checkbox" checked={on} disabled={act.busy} onChange={() => saveFlag(key, { beta: on ? beta.filter((x) => x !== d._id) : [...beta, d._id] }, `${f.name} beta: ${on ? 'removed' : 'added'} ${d.email || d.name}`)} />{d.name || d.email} <span className="faint">{d.email}</span></label>
+                    ); })}
+                    {!dir.length && <span className="caption faint">People appear here after they sign in once.</span>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </section>
       </div>
       <section className="card p0">
