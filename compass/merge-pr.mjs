@@ -33,11 +33,20 @@ export function latestReview(comments) {
   return {
     verdict: (last.body.match(/Verdict:\s*(APPROVE|CHANGES NEEDED)/) || [])[1] || null,
     sha: (last.body.match(/Reviewed commit:\s*`?([0-9a-f]{7,40})`?/i) || [])[1] || null,
-    // REQ-032: the reviewer's own run of the bug's failing test at the first commit ("Test-first run: … fails …")
+    // REQ-032: the reviewer's own run of the bug's failing test at the first commit ("Test-first run: <test> fails at <sha>")
     testFirst: (last.body.match(/^Test-first run:[ \t]*(.*)$/im) || [])[1]?.trim() || null,
   };
 }
 export const latestReviewVerdict = (comments) => latestReview(comments)?.verdict ?? null;
+
+/**
+ * REQ-032: true when a "Test-first run:" line proves the failing test failed at a named commit: it says
+ * "fails at <sha>" or "failed at <sha>", and no "not", "no longer" or "never" comes before "fail".
+ */
+export function testFirstProven(line) {
+  const text = line || '';
+  return /\b(?:fails|failed) at `?[0-9a-f]{7,40}\b/i.test(text) && !/\b(?:not|no longer|never)\s+(?:\w+\s+)?fail/i.test(text) && !/n't\s+(?:\w+\s+)?fail/i.test(text);
+}
 
 /** Reasons the PR must not be merged yet (empty = OK). */
 export function mergeBlockers({ checkRuns, comments, files, labels, headSha, body, bugIssues = [], planTexts, guardrails = loadGuardrails() }) {
@@ -63,8 +72,8 @@ export function mergeBlockers({ checkRuns, comments, files, labels, headSha, bod
   for (const i of bugIssues) if (!(labels || []).includes('bug')) blockers.push(`#${i} is a bug — add the "bug" label to the PR so CI checks that a failing test was committed first (REQ-032), then wait for CI`);
   // REQ-032: a bug fix merges only when the APPROVE review reports that the failing test failed before the fix
   // (the CI reviewer cannot run Playwright tests, so a bug PR needs an in-session reviewer who ran it)
-  if ((labels || []).includes('bug') && review?.verdict === 'APPROVE' && !/\b(?:fails|failed) at `?[0-9a-f]{7,40}\b/i.test(review.testFirst || ''))
-    blockers.push('this is a bug fix, but the APPROVE review has no "Test-first run: … fails …" line — ask a fresh in-session reviewer to run the failing test at the first commit (compass/REVIEW.md)');
+  if ((labels || []).includes('bug') && review?.verdict === 'APPROVE' && !testFirstProven(review.testFirst))
+    blockers.push('this is a bug fix, but the APPROVE review has no "Test-first run: <test> fails at <sha> (before the fix)" line — ask a fresh in-session reviewer to run the failing test at the first commit (compass/REVIEW.md)');
   // ADR-006: PRs that need a person merge only after the Owner's OK in chat, recorded as the human-approved label
   if (!(labels || []).includes(APPROVAL_LABEL)) {
     const route = `the Owner decides (compass/REVIEW.md) — ask in chat; once the Owner approves, quote it in a PR comment and add "${APPROVAL_LABEL}"`;
