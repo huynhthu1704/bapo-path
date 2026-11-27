@@ -1,0 +1,61 @@
+name: Compass
+
+# Compass Framework checks (AGENTS.md). A separate workflow so the existing required checks keep their names (ADR-007).
+# Add "Compass checks" to the required checks in branch protection.
+on:
+  pull_request:
+    # labeled/unlabeled: adding the human-approved or bug label re-runs the checks (REQ-027, REQ-032)
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  push:
+    branches: [main]
+
+concurrency:
+  group: compass-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compass:
+    name: Compass checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # REQ-026, REQ-029, REQ-030, REQ-033: traceability, intents, designs, ADRs, TC ids in test files, handover not stale
+      - name: Spec traceability check
+        run: node compass/check-spec.mjs
+      # REQ-027: protected/forbidden paths, ≤ 12 files, secrets, deletions, dependencies; REQ-031: "## Plan" in the PR body.
+      # Runs main's copy of the check and its rules (HEAD^1 = main in the PR merge commit), so a PR cannot weaken the
+      # check that judges it. Before Compass is on main there is no copy to run, so the step only notes that.
+      - name: Guardrails check
+        if: github.event_name == 'pull_request'
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD^1
+          if [ -f "$RUNNER_TEMP/base/compass/check-guardrails.mjs" ]; then
+            node "$RUNNER_TEMP/base/compass/check-guardrails.mjs"
+          else
+            echo "::notice::main has no compass/check-guardrails.mjs yet; the guardrails check starts with the next PR."
+          fi
+      # REQ-031: a code change adds a plan file in compass/plans/. REQ-032: on PRs labelled "bug", the failing test comes
+      # first. Like the guardrails, these run main's copy, so a PR cannot weaken the check that judges it; the PR's own
+      # copy only runs (with a notice) while main has none.
+      - name: Plan file and test-first checks
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          for check in plan-file test-first; do
+            script="$RUNNER_TEMP/base/compass/$check.mjs"
+            if [ ! -f "$script" ]; then
+              echo "::notice::main has no compass/$check.mjs yet; running this PR's copy."
+              script="compass/$check.mjs"
+            fi
+            node "$script" HEAD^1
+          done
+      # Process tests (tests/compass/)
+      - name: Process tests
+        run: node --test tests/compass/*.test.mjs

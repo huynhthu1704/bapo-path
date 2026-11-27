@@ -11,7 +11,13 @@
       "Bash(npx playwright test *)",
       "Bash(git status)",
       "Bash(git diff *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(npm test)",
+      "Bash(node compass/check-spec.mjs)",
+      "Bash(node compass/build-views.mjs)",
+      "Bash(node compass/check-guardrails.mjs *)",
+      "Bash(node compass/plan-file.mjs *)",
+      "Bash(node compass/test-first.mjs *)"
     ],
     "deny": [
       "Bash(git push --force*)",
@@ -21,6 +27,20 @@
       "Bash(git push *:main*)",
       "Bash(npx firebase-tools* deploy*)",
       "Read(./**/*service-account*.json)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/compass/hooks/guard-edit.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
