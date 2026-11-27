@@ -80,7 +80,8 @@ any later push needs a fresh review before merging (`compass/merge-pr.mjs` enfor
 ## What a person still decides
 The Owner decides (a review's APPROVE is not enough; the Owner's OK in chat and the `human-approved` label are needed) when a PR:
 - changes a protected path in `compass/guardrails.json` (`.github/workflows/`, `.github/CODEOWNERS`, the enforcement
-  files: every `compass/*.mjs` check script and `compass/hooks/`, `.claude/settings.json`, `firebase.json`, `.env`),
+  files: every `compass/*.mjs` check script, listed by name in `protectedPaths` (TC-027 fails when a new one is not
+  listed), and `compass/hooks/`, `.claude/settings.json`, `firebase.json`, `.env`),
 - changes `firestore.rules`, deletes files or adds or upgrades a dependency,
 - deletes or migrates learner data, or changes sign-in or roles.
 

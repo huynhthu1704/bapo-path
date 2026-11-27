@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkChange, dependenciesChanged, decideEdit, loadGuardrails, APPROVAL_LABEL } from '../../compass/guardrails-lib.mjs';
 
@@ -19,6 +20,12 @@ test('TC-027: protected paths need the approval label; forbidden paths never pas
   assert.deepEqual(checkChange([f('src/App.jsx'), f('firestore.rules')], g).errors, [], 'rules changes are decided at review and merge');
   for (const p of ['compass/check-spec.mjs', 'compass/build-views.mjs', 'compass/plan-file.mjs', 'compass/test-first.mjs', 'compass/merge-pr.mjs', 'compass/guardrails-lib.mjs', 'compass/hooks/guard-edit.mjs'])
     assert.equal(checkChange([f(p)], g).errors.length, 1, `${p}: a PR must not weaken the checks that judge it`);
+});
+
+test('TC-027: every compass/*.mjs check script is a protected path, including new ones', () => {
+  const scripts = readdirSync(new URL('../../compass/', import.meta.url)).filter((f) => f.endsWith('.mjs'));
+  assert.ok(scripts.length >= 7, 'the seven Compass scripts are found');
+  for (const s of scripts) assert.equal(checkChange([f(`compass/${s}`)], g).errors.length, 1, `add compass/${s} to protectedPaths in compass/guardrails.json`);
 });
 
 test('TC-027: more than 12 files, deletions and dependency changes are caught', () => {

@@ -33,7 +33,7 @@ Plan file: compass/plans/
 - [ ] New user-facing feature is behind a flag in `src/data/flags.js`
 - [ ] If `firestore.rules` changed: a test in `tests/rules.test.mjs` covers it, and the Owner approved (`human-approved`)
 - [ ] No secrets, no protected paths changed without approval (see `compass/guardrails.json`)
-- [ ] Bug fix: label `bug`, first commit only adds the failing test
+- [ ] Bug fix: label `bug`, first commit only adds the failing test (and its plan file); in-session review with a `Test-first run:` line
 
 ## Tested
 
