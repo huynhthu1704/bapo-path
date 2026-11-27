@@ -64,6 +64,16 @@ test('TC-037b links inside other pages to a switched-off feature disappear @mobi
   await expect(page.getByText('Terms learned')).toBeVisible();
   await expect(page.getByText('Current streak')).toHaveCount(0);
   await expect(page.getByRole('link', { name: /See your rank and badges/ })).toHaveCount(0);
+  await expect(page.getByText('Intern', { exact: true })).toHaveCount(0); // rank tag
+  // A domain page: no "Practise … terms" button
+  await page.goto('#/domain/banking');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Practise .* terms$/ })).toHaveCount(0);
+  // Saved (empty): no "Browse the glossary" link
+  await page.goto('#/saved');
+  await expect(page.getByText('No saved terms yet')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Browse the glossary' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Practise saved terms' })).toHaveCount(0);
   // Collection cards keep their content but no longer link to the glossary
   await page.goto('#/collection');
   await expect(page.locator('.collect-card').first()).toBeVisible();

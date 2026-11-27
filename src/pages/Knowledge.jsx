@@ -70,7 +70,7 @@ export function General() {
       </section>}
       <div className="row stretch stack-sm gap24">
         <div className="card p24 grow"><h3 className="h3">Browse A – Z</h3>
-          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.cat !== 'it' && t.term[0].toUpperCase() === ch); return (
+          <div className="row wrap gap6">{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((ch) => { const has = TERMS.some((t) => t.cat !== 'it' && onPath(`/term/${t.id}`) && t.term[0].toUpperCase() === ch); return (
             <Link key={ch} to={has ? `/glossary/all?letter=${ch}` : '#'} className="mark" style={{ background: has ? 'var(--bg)' : 'transparent', color: has ? 'var(--ink-2)' : 'var(--border)', fontWeight: 600, pointerEvents: has ? 'auto' : 'none' }}>{ch}</Link>); })}</div>
         </div>
         <div className="card p24" style={{ width: 460, maxWidth: '100%', gap: 4 }}>
@@ -85,13 +85,13 @@ export function General() {
 }
 
 export function Glossary() {
-  const { on } = useFeatures();
+  const { on, onPath } = useFeatures();
   const { cat } = useParams();
   const [params] = useSearchParams();
   const { s } = useStore();
   const nav = useNavigate();
   const c = CAT_BY_ID[cat];
-  const base = cat === 'all' ? TERMS : termsIn(cat);
+  const base = cat === 'all' ? TERMS.filter((t) => onPath(`/term/${t.id}`)) : termsIn(cat); // REQ-037: only terms of features that are on
   const subs = ['All', ...new Set(base.map((t) => t.sub))];
   const [sub, setSub] = useState('All'); const [q, setQ] = useState(''); const [lv, setLv] = useState(0);
   const letter = params.get('letter');
@@ -129,6 +129,7 @@ export function Glossary() {
 export function TermDetail() {
   const { id } = useParams();
   const { s, a, tracks } = useStore();
+  const { on } = useFeatures(); // REQ-037: "Used in skills" only while the roadmap is on
   const t = TERM_BY_ID[id];
   if (!t) return <p>Term not found.</p>;
   const c = CAT_BY_ID[t.cat];
@@ -136,7 +137,6 @@ export function TermDetail() {
   const idx = siblings.findIndex((x) => x.id === id);
   const prev = siblings[idx - 1]; const next = siblings[idx + 1];
   const related = siblings.filter((x) => x.sub === t.sub && x.id !== id).slice(0, 6);
-  const { on } = useFeatures();
   const usedIn = (on('roadmap') ? SKILLS : []).filter((k) => tracks.some((t) => t.id === k.track) && k.terms.includes(id));
   const learned = s.learned.includes(id); const inCards = !!s.cards[id];
   return (
@@ -201,6 +201,7 @@ export function DomainDetail() {
   const { id } = useParams();
   const { s } = useStore();
   const nav = useNavigate();
+  const { on } = useFeatures(); // REQ-037
   const d = DOMAIN_BY_ID[id];
   const [tab, setTab] = useState('overview');
   if (!d) return <p>Domain not found.</p>;
@@ -211,7 +212,7 @@ export function DomainDetail() {
       <div className="panel-primary row center stack-sm" style={{ flexDirection: 'row', gap: 20 }}>
         <div className="badge-ic" style={{ width: 64, height: 64, background: '#fff', borderRadius: 16 }}><Icon name={d.icon} size={32} color="#4F46E5" /></div>
         <div className="col grow gap6"><h1 className="h1">{d.name}</h1><p className="body">{d.overview}</p></div>
-        <div className="col" style={{ width: 220, gap: 8 }}><span className="label">{Math.round((got / terms.length) * 100)}% learned</span><Progress value={(got / terms.length) * 100} h={6} color="#fff" track="rgba(255,255,255,.25)" /><button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${id}&n=${Math.min(10, terms.length)}`)}>Practise {d.name.split(' ')[0]} terms</button></div>
+        <div className="col" style={{ width: 220, gap: 8 }}><span className="label">{Math.round((got / terms.length) * 100)}% learned</span><Progress value={(got / terms.length) * 100} h={6} color="#fff" track="rgba(255,255,255,.25)" />{on('practice') && <button className="btn btn-secondary" onClick={() => nav(`/quiz?mode=mixed&cats=${id}&n=${Math.min(10, terms.length)}`)}>Practise {d.name.split(' ')[0]} terms</button>}</div>
       </div>
       <div className="row" style={{ gap: 28, borderBottom: '1px solid var(--border)' }}>
         {[['overview', 'Overview'], ['processes', 'Key processes'], ['glossary', `Glossary (${terms.length})`]].map(([k, l]) => (
@@ -247,7 +248,7 @@ export function Saved() {
       <PageHead title="Saved terms" sub={`${items.length} term${items.length === 1 ? '' : 's'} you bookmarked. Practise them as flashcards any time.`}>
         {on('practice') && <button className="btn btn-primary" disabled={!items.length} onClick={() => nav('/flashcards?saved=1')}>Practise saved terms</button>}
       </PageHead>
-      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><Link to="/general" className="btn btn-primary">Browse the glossary</Link></div> : <>
+      {items.length === 0 ? <div className="card p28" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="Bookmark" size={32} color="#94A3B8" /><span className="h3">No saved terms yet</span><span className="body muted">Tap the bookmark on any term in the glossary to save it here.</span><FeatureLink to="/general" className="btn btn-primary">Browse the glossary</FeatureLink></div> : <>
         <div className="row wrap gap10"><button className={`chip ${f === 'all' ? 'on' : ''}`} onClick={() => setF('all')}>All ({items.length})</button>{cats.map((c) => <button key={c} className={`chip ${f === c ? 'on' : ''}`} onClick={() => setF(c)}>{CAT_BY_ID[c].short} ({items.filter((t) => t.cat === c).length})</button>)}</div>
         <div className="grid g3">{list.map((t) => (
           <FeatureLink keep key={t.id} to={`/term/${t.id}`} className="card hover"><div className="row center"><Tag tone="ink">{CAT_BY_ID[t.cat].short}</Tag><div className="grow" /><SaveBtn id={t.id} size={18} /></div><span className="h3">{t.term}</span><Translations id={t.id} mode="term" /><span className="small muted">{t.def}</span><span>{s.learned.includes(t.id) ? <Tag tone="success">Learned</Tag> : s.cards[t.id] ? <Tag>Learning</Tag> : <Tag tone="accent">New</Tag>}</span></FeatureLink>))}</div>

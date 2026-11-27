@@ -25,7 +25,7 @@ export function useFeatures() {
  *  children as plain text (for cards whose content the page still needs). Same props as Link otherwise. */
 export function FeatureLink({ to, keep, children, ...rest }) {
   const { onPath } = useFeatures();
-  if (onPath(typeof to === 'string' ? to : to.pathname || '')) return <Link to={to} {...rest}>{children}</Link>;
+  if (onPath(typeof to === 'string' ? to : (to && to.pathname) || '')) return <Link to={to} {...rest}>{children}</Link>;
   return keep ? <span className={rest.className} style={rest.style}>{children}</span> : null;
 }
 

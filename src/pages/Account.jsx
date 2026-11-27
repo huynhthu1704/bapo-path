@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Icon, Tag, IconBox, PageHead, GoogleButton, Spinner, Loading, track, FeatureLink } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { enabled, signInWithGoogle, listJobs, saveJob, deleteJob, listSearches, clearSearches, publishKnowledge, kbInfo, saveTerm, deleteTerm } from '../firebase.js';
