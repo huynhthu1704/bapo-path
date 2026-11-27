@@ -39,7 +39,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-033 | Record decisions as ADRs | — | Must | In build | TC-033 |
 | REQ-034 | Shared memory for agents: lessons learned and working knowledge | — | Must | In build | TC-034 |
 | REQ-036 | Product Manager role and learning path | — | Should | Done | TC-036 |
-| REQ-037 | Every feature behind its own feature flag | — | Must | Approved | TC-037 |
+| REQ-037 | Every feature behind its own feature flag | — | Must | In build | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Approved | TC-038 |
 | REQ-039 | Admin Overview of what needs attention | — | Should | Approved | TC-039 |
 

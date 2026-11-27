@@ -1,28 +1,28 @@
-// Feature-flag gate for the Prompt Workbench. Kept separate from Prompts.jsx so the
-// main bundle stays small: the pages and the prompt data load only when allowed.
+// Feature-flag gate for a feature's pages (REQ-037). Kept apart from the page files so the main bundle stays small:
+// the Prompt Workbench pages and the prompt data load only when allowed.
 import { Suspense } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useStore } from '../store.jsx';
 import { Loading } from '../components/ui.jsx';
 import { LOCAL_MODE } from '../firebase.js';
-import { can, capturePreview, useFlags } from '../data/flags.js';
+import { FLAGS, can, capturePreview, useFlags } from '../data/flags.js';
 
-export function usePromptsFlag() {
+/** Shows the page only when its feature is on for this visitor; otherwise "Coming soon".
+ *  flag: a FLAGS key, or a function of the route params that returns one. */
+export function FlagGate({ flag = 'prompts', children }) {
+  const loc = useLocation();
+  const params = useParams();
+  capturePreview(loc.search);
   useFlags();
   const { role, me, sync } = useStore();
-  return { on: can('prompts', { role, uid: me && me.uid }), loading: sync === 'loading' };
-}
-
-export function FlagGate({ children }) {
-  const loc = useLocation();
-  capturePreview(loc.search);
-  const { on, loading } = usePromptsFlag();
-  if (on) return <Suspense fallback={<Loading label="Loading prompts…" />}>{children}</Suspense>;
-  if (loading) return <Loading label="Checking access…" />;
+  const key = typeof flag === 'function' ? flag(params) : flag;
+  if (!key || can(key, { role, uid: me && me.uid })) return <Suspense fallback={<Loading label="Loading…" />}>{children}</Suspense>;
+  if (sync === 'loading') return <Loading label="Checking access…" />;
+  const name = key === 'prompts' ? 'The Prompt Workbench' : FLAGS[key].name;
   return (
     <div className="card p28" style={{ maxWidth: 560 }}>
       <h1 className="h2">Coming soon</h1>
-      <p className="body muted">The Prompt Workbench is not available yet. It will open here once it is released.</p>
+      <p className="body muted">{name} is not available yet. It will open here once it is released.</p>
       <Link to="/home" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>Back to Home</Link>
     </div>
   );
