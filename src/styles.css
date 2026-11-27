@@ -52,6 +52,8 @@ h1, h2, h3, p { margin: 0; }
 .gap4 { gap: 4px; } .gap6 { gap: 6px; } .gap8 { gap: 8px; } .gap10 { gap: 10px; } .gap24 { gap: 24px; } .gap32 { gap: 32px; }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+/* A card that is also a row lays out as a row (.card comes after .row and would make it a column): #71 */
+.card.row { flex-direction: row; }
 .card.p24 { padding: 24px; } .card.p28 { padding: 28px; } .card.p0 { padding: 0; gap: 0; }
 .card.hover:hover { border-color: var(--primary); }
 .card.selected { background: var(--primary-soft); border: 2px solid var(--primary); }
