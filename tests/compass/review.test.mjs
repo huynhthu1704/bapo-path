@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { mergeBlockers, latestReview, parseCloses, commitMessage, REQUIRED_CHECKS, REVIEW_HEADING } from '../../compass/merge-pr.mjs';
+import { mergeBlockers, latestReview, testFirstProven, parseCloses, commitMessage, REQUIRED_CHECKS, REVIEW_HEADING } from '../../compass/merge-pr.mjs';
 
 const head = 'a'.repeat(40);
 const green = REQUIRED_CHECKS.map((name) => ({ name, status: 'completed', conclusion: 'success' }));
@@ -53,6 +53,18 @@ test('TC-028: a bug fix merges only when the APPROVE review reports the test-fir
   assert.deepEqual(bug('Test-first run: failed at `abcdef1` as expected\n'), []);
   assert.ok(bug('Test-first run: the test does not fail at abc1234\n').some((b) => /Test-first run/.test(b)), '"does not fail" is no proof');
   assert.ok(bug('Test-first run: it fails\n').some((b) => /Test-first run/.test(b)), 'the commit must be named');
+  for (const no of ['no longer fails at abc1234', 'never failed at abc1234', "doesn't fail at abc1234", 'does not fail at abc1234'])
+    assert.equal(testFirstProven(no), false, no);
+  for (const yes of ['tests/e2e/a.spec.js fails at 1234567 (before the fix)', 'failed at `abcdef1` as expected', 'Test-first proof: tests/compass/x.test.mjs fails at abc1234 (before the fix), as expected.'])
+    assert.equal(testFirstProven(yes), true, yes);
+  for (const yes of [
+    '#41 fails at abc1234 (before the fix) and does not fail at def5678 (after the fix)',
+    '#41 fails at abc1234 (before the fix); it no longer fails at def5678',
+    '"#41 save does not fail on empty list" fails at abc1234 (before the fix)',
+  ]) assert.equal(testFirstProven(yes), true, `honest line with more detail: ${yes}`);
+  assert.ok(bug('Test-first run: #41 no longer fails at abc1234\n').some((b) => /Test-first run/.test(b)), 'end to end through mergeBlockers');
+  assert.deepEqual(bug('Test-first run: #41 fails at abc1234 (before the fix), does not fail at def5678 (after)\n'), []);
+  assert.match(bug('').find((b) => /Test-first run/.test(b)), /fails at <sha>/, 'the message shows the exact format');
 });
 
 test('TC-028: closes links and the squash message keep the traceability', () => {

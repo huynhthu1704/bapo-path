@@ -32,7 +32,8 @@ not edit it (`compass/test-first.mjs` checks this in CI). Playwright tests canno
 reviewer checks out the first commit, runs `npx playwright test -g "#<issue>"` and confirms it fails. A test that does not
 fail is an important finding. The reviewer writes the result in the comment as
 `Test-first run: <test> fails at <sha> (before the fix)`; for a node test it may cite the CI test-first output.
-`compass/merge-pr.mjs` refuses a `bug` PR whose APPROVE review has no such line. The CI reviewer (`claude-review.yml`)
+The line must name the commit, as `fails at <sha>` or `failed at <sha>`; `compass/merge-pr.mjs` refuses a `bug` PR whose
+APPROVE review has no such line, or one that only says the test did not fail ("not", "no longer", "never" or "n't" right before "fails at"). The CI reviewer (`claude-review.yml`)
 cannot run Playwright, so a `bug` PR needs an **in-session reviewer**: a fresh subagent with the checkout, `npm ci` and
 the browser.
 
@@ -46,7 +47,7 @@ the browser.
 ## Independent review (Claude)
 Verdict: <APPROVE | CHANGES NEEDED>   ·   Important: <n>   ·   Nits: <n>
 Reviewed commit: <full SHA of the PR head you reviewed>
-Test-first run: <bug PRs only: test, "fails at <sha>" or what happened>
+Test-first run: <bug PRs only: <test> fails at <sha> (before the fix); if it did not fail, say so and set CHANGES NEEDED>
 
 ### Important
 1. <file:line> — <what is wrong> → <what to do>
