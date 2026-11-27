@@ -99,10 +99,10 @@
       "id": "ADR-007",
       "date": "2026-11-26",
       "title": "Compass checks run as a separate CI workflow; existing job names stay",
-      "status": "Proposed",
+      "status": "Accepted",
       "context": "Branch protection may already require the checks \"Content, build and end-to-end tests\" and \"rules\"; renaming them would block every PR.",
       "decision": "Add .github/workflows/compass.yml with a job named \"Compass checks\" (spec, guardrails, plan, test-first, process tests) and leave ci.yml and rules-test.yml as they are.",
-      "consequences": "The Owner adds \"Compass checks\" to the required checks in branch protection. merge-pr requires all three.",
+      "consequences": "The Owner added \"Compass checks\" to the required checks on main (2026-11-27) and accepted this ADR in chat (\"Accept ADR-007\"). merge-pr requires all three checks.",
       "reqIds": [
         "REQ-026",
         "REQ-027"
