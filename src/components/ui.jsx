@@ -6,7 +6,21 @@ import { logSearch, enabled as authEnabled, signInErrorText, LOCAL_MODE } from '
 import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
-import { can, useFlags } from '../data/flags.js';
+import { can, useFlags, flagOfPath, termFlag } from '../data/flags.js';
+
+/** REQ-037: whether a feature (a key of FLAGS in src/data/flags.js) is on for this visitor. Staff always see it. */
+export function useFeature(key) {
+  useFlags();
+  const { role, me } = useStore();
+  return can(key, { role, uid: me && me.uid });
+}
+/** The same check for many features at once: on('story'), onPath('/story'). Paths that are not a feature are always on. */
+export function useFeatures() {
+  useFlags();
+  const { role, me } = useStore();
+  const on = (key) => can(key, { role, uid: me && me.uid });
+  return { on, onPath: (to) => { const k = flagOfPath(to); return !k || on(k); } };
+}
 
 export const Icon = ({ name, size = 20, color, ...p }) => {
   const C = L[name] || L.Circle;
@@ -84,46 +98,52 @@ const PW_PATHS = /^#\/(prompts|workbench|collections|my-prompts)/;
 function Sidebar({ open, onClose }) {
   useLocation(); // re-render on navigation so the Prompt Workbench item highlights on its sub-pages
   useFlags();
-  const { s, admin, role, me, pmTrack } = useStore();
-  const pwOn = can('prompts', { role, uid: me && me.uid });
+  const { s, admin, role, pmTrack } = useStore();
+  const { on, onPath } = useFeatures();
   const r = rankInfo(s.xp, s.track);
+  const RankBox = on('achievements') ? Link : 'div';
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`} onClick={(e) => { if (e.target.closest('a')) onClose && onClose(); }} aria-label="Main menu">
       <div className="row center"><Link to="/home" className="logo grow"><div className="mark">BP</div><div><div className="h3">BAPO Path</div><div className="caption faint">{pmTrack ? 'BA, PO & PM learning' : 'BA & PO learning'}</div></div></Link>{open && <button className="icon-btn" aria-label="Close menu" onClick={onClose} style={{ marginBottom: 20 }}><Icon name="X" size={18} /></button>}</div>
-      {NAV.map(([sec, items]) => (
+      {NAV.map(([sec, all]) => {
+        // Each item shows only when its feature is on; a group with nothing to show is left out (REQ-037).
+        const items = (sec === 'LEARN' ? [...all.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...all.slice(5)] : all).filter(([to]) => onPath(to));
+        return items.length > 0 && (
         <div key={sec} className="col gap4" style={{ gap: 2 }}>
           <div className="nav-sec overline">{sec}</div>
-          {(sec === 'LEARN' && pwOn ? [...items.slice(0, 5), ['/prompts', 'Prompt Workbench', 'Sparkles'], ...items.slice(5)] : items).map(([to, label, icon]) => (
+          {items.map(([to, label, icon]) => (
             <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>
           ))}
         </div>
-      ))}
+        );
+      })}
  {role && <NavLink to="/pw-admin" className={({ isActive }) => `nav-item ${isActive || /^#\/pw-admin/.test(location.hash) ? 'active' : ''}`}><Icon name="ClipboardList" size={20} />Prompt admin</NavLink>}
       {admin && <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name="Database" size={20} />Knowledge admin</NavLink>}
-      <Link to="/achievements" className="rank-card">
+      {on('rewards') && <RankBox {...(on('achievements') ? { to: '/achievements' } : {})} className="rank-card">
         <div className="row center gap8"><Icon name="Award" size={18} color="#4F46E5" /><span className="label grow" style={{ color: 'var(--primary-dark)' }}>{r.name}</span><span className="caption c-primary">Rank {r.index + 1}</span></div>
         <Progress value={r.pct} h={6} track="#fff" />
         <div className="caption muted">{r.next ? `${s.xp.toLocaleString()} / ${r.next.toLocaleString()} XP to ${r.nextName}` : `${s.xp.toLocaleString()} XP · top rank`}</div>
         <div className="row center gap6 caption"><Icon name="Flame" size={14} color="#D97706" /><span className="c-accent">{s.streak.count}-day streak</span><Icon name="Snowflake" size={14} color="#3B82F6" /><span className="muted">{s.streak.freezes} freeze</span></div>
-      </Link>
+      </RankBox>}
     </aside>
   );
 }
 
 function SearchBox() {
   useFlags();
-  const { user, role, me, tracks } = useStore();
+  const { user, tracks } = useStore();
+  const { on } = useFeatures();
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const record = (r) => { if (user && q.trim()) logSearch(user.uid, q.trim(), r ? { label: r.label, to: r.to, meta: r.meta } : null).catch(() => {}); };
   const ref = useRef(); const nav = useNavigate();
   useEffect(() => { const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, []);
   const ql = q.trim().toLowerCase();
   // Prompts are searched only when the Workbench is on; their data loads on first search.
-  const pwOn = can('prompts', { role, uid: me && me.uid }); const [prompts, setPrompts] = useState(null);
+  const pwOn = on('prompts'); const [prompts, setPrompts] = useState(null);
   useEffect(() => { if (pwOn && ql.length >= 2 && !prompts) import('../data/promptStore.js').then((m) => { setPrompts(m.promptData().prompts); m.loadPromptData().then(() => setPrompts(m.promptData().prompts)); }); }, [pwOn, ql, prompts]);
   const results = ql.length < 2 ? [] : [
-    ...TERMS.filter((t) => (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
-    ...SKILLS.filter((k) => tracks.some((t) => t.id === k.track) && k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
+    ...TERMS.filter((t) => on(termFlag(t.id)) && (t.term + ' ' + t.full).toLowerCase().includes(ql)).slice(0, 6).map((t) => ({ to: `/term/${t.id}`, label: t.term, meta: 'Term' })),
+    ...(on('roadmap') ? SKILLS : []).filter((k) => tracks.some((t) => t.id === k.track) && k.title.toLowerCase().includes(ql)).slice(0, 4).map((k) => ({ to: `/skill/${k.id}`, label: k.title, meta: `Skill · ${k.track}` })),
     ...(pwOn && prompts ? prompts.filter((p) => (p.title + ' ' + p.tags.join(' ')).toLowerCase().includes(ql)).slice(0, 4).map((p) => ({ to: `/prompts/${p.id}`, label: p.title, meta: 'Prompt' })) : []),
   ];
   return (
@@ -142,14 +162,15 @@ function SearchBox() {
 
 function TopBar({ onMenu }) {
   const { s, user, signedIn } = useStore();
+  const rewards = useFeature('rewards');
   return (
     <header className="topbar">
       <button className="icon-btn menu-btn" aria-label="Open menu" onClick={onMenu}><Icon name="Menu" size={20} /></button>
       <SearchBox />
       <div className="grow" />
       <Tag className="hide-sm">{s.track} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][s.startLevel - 1]}</Tag>
-      <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} color="#D97706" />{s.streak.count}</span>
-      <span className="pill bg-primary-soft c-primary hide-sm"><Icon name="Star" size={16} color="#4F46E5" />{s.xp.toLocaleString()} XP</span>
+      {rewards && <span className="pill bg-accent-soft c-accent"><Icon name="Flame" size={16} color="#D97706" />{s.streak.count}</span>}
+      {rewards && <span className="pill bg-primary-soft c-primary hide-sm"><Icon name="Star" size={16} color="#4F46E5" />{s.xp.toLocaleString()} XP</span>}
       {!signedIn && <span className="hide-sm"><GoogleButton label="Sign in" small /></span>}
       <Link to="/profile" className="mark" title={user ? `Signed in as ${user.email}` : 'Not signed in'} style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999, overflow: 'hidden' }}>{user && user.photoURL ? <img src={user.photoURL} alt="" width="36" height="36" referrerPolicy="no-referrer" /> : (s.name || 'You')[0].toUpperCase()}</Link>
     </header>
@@ -157,9 +178,10 @@ function TopBar({ onMenu }) {
 }
 
 function MobileNav() {
+  const { onPath } = useFeatures();
   return (
     <nav className="mobile-nav">
-      {[['/home', 'Home', 'Home'], ['/roadmap', 'Roadmap', 'Route'], ['/general', 'Glossary', 'Globe'], ['/practice', 'Practice', 'Zap'], ['/profile', 'Me', 'User']].map(([to, l, i]) => (
+      {[['/home', 'Home', 'Home'], ['/roadmap', 'Roadmap', 'Route'], ['/general', 'Glossary', 'Globe'], ['/practice', 'Practice', 'Zap'], ['/profile', 'Me', 'User']].filter(([to]) => onPath(to)).map(([to, l, i]) => (
         <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} size={20} />{l}</NavLink>
       ))}
     </nav>

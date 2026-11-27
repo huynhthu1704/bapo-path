@@ -1,6 +1,6 @@
 # BAPO Path — working knowledge for Claude
 
-Reference for any Claude session working on BAPO Path. Last updated 2026-11-26. Loaded automatically through
+Reference for any Claude session working on BAPO Path. Last updated 2026-11-27. Loaded automatically through
 `CLAUDE.md` (REQ-034). Keep it current: when a standing instruction, decision or open item changes, update this file in
 the same PR. It is written by hand (not generated).
 
@@ -69,9 +69,12 @@ the same PR. It is written by hand (not generated).
   (`merge-pr.mjs` does this).
 
 ## 6. Feature flags
-- Every new user-facing feature goes behind a flag in `src/data/flags.js`, audience `owner` by default (ADR-002).
-- The Owner moves audiences owner → beta → everyone in **Prompt admin → Insights → Features**. Preview any flag with
-  `?preview=<flag>`.
+- **One flag per feature** (REQ-037, as on Bee There): `src/data/flags.js` lists every feature (name, icon, where it
+  appears, since, audience). A new feature gets audience `owner`; features live before flags default to `everyone`.
+- Check a feature with `useFeature('<key>')` / `useFeatures()` from `src/components/ui.jsx` in **every** place it shows
+  (menu, Home, search, buttons) and map its routes in `ROUTE_FLAGS`; routes are wrapped in `FlagGate` ("Coming soon").
+- The Owner moves audiences owner → beta → everyone in the admin Features settings (today *Prompt admin → Insights →
+  Features*; its own *Admin › Features* page comes with REQ-037 part 2). Preview any flag with `?preview=<flag>`.
 - Flags still at `owner`: `prompts`, `pmTrack` (Product Manager track, REQ-036; roll out after the Owner has read the lessons).
 
 ## 7. Tests and CI/CD

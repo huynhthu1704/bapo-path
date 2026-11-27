@@ -12,6 +12,7 @@ import Profile from './pages/Profile.jsx';
 import { Frameworks, FrameworkDetail, References } from './pages/Frameworks.jsx';
 import { Jobs, Library, Admin } from './pages/Account.jsx';
 import { FlagGate, StaffGate } from './pages/PromptGate.jsx';
+import { ROUTE_FLAGS, catFlag, termFlag } from './data/flags.js';
 
 // Prompt Workbench pages load as their own chunk.
 const pwPage = (name) => lazy(() => import('./pages/Prompts.jsx').then((m) => ({ default: m[name] })));
@@ -36,6 +37,9 @@ const inApp = (el) => <RequireOnboarding><Layout>{el}</Layout></RequireOnboardin
 // Prompt Workbench: public (no sign-in or onboarding needed), behind the `prompts` feature flag.
 const pw = (el) => <Layout><FlagGate>{el}</FlagGate></Layout>;
 const focus = (el) => <RequireOnboarding>{el}</RequireOnboarding>;
+// REQ-037: every feature page sits behind its feature flag. A glossary of a framework or domain category (and its terms)
+// belongs to that feature, not to the general glossary.
+const flagged = (path, el, flag) => <FlagGate flag={flag || ROUTE_FLAGS[path.split('/')[1]]}>{el}</FlagGate>;
 
 export default function App({ kbVersion = 0 }) {
   return (
@@ -49,30 +53,30 @@ export default function App({ kbVersion = 0 }) {
           <Route path="/onboarding/1" element={<Onboarding1 />} />
           <Route path="/onboarding/2" element={<Onboarding2 />} />
           <Route path="/home" element={inApp(<Home />)} />
-          <Route path="/roadmap" element={inApp(<Roadmap />)} />
-          <Route path="/skill/:id" element={inApp(<SkillDetail />)} />
-          <Route path="/challenge/:track/:level" element={focus(<Challenge />)} />
-          <Route path="/general" element={inApp(<General />)} />
-          <Route path="/glossary/:cat" element={inApp(<Glossary />)} />
-          <Route path="/term/:id" element={inApp(<TermDetail />)} />
-          <Route path="/frameworks" element={inApp(<Frameworks />)} />
-          <Route path="/framework/:id" element={inApp(<FrameworkDetail />)} />
-          <Route path="/references" element={<Layout><References /></Layout>} />
-          <Route path="/domains" element={inApp(<Domains />)} />
-          <Route path="/domain/:id" element={inApp(<DomainDetail />)} />
-          <Route path="/saved" element={inApp(<Saved />)} />
-          <Route path="/practice" element={inApp(<PracticeSetup />)} />
-          <Route path="/flashcards" element={focus(<Flashcards />)} />
-          <Route path="/quiz" element={focus(<Quiz />)} />
-          <Route path="/results" element={inApp(<Results />)} />
+          <Route path="/roadmap" element={inApp(flagged('/roadmap', <Roadmap />))} />
+          <Route path="/skill/:id" element={inApp(flagged('/skill/:id', <SkillDetail />))} />
+          <Route path="/challenge/:track/:level" element={focus(flagged('/challenge/:track/:level', <Challenge />))} />
+          <Route path="/general" element={inApp(flagged('/general', <General />))} />
+          <Route path="/glossary/:cat" element={inApp(flagged('/glossary/:cat', <Glossary />, ({ cat }) => catFlag(cat)))} />
+          <Route path="/term/:id" element={inApp(flagged('/term/:id', <TermDetail />, ({ id }) => termFlag(id)))} />
+          <Route path="/frameworks" element={inApp(flagged('/frameworks', <Frameworks />))} />
+          <Route path="/framework/:id" element={inApp(flagged('/framework/:id', <FrameworkDetail />))} />
+          <Route path="/references" element={<Layout>{flagged('/references', <References />)}</Layout>} />
+          <Route path="/domains" element={inApp(flagged('/domains', <Domains />))} />
+          <Route path="/domain/:id" element={inApp(flagged('/domain/:id', <DomainDetail />))} />
+          <Route path="/saved" element={inApp(flagged('/saved', <Saved />))} />
+          <Route path="/practice" element={inApp(flagged('/practice', <PracticeSetup />))} />
+          <Route path="/flashcards" element={focus(flagged('/flashcards', <Flashcards />))} />
+          <Route path="/quiz" element={focus(flagged('/quiz', <Quiz />))} />
+          <Route path="/results" element={inApp(flagged('/results', <Results />))} />
           <Route path="/profile" element={inApp(<Profile />)} />
-          <Route path="/achievements" element={inApp(<Achievements />)} />
-          <Route path="/collection" element={inApp(<Collection />)} />
-          <Route path="/story" element={inApp(<Story />)} />
-          <Route path="/speed" element={focus(<Speed />)} />
-          <Route path="/circle" element={inApp(<Circle />)} />
-          <Route path="/jobs" element={inApp(<Jobs />)} />
-          <Route path="/library" element={inApp(<Library />)} />
+          <Route path="/achievements" element={inApp(flagged('/achievements', <Achievements />))} />
+          <Route path="/collection" element={inApp(flagged('/collection', <Collection />))} />
+          <Route path="/story" element={inApp(flagged('/story', <Story />))} />
+          <Route path="/speed" element={focus(flagged('/speed', <Speed />))} />
+          <Route path="/circle" element={inApp(flagged('/circle', <Circle />))} />
+          <Route path="/jobs" element={inApp(flagged('/jobs', <Jobs />))} />
+          <Route path="/library" element={inApp(flagged('/library', <Library />))} />
           <Route path="/admin" element={inApp(<Admin />)} />
           <Route path="/prompts" element={pw(<PromptLibrary />)} />
           <Route path="/prompts/:id" element={pw(<PromptDetail />)} />

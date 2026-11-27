@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, useFeatures } from '../components/ui.jsx';
 import { useStore, rankInfo, skillState, dueCards, dayStr, addDays } from '../store.jsx';
 import { SKILLS } from '../data/skills.js';
 import { TERMS } from '../data/terms.js';
@@ -18,6 +18,7 @@ const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Good mor
 
 export default function Home() {
   const { s, a } = useStore();
+  const { on } = useFeatures(); // REQ-037: each block shows only when its feature is on
   const r = rankInfo(s.xp, s.track);
   const trackSkills = SKILLS.filter((k) => k.track === s.track);
   const next = trackSkills.find((k) => skillState(s, k) === 'open');
@@ -34,10 +35,10 @@ export default function Home() {
     <>
       <div className="col gap6">
         <h1 className="h1">{greet()}, {s.name || 'there'}</h1>
-        <p className="body muted">You are {/^[AEIOU]/.test(r.name) ? 'an' : 'a'} {r.name}{r.next ? ` — ${r.toNext.toLocaleString()} XP until your next rank.` : '.'} Finish today’s quests to get there faster.</p>
+        {on('rewards') && <p className="body muted">You are {/^[AEIOU]/.test(r.name) ? 'an' : 'a'} {r.name}{r.next ? ` — ${r.toNext.toLocaleString()} XP until your next rank.` : '.'} Finish today’s quests to get there faster.</p>}
       </div>
 
-      <div className="home-split">
+      {on('rewards') && <div className="home-split">
         <div className="panel-primary">
           <span className="overline">Career rank</span>
           <div className="h1">{r.name}</div>
@@ -65,10 +66,10 @@ export default function Home() {
             <div className="col gap4" style={{ gap: 2 }}><span className="label" style={{ color: 'var(--primary-dark)' }}>{s.streak.freezes} streak freeze{s.streak.freezes === 1 ? '' : 's'} ready</span><span className="caption muted">Protects your streak if you miss a day. Earn one every 7 days.</span></div>
           </div>
         </div>
-      </div>
+      </div>}
 
-      <div className="home-split">
-        <div className="card p24" style={{ gap: 4 }}>
+      {(on('rewards') || on('roadmap') || (due > 0 && on('practice'))) && <div className="home-split" style={on('rewards') ? undefined : { gridTemplateColumns: 'minmax(0, 1fr)' }}>
+        {on('rewards') && <div className="card p24" style={{ gap: 4 }}>
           <div className="row center" style={{ paddingBottom: 8 }}><span className="h3 grow">Daily quests</span><span className="caption faint">Resets at midnight</span></div>
           {q.map((x) => { const done = x.cur >= x.tot; return (
             <Link to={x.to} key={x.title} className="row center" style={{ gap: 14, padding: '12px 0' }}>
@@ -81,30 +82,30 @@ export default function Home() {
             <span className="small grow" style={{ minWidth: 200 }}>{s.daily.chest ? 'Bonus chest opened today. See you tomorrow!' : 'Finish all 3 quests to open the bonus chest: +50 XP'}</span>
             {!s.daily.chest && <button className="btn btn-primary" style={{ padding: '8px 14px' }} disabled={!allDone} onClick={a.claimChest}>Open chest</button>}
           </div>
-        </div>
-        <div className="card p24">
+        </div>}
+        {(on('roadmap') || (due > 0 && on('practice'))) && <div className="card p24">
           <span className="overline c-primary">Continue learning</span>
-          {next ? <>
+          {!on('roadmap') ? null : next ? <>
             <div className="h2">{next.title}</div>
             <p className="small muted">Skill {next.order + 1} · {['Beginner', 'Intermediate', 'Advanced', 'Expert'][next.level - 1]} · {next.track}</p>
             <span><Tag tone="accent">+50 XP when complete</Tag></span>
             <div className="grow" />
             <Link to={`/skill/${next.id}`} className="btn btn-primary block">Continue skill</Link>
           </> : <><div className="h3">All open skills done!</div><Link to="/roadmap" className="btn btn-primary block">Open roadmap</Link></>}
-          {due > 0 && <Link to="/flashcards?due=1" className="btn btn-secondary block">Review {due} due card{due > 1 ? 's' : ''}</Link>}
-        </div>
-      </div>
+          {due > 0 && on('practice') && <Link to="/flashcards?due=1" className="btn btn-secondary block">Review {due} due card{due > 1 ? 's' : ''}</Link>}
+        </div>}
+      </div>}
 
       <div className="grid g4">
-        <MiniCard icon="Users" tone="po" over="This week" title="Beginner Circle" to="/circle">
+        {on('circle') && <MiniCard icon="Users" tone="po" over="This week" title="Beginner Circle" to="/circle">
           {s.circleOptIn ? board.map((p) => (
             <div key={p.name} className="row center gap8" style={{ padding: '4px 8px', borderRadius: 8, background: p.me ? 'var(--primary-soft)' : 'transparent' }}>
               <span className={`caption ${p.rank <= 3 ? 'c-success' : 'faint'}`}>#{p.rank}</span><span className={`small grow ${p.me ? 'c-primary' : ''}`}>{p.me ? 'You' : p.name}</span><span className="caption muted">{p.xp} XP</span>
             </div>)) : <p className="small muted">You are not in a circle.</p>}
-        </MiniCard>
-        <MiniCard icon="Timer" tone="accent" over="60 seconds" title="Speed Round" to="/speed" btn="Play"><p className="small muted">Match terms to meanings before time runs out. Your best: {s.speedBest}.</p></MiniCard>
-        <MiniCard icon="Copy" tone="primary" over="Collection" title="Scrum set" to="/collection" btn="View set"><p className="small muted">{setGot} of {setTerms.length} cards collected</p><Progress value={(setGot / setTerms.length) * 100} /></MiniCard>
-        <MiniCard icon="BookOpen" tone="po" over="Story mode" title={`Chapter ${ch.n}: ${ch.title}`} to="/story" btn="Continue story"><p className="small muted">You are the new BA at ShopNow.</p></MiniCard>
+        </MiniCard>}
+        {on('speed') && <MiniCard icon="Timer" tone="accent" over="60 seconds" title="Speed Round" to="/speed" btn="Play"><p className="small muted">Match terms to meanings before time runs out. Your best: {s.speedBest}.</p></MiniCard>}
+        {on('collection') && <MiniCard icon="Copy" tone="primary" over="Collection" title="Scrum set" to="/collection" btn="View set"><p className="small muted">{setGot} of {setTerms.length} cards collected</p><Progress value={(setGot / setTerms.length) * 100} /></MiniCard>}
+        {on('story') && <MiniCard icon="BookOpen" tone="po" over="Story mode" title={`Chapter ${ch.n}: ${ch.title}`} to="/story" btn="Continue story"><p className="small muted">You are the new BA at ShopNow.</p></MiniCard>}
       </div>
     </>
   );
