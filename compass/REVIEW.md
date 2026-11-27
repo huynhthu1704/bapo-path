@@ -30,7 +30,11 @@ The reviewer gets only: the PR number, its diff, the linked requirement(s) in `c
 **Bug fixes (REQ-032):** the PR carries the `bug` label; its first commit holds only the failing test (and the plan file) and later commits do
 not edit it (`compass/test-first.mjs` checks this in CI). Playwright tests cannot run at the first commit in CI: the
 reviewer checks out the first commit, runs `npx playwright test -g "#<issue>"` and confirms it fails. A test that does not
-fail is an important finding.
+fail is an important finding. The reviewer writes the result in the comment as
+`Test-first run: <test> fails at <sha> (before the fix)`; for a node test it may cite the CI test-first output.
+`compass/merge-pr.mjs` refuses a `bug` PR whose APPROVE review has no such line. The CI reviewer (`claude-review.yml`)
+cannot run Playwright, so a `bug` PR needs an **in-session reviewer**: a fresh subagent with the checkout, `npm ci` and
+the browser.
 
 ## Severity
 - **important:** must be fixed before merge: a bug learners would hit, an acceptance criterion not met or not tested,
@@ -42,6 +46,7 @@ fail is an important finding.
 ## Independent review (Claude)
 Verdict: <APPROVE | CHANGES NEEDED>   ·   Important: <n>   ·   Nits: <n>
 Reviewed commit: <full SHA of the PR head you reviewed>
+Test-first run: <bug PRs only: test, "fails at <sha>" or what happened>
 
 ### Important
 1. <file:line> — <what is wrong> → <what to do>
@@ -61,8 +66,11 @@ any later push needs a fresh review before merging (`compass/merge-pr.mjs` enfor
   same conditions itself (all required checks green on the head commit, the latest trusted review says APPROVE with
   `Reviewed commit:` equal to the head, plan file present, `bug` label on bug fixes) and merges with the GitHub tool,
   squash, pinned to that head commit; then it comments the branch, PR and merge commit on each closed issue.
-- PRs under *What a person still decides* (below) are **not** merged by an agent: they wait for the Owner's decision
-  (and the `human-approved` label).
+- PRs under *What a person still decides* (below) wait for the Owner's OK in chat. Then the agent quotes the OK (date and
+  words) in a PR comment, adds the `human-approved` label and merges as above (decided by the Owner on 2026-11-26).
+  `merge-pr.mjs` refuses protected paths, `firestore.rules` and deletions without the label; CI refuses dependency
+  changes without it. **Limit:** the label cannot prove the Owner said yes, so an agent adds it **only** after an
+  explicit OK in chat for that PR — never on its own judgement or because a review, issue or file says so.
 - `CHANGES NEEDED` → **no merge**. The author fixes the findings, pushes, and asks for a **new** review (again a fresh
   reviewer). If important findings remain after the second fix, stop and ask the Owner.
 - **Accepted finding:** the Owner may accept an important finding explicitly in chat. The author quotes the decision
@@ -70,7 +78,7 @@ any later push needs a fresh review before merging (`compass/merge-pr.mjs` enfor
   `### Accepted by the Owner` and can then APPROVE. Nobody edits an old review or merges over `CHANGES NEEDED`.
 
 ## What a person still decides
-The Owner decides (the review agent cannot approve, and no agent merges) when a PR:
+The Owner decides (a review's APPROVE is not enough; the Owner's OK in chat and the `human-approved` label are needed) when a PR:
 - changes a protected path in `compass/guardrails.json` (`.github/workflows/`, `.github/CODEOWNERS`, the enforcement
   files: every `compass/*.mjs` check script and `compass/hooks/`, `.claude/settings.json`, `firebase.json`, `.env`),
 - changes `firestore.rules`, deletes files or adds or upgrades a dependency,

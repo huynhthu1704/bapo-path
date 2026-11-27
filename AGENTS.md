@@ -32,8 +32,8 @@ following this file. Project: **BAPO Path** — a free learning site for starter
    **Decisions (REQ-033):** when the Owner decides something in chat, add an ADR to `compass/spec.json → decisions` in the
    same PR (`Accepted`; `Proposed` for an agent's interim choice).
 5. **Merge and release (ADR-006):** once CI is green and the review says APPROVE for the head commit, the author agent
-   squash-merges with `node compass/merge-pr.mjs <n>` and reports to the Owner; PRs that need a person (compass/REVIEW.md)
-   wait for the Owner. `deploy.yml` publishes
+   squash-merges with `node compass/merge-pr.mjs <n>` and reports to the Owner. PRs that need a person (compass/REVIEW.md)
+   merge only after the Owner's explicit OK in chat, quoted in a PR comment and recorded with the `human-approved` label. `deploy.yml` publishes
    the site; `deploy-rules.yml` publishes rules after the `production` approval. Then roll the flag out
    owner → beta → everyone.
 
@@ -45,7 +45,7 @@ node compass/check-spec.mjs               # traceability, intent, design, ADRs, 
 node compass/build-views.mjs              # regenerate requirements.md, tests.md, decisions.md, handover.md
 node compass/check-guardrails.mjs origin/main   # the CI guardrails check, locally
 node compass/plan-file.mjs origin/main    # the plan file of a code change
-node compass/test-first.mjs origin/main --bug   # bug fix: failing test committed first
+npm run test:first                        # bug fix: failing test committed first (test-first.mjs --bug)
 node compass/merge-pr.mjs <n> --dry-run   # what a safe merge would do
 ```
 

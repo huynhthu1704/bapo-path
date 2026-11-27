@@ -9,7 +9,7 @@ Stop and report at the first failure; never skip or weaken a check.
 
 1. `git diff main...HEAD --stat`. More than 12 files, or more than one REQ or sprint? Suggest splitting it first.
 2. A code change has its plan file in `compass/plans/`: `node compass/plan-file.mjs origin/main`.
-3. `npm test` (process tests, test-first on `--bug`) and `npm run verify` (prompt check, build, e2e).
+3. `npm test` (process tests), `npm run test:first` on a bug fix, and `npm run verify` (prompt check, build, e2e).
 4. If `firestore.rules`, `src/data/promptApi.js`, `src/firebase.js` or role logic changed: `tests/rules.test.mjs` covers
    the change (CI runs it; locally `npm run test:rules:emulator` when Java is available), and run `/security-review`.
 5. Every closed criterion has a test titled `TC-0xx …`. Update the REQ and TC statuses in `compass/spec.json`, run

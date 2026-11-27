@@ -36,6 +36,9 @@ Intent: compass/intent/2026-11-26-compass-framework.md · Design: none: process 
   bug-fix commit 1 may hold the plan file with the failing test; the TC-id check reads test titles, not comments.
   The remaining check scripts are now protected and CI runs main's copies of the plan and test-first checks
   (protected files, approved by the Owner in chat on 2026-11-26).
+- Second review (CHANGES NEEDED): one merge rule everywhere (the agent merges a PR that needs a person only after the
+  Owner's OK in chat, recorded with `human-approved`; merge-pr enforces the label); bug fixes need a reviewer's
+  `Test-first run:`; the test-first proof itself is now tested. Approved by the Owner in chat on 2026-11-27.
 - Agents now merge their own PRs (ADR-006, the Owner's decision). Guard: `merge-pr.mjs` refuses without green CI and an
   APPROVE for the head commit, and PRs touching protected paths, rules, deletions or dependencies still wait for the Owner.
   `merge-pr.mjs` needs an authenticated `gh` CLI; without it the agent checks the same conditions and merges pinned to the head.

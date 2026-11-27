@@ -6,7 +6,7 @@ import { mergeBlockers, latestReview, parseCloses, commitMessage, REQUIRED_CHECK
 
 const head = 'a'.repeat(40);
 const green = REQUIRED_CHECKS.map((name) => ({ name, status: 'completed', conclusion: 'success' }));
-const review = (verdict, sha = head, who = { author_association: 'OWNER' }, at = '2026-11-26T10:00:00Z') => ({ body: `${REVIEW_HEADING}\nVerdict: ${verdict}   ·   Important: 0\nReviewed commit: ${sha}\n`, created_at: at, ...who });
+const review = (verdict, sha = head, who = { author_association: 'OWNER' }, at = '2026-11-26T10:00:00Z', extra = '') => ({ body: `${REVIEW_HEADING}\nVerdict: ${verdict}   ·   Important: 0\nReviewed commit: ${sha}\n${extra}`, created_at: at, ...who });
 const body = '## Plan\nPlan file: compass/plans/REQ-035-x.md\n- Files: src/a.jsx\n- Steps: change it\n- Risks: none known, covered by TC-035\n- Proof: TC-035\n';
 const plan = { 'compass/plans/REQ-035-x.md': '# Plan\n## Files\n- src/a.jsx\n## Steps\n1. do\n## Risks\n- low\n## Proof\n- TC-035\n' };
 const ok = { checkRuns: green, comments: [review('APPROVE')], files: [{ filename: 'src/a.jsx', status: 'modified' }], labels: [], headSha: head, body, planTexts: plan };
@@ -34,6 +34,22 @@ test('TC-028: firestore.rules, a missing plan file and an unlabelled bug fix nee
   assert.deepEqual(mergeBlockers({ ...ok, files: [...ok.files, { filename: 'firestore.rules', status: 'modified' }], labels: ['human-approved'] }), []);
   assert.ok(mergeBlockers({ ...ok, planTexts: {} }).some((b) => /plan file/.test(b)));
   assert.ok(mergeBlockers({ ...ok, bugIssues: [27] }).some((b) => /#27 is a bug/.test(b)));
+});
+
+test('TC-028: protected paths and deletions need the human-approved label (the Owner\'s OK in chat)', () => {
+  const withFiles = (extra, labels = []) => mergeBlockers({ ...ok, files: [...ok.files, extra], labels });
+  assert.ok(withFiles({ filename: '.github/workflows/ci.yml', status: 'modified' }).some((b) => /protected path/.test(b)));
+  assert.ok(withFiles({ filename: 'compass/merge-pr.mjs', status: 'modified' }).some((b) => /protected path/.test(b)));
+  assert.ok(withFiles({ filename: 'src/old.jsx', status: 'removed' }).some((b) => /is deleted/.test(b)));
+  assert.deepEqual(withFiles({ filename: '.github/workflows/ci.yml', status: 'modified' }, ['human-approved']), []);
+  assert.deepEqual(withFiles({ filename: 'src/old.jsx', status: 'removed' }, ['human-approved']), []);
+});
+
+test('TC-028: a bug fix merges only when the APPROVE review reports the test-first run failing', () => {
+  const bug = (extra) => mergeBlockers({ ...ok, labels: ['bug'], comments: [review('APPROVE', head, undefined, undefined, extra)] });
+  assert.ok(bug('').some((b) => /Test-first run/.test(b)));
+  assert.ok(bug('Test-first run: not run (CI reviewer) — needs an in-session reviewer\n').some((b) => /Test-first run/.test(b)));
+  assert.deepEqual(bug('Test-first run: tests/e2e/smoke.spec.js "#41 …" fails at 1234567 (before the fix)\n'), []);
 });
 
 test('TC-028: closes links and the squash message keep the traceability', () => {

@@ -43,12 +43,14 @@ test('TC-026: an automated test case must point to a file that carries its TC id
     'tests/e2e/b.spec.js': "test('TC-0010 other', …)",
     'tests/e2e/c.spec.js': "// TC-001 is only mentioned in a comment\ntest('something else', …)",
     'tests/e2e/d.spec.js': "test.describe('x', () => { test(`TC-006/TC-001 shared`, …) })",
+    'tests/e2e/e.spec.js': "test.skip('TC-001 not ready', …); test.fixme('TC-001 later', …)",
   };
   const r = (t) => testFileProblems(mini([], [t]), (f) => files[f] ?? null);
   assert.deepEqual(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/a.spec.js' }), []);
   assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/b.spec.js' })[0], /no test titled with TC-001/);
   assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/c.spec.js' })[0], /no test titled with TC-001/, 'a comment does not count');
   assert.deepEqual(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/d.spec.js' }), []);
+  assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/e.spec.js' })[0], /no test titled/, 'skipped tests do not count');
   assert.match(r({ id: 'TC-001', type: 'automated', file: 'tests/e2e/missing.spec.js' })[0], /missing/);
   assert.match(r({ id: 'TC-001', type: 'automated' })[0], /names no file/);
   assert.deepEqual(r({ id: 'TC-002', type: 'manual' }), []);

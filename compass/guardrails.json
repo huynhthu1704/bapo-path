@@ -32,7 +32,6 @@
   ],
   "maxFilesPerChange": 12,
   "maxLinesPerFile": 600,
-  "requireRequirementReference": true,
   "requireHumanApprovalFor": [
     "delete",
     "protected-path",

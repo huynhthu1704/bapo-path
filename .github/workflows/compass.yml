@@ -46,7 +46,7 @@ jobs:
       # first. Like the guardrails, these run main's copy, so a PR cannot weaken the check that judges it; the PR's own
       # copy only runs (with a notice) while main has none.
       - name: Plan file and test-first checks
-        if: github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request'
         run: |
           for check in plan-file test-first; do
             script="$RUNNER_TEMP/base/compass/$check.mjs"

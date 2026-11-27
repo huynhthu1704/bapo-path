@@ -1,5 +1,6 @@
 // REQ-032: a bug fix starts with a commit that only adds a failing test; later commits must not edit that test.
-// CI (npm test, pull_request event): runs when the PR carries the "bug" label; otherwise it skips.
+// CI (compass.yml, pull_request event, main's copy of this script): runs when the PR carries the "bug" label; otherwise
+// it skips. `npm test` runs it too, but without --bug it skips locally: use `npm run test:first`.
 // Locally: node compass/test-first.mjs [baseRef] --bug   (default base origin/main)
 // Checks: ≥ 2 commits · the first commit only touches tests/ (and its plan file in compass/plans/) and adds or changes a test · later commits do
 // not touch those test files (unless the PR has the human-approved label) · the unit tests of the first commit

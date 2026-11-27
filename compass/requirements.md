@@ -230,7 +230,7 @@ Intent: [compass/intent/2026-11-26-compass-framework.md](../compass/intent/2026-
 Design: none: process change, no UI
 
 - Given a pull request · When it is ready to merge · Then a fresh reviewer has posted '## Independent review (Claude)' with a verdict and the reviewed commit, as described in compass/REVIEW.md
-- Given node compass/merge-pr.mjs <n> · When CI is not green, the latest trusted review is not APPROVE for the head commit, or firestore.rules changed without human-approved · Then it refuses to merge and says why
+- Given node compass/merge-pr.mjs <n> · When CI is not green, the latest trusted review is not APPROVE for the head commit, a bug fix's review has no Test-first run that failed, or a protected path, firestore.rules or a deletion has no human-approved label · Then it refuses to merge and says why
 
 ## REQ-029 — Capture the business need as an intent before requirements
 

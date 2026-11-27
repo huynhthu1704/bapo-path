@@ -104,7 +104,7 @@ The full Firestore layout and access rules are at the top of `src/data/promptApi
 ## How we work
 
 The project follows an AI-native workflow: requirements as issues with Given/When/Then criteria, tests named after them,
-AI agents doing the build and first review, and people approving every merge and release.
+AI agents doing the build, an independent AI review and the merge, and the Owner deciding scope, risky changes and releases.
 
 - **[docs/WORKFLOW.md](docs/WORKFLOW.md)**: the working flow for one engineer and for a team, the gates, and the one-time GitHub setup
 - **[CLAUDE.md](CLAUDE.md)**: instructions every AI agent session follows

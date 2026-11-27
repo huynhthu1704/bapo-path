@@ -222,7 +222,7 @@ export function testFileProblems(spec, readFile) {
     for (const file of t.file.split(/\s*\+\s*/)) {
       const text = readFile(file);
       if (text == null) problems.push(`${t.id} points to missing ${file}`);
-      else if (file !== 'tests/rules.test.mjs' && !new RegExp(`\\btest(?:\\.\\w+)?\\(\\s*['"\`][^'"\`\\n]*\\b${t.id}(?!\\d)`).test(text)) problems.push(`${file} has no test titled with ${t.id}`);
+      else if (file !== 'tests/rules.test.mjs' && !new RegExp(`\\btest(?:\\.(?!skip|fixme|todo)\\w+)?\\(\\s*['"\`][^'"\`\\n]*\\b${t.id}(?!\\d)`).test(text)) problems.push(`${file} has no test titled with ${t.id}`);
     }
   }
   return problems;

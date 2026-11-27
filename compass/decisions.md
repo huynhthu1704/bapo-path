@@ -68,9 +68,9 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 
 **Context.** travel-map lets the agent merge once CI is green and the independent review says APPROVE. The Owner chose the same for BAPO Path in chat on 2026-11-26 ("please let the agent merge"), replacing the earlier rule that the Owner merges every PR.
 
-**Decision.** After CI is green and a fresh reviewer posts APPROVE for the head commit, the author agent squash-merges with node compass/merge-pr.mjs <n> and then reports to the Owner. PRs listed under "What a person still decides" in compass/REVIEW.md (protected paths, firestore.rules, deletions, dependencies, learner data, sign-in or roles) still wait for the Owner, and CHANGES NEEDED is never merged.
+**Decision.** After CI is green and a fresh reviewer posts APPROVE for the head commit, the author agent squash-merges with node compass/merge-pr.mjs <n> and then reports to the Owner. PRs listed under "What a person still decides" in compass/REVIEW.md (protected paths, firestore.rules, deletions, dependencies, learner data, sign-in or roles) need the Owner's explicit OK in chat first; the agent quotes it in a PR comment, adds the human-approved label and then merges (confirmed by the Owner on 2026-11-26). CHANGES NEEDED is never merged.
 
-**Consequences.** The Owner is told about changes after the merge and rolls flags out as before. Agents open PRs as ready for review (a draft cannot be merged). A session without an authenticated gh CLI checks the same conditions by hand and merges with the GitHub tool pinned to the reviewed head commit.
+**Consequences.** The Owner is told about changes after the merge and rolls flags out as before. Agents open PRs as ready for review (a draft cannot be merged). merge-pr refuses protected paths, rules changes and deletions without the label, and bug fixes without a reviewer's test-first run. The label cannot prove the Owner said yes: agents add it only after an explicit OK in chat. A session without an authenticated gh CLI checks the same conditions by hand and merges with the GitHub tool pinned to the reviewed head commit.
 
 ## ADR-007 — Compass checks run as a separate CI workflow; existing job names stay
 

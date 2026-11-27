@@ -15,9 +15,10 @@ description: Use when the user reports something broken on the site. Reproduce-f
 4. Find the cause and write it in the issue in one or two plain sentences.
 5. Fix it with the smallest change, in later commits that **do not edit the failing test**. Look for the same mistake
    elsewhere (for example, other `href="#…"` anchors after bug #27).
-6. Run `npm test` and `npm run verify`, then follow the `ship` skill. The PR gets label `bug` and says `Fixes #<issue>`.
+6. Run `npm test`, `npm run test:first` and `npm run verify`, then follow the `ship` skill. The independent review must be
+   an in-session reviewer that runs the failing test at the first commit (`Test-first run:` line, compass/REVIEW.md). The PR gets label `bug` and says `Fixes #<issue>`.
    If the same kind of bug happened before, add a line to `CLAUDE.md → Lessons learned`.
 
 ## Enforced by
-- `compass/test-first.mjs` (run by `npm test` in CI on PRs labelled `bug`) and `compass/merge-pr.mjs` (a fix for a bug
+- `compass/test-first.mjs` (`npm run test:first` locally; in CI `compass.yml` runs it on PRs labelled `bug`) and `compass/merge-pr.mjs` (a fix for a bug
   issue needs the `bug` label).

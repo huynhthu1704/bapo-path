@@ -10,6 +10,7 @@
     "dev:demo": "VITE_LOCAL_MODE=1 vite",
     "check:prompts": "node scripts/check-prompts.mjs",
     "test": "node --test tests/compass/*.test.mjs && node compass/test-first.mjs",
+    "test:first": "node compass/test-first.mjs origin/main --bug",
     "check:spec": "node compass/check-spec.mjs",
     "test:rules": "node --test tests/rules.test.mjs",
     "test:rules:emulator": "npx -y firebase-tools@15 emulators:exec --only firestore --project demo-bapo \"npm run test:rules\"",
