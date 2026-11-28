@@ -363,6 +363,8 @@ textarea.mono { font-size: 13.5px; line-height: 21px; }
 .tax-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tax-row .input { height: 40px; width: auto; min-width: 160px; }
 .tax-row .input.grow { flex: 1; }
+/* #77: same-width phase label so the name and description boxes line up on every row */
+.tax-row .phase-chip { flex: none; width: 104px; }
 .tax-block { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .tax-block:last-of-type { border-bottom: 0; }
 .sub-pill { display: inline-flex; align-items: center; gap: 2px; background: var(--bg); border-radius: 999px; padding: 4px 6px 4px 12px; }
