@@ -6,7 +6,8 @@ Intent: the bug issue · Design: no new design; the boxes simply line up as a co
 ## Files
 - tests/e2e/taxonomy-alignment.spec.js — failing test: on desktop every phase name box (and description box) starts at
   the same x position; at 375 px the page has no horizontal scroll
-- src/styles.css — one rule: the phase label inside `.tax-row` gets a fixed width so the boxes after it line up
+- tests/e2e/taxonomy-labels.spec.js — a renamed, longer phase label is not cut off (added after review)
+- src/styles.css — one rule: the phase label inside `.tax-row` gets a minimum width so the boxes after it line up
 
 ## Steps
 1. Commit the failing test and this plan.
@@ -15,7 +16,8 @@ Intent: the bug issue · Design: no new design; the boxes simply line up as a co
 
 ## Risks
 - Only `.tax-row .phase-chip` changes; phase labels elsewhere (library, cards) keep their natural width.
-- A renamed phase does not change the label (the label shows the design-system name), so the width stays enough.
+- The label shows the name saved on this page, so the Owner can make it longer. Use `min-width` (not a fixed width):
+  default names line up, and a longer name widens its own label instead of being cut off (second test file).
 
 ## Proof
 - `npx playwright test -g "#77"` fails before the fix and passes after; `npm run verify`; screenshots.
