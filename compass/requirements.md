@@ -42,6 +42,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-037 | Every feature behind its own feature flag | — | Must | Done | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Done | TC-038 |
 | REQ-039 | Admin Overview of what needs attention | — | Should | Done | TC-039 |
+| REQ-040 | Saved terms need sign-in | — | Should | Approved | TC-040 |
 
 ## REQ-001 — Browse prompts by phase or category
 
@@ -369,3 +370,17 @@ Design: [compass/design/2026-11-27-admin-redesign-and-flags.md](../compass/desig
 - Given prompts waiting for review, new feedback or unreleased features · When I open Admin → Overview · Then each is a count card that links to its page
 - Given my role · When I open Admin → Overview · Then I see only the cards for sections my role can open
 - Given nothing is pending · When I open Admin → Overview · Then I see "Nothing to do right now"
+
+## REQ-040 — Saved terms need sign-in
+
+As a visitor who is not signed in I want the Saved page to ask me to sign in, so that I know my saved terms live in my account and are kept on every device.
+
+Issue: #89
+
+Intent: [compass/intent/2026-11-28-save-terms-needs-sign-in.md](../compass/intent/2026-11-28-save-terms-needs-sign-in.md)
+
+Design: [compass/design/2026-11-28-save-terms-needs-sign-in.md](../compass/design/2026-11-28-save-terms-needs-sign-in.md)
+
+- Given the Google-only sign-in flag is on and I am not signed in · When I open Saved · Then I see "Sign in to see your saved terms" with a Continue with Google button, and no list or "Practise saved terms" button
+- Given the Google-only sign-in flag is on and I am not signed in · When I sign in from the Saved page · Then I stay on Saved and see my saved terms
+- Given the Google-only sign-in flag is off, or I am signed in · When I open Saved · Then the page works as before

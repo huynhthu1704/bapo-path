@@ -88,3 +88,38 @@ test('#45 the Owner can release Google-only sign-in from the Features panel', as
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.getByLabel('Full name')).toHaveCount(0);
 });
+
+// REQ-040 (#89): with Google-only sign-in on, the Saved page asks a visitor who is not signed in to sign in.
+test('TC-040a Saved asks a visitor who is not signed in to sign in, and shows no list @mobile', async ({ page }) => {
+  const noErrors = failOnPageErrors(page);
+  await page.goto('#/home');
+  await page.evaluate(() => localStorage.setItem('bapo-path-v1', JSON.stringify({ onboarded: true, saved: ['it-api'] })));
+  await page.goto(withFlag('/saved'));
+  await page.reload();
+  const main = page.getByRole('main');
+  await expect(main.getByText('Sign in to see your saved terms')).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Practise saved terms' })).toHaveCount(0);
+  await expect(main.getByText('No saved terms yet')).toHaveCount(0);
+  await expect(main.getByRole('link', { name: /API/ })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+  noErrors();
+});
+
+test('TC-040b after signing in from Saved, I stay on Saved and see my saved terms', async ({ page }) => {
+  await page.goto('#/home');
+  await page.evaluate(() => localStorage.setItem('bapo-path-v1', JSON.stringify({ onboarded: true, saved: ['it-api'] })));
+  await page.goto(withFlag('/saved'));
+  await page.reload();
+  await page.getByRole('main').getByRole('button', { name: 'Continue with Google' }).click();
+  await expect(page).toHaveURL(/#\/saved(\?|$)/);
+  await expect(page.getByText('Sign in to see your saved terms')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Practise saved terms' })).toBeVisible();
+  await expect(page.getByText('1 term you bookmarked', { exact: false })).toBeVisible();
+});
+
+test('TC-040c with the flag off, Saved works as before without signing in', async ({ page }) => {
+  await page.goto('#/saved');
+  await expect(page.getByText('No saved terms yet')).toBeVisible();
+  await expect(page.getByText('Sign in to see your saved terms')).toHaveCount(0);
+});

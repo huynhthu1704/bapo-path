@@ -709,6 +709,22 @@
         "Given nothing is pending\nWhen I open Admin → Overview\nThen I see \"Nothing to do right now\""
       ],
       "issue": 60
+    },
+    {
+      "id": "REQ-040",
+      "title": "Saved terms need sign-in",
+      "story": "As a visitor who is not signed in I want the Saved page to ask me to sign in, so that I know my saved terms live in my account and are kept on every device.",
+      "priority": "Should",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-28",
+      "intent": "compass/intent/2026-11-28-save-terms-needs-sign-in.md",
+      "design": "compass/design/2026-11-28-save-terms-needs-sign-in.md",
+      "ac": [
+        "Given the Google-only sign-in flag is on and I am not signed in\nWhen I open Saved\nThen I see \"Sign in to see your saved terms\" with a Continue with Google button, and no list or \"Practise saved terms\" button",
+        "Given the Google-only sign-in flag is on and I am not signed in\nWhen I sign in from the Saved page\nThen I stay on Saved and see my saved terms",
+        "Given the Google-only sign-in flag is off, or I am signed in\nWhen I open Saved\nThen the page works as before"
+      ],
+      "issue": 89
     }
   ],
   "tests": [
@@ -1097,6 +1113,16 @@
       "type": "automated",
       "status": "Passing",
       "file": "tests/e2e/admin-overview.spec.js"
+    },
+    {
+      "id": "TC-040",
+      "title": "Saved terms need sign-in",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "type": "automated",
+      "status": "Not run",
+      "file": "tests/e2e/sign-in.spec.js"
     }
   ]
 }
