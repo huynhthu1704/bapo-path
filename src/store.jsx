@@ -109,6 +109,19 @@ const readDemoSignedIn = () => { try { return localStorage.getItem(DEMO_SIGNED_K
 // ---------- context ----------
 const Ctx = createContext(null);
 
+// #93: a read that fails (no connection, or blocked by the browser) is tried again after these waits before the
+// site gives up. Stops early when the person signs out or another account signs in (`stale`).
+const RETRY_MS = [1000, 3000, 8000];
+async function retry(read, stale) {
+  for (let i = 0; ; i++) {
+    try { return await read(); } catch (e) {
+      if (i >= RETRY_MS.length || stale()) throw e;
+      await new Promise((r) => setTimeout(r, RETRY_MS[i]));
+      if (stale()) throw e;
+    }
+  }
+}
+
 export function StoreProvider({ children }) {
   const [state, setState] = useState(load);
   const [user, setUser] = useState(null); const [admin, setAdmin] = useState(false); const [sync, setSync] = useState('off');
@@ -133,10 +146,13 @@ export function StoreProvider({ children }) {
     if (!u) { setSync('off'); return; }
     setSync('loading');
     touchDirectory(u).catch(() => {}); // lets the Owner find this person on the Staff page
+    // #93: the role and the progress are loaded and applied separately, so a failed progress read does not take
+    // the Admin menu away; each read is tried again a few times before the site gives up.
+    retry(() => Promise.all([isAdmin(u.uid), getStaffRole(u.uid)]), stale)
+      .then(([adm, role]) => { if (!stale()) { setAdmin(adm); setStaffRole(role); } }, (e) => console.warn(e));
     try {
-      const [cloud, adm, role] = await track(Promise.all([loadProgress(u.uid), isAdmin(u.uid), getStaffRole(u.uid)]));
+      const cloud = await track(retry(() => loadProgress(u.uid), stale));
       if (stale()) return; // signed out (or another account signed in) while this was loading
-      setAdmin(adm); setStaffRole(role);
       setState((local) => {
         const c = cloud && cloud.progress;
         const useCloud = c && (c.xp > local.xp || !local.onboarded);

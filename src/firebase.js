@@ -52,7 +52,8 @@ export const signInErrorText = (e) => ({
 }[e?.code || e?.message] ?? 'Google sign-in failed. Please try again.');
 export const logOut = () => (enabled ? signOut(auth) : Promise.resolve());
 export const onUser = (cb) => { if (!enabled) { cb(null); return () => {}; } return onAuthStateChanged(auth, cb); };
-export const isAdmin = async (uid) => { try { return (await getDoc(doc(db, 'admins', uid))).exists(); } catch (e) { return false; } };
+// A failed read throws (#93): the store tries again instead of treating the Owner as a learner.
+export const isAdmin = async (uid) => (await getDoc(doc(db, 'admins', uid))).exists();
 
 // ---------- knowledge base ----------
 // Firestore cannot store arrays inside arrays, so domain processes are stored as {name, steps} objects.

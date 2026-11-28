@@ -235,7 +235,8 @@ export async function saveTaxonomy(t, me, what = 'Taxonomy updated') {
 export const touchDirectory = (user) => db.set(`directory/${user.uid}`, { name: user.displayName || '', email: user.email || '', photo: user.photoURL || null, lastSeen: now() }, true);
 export const listDirectory = () => db.list('directory');
 export const listStaff = () => db.list('staff');
-export const getStaffRole = async (uid) => { try { const s = await db.get(`staff/${uid}`); return s ? s.role : null; } catch (e) { return null; } };
+// A failed read throws (#93): the store tries again instead of treating staff as learners.
+export const getStaffRole = async (uid) => { const s = await db.get(`staff/${uid}`); return s ? s.role : null; };
 export async function setStaffRole(target, role, me) {
   if (role) await db.set(`staff/${target.uid}`, { role, name: target.name || '', email: target.email || '', by: who(me), at: now() });
   else await db.del(`staff/${target.uid}`);
