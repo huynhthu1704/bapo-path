@@ -42,7 +42,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-037 | Every feature behind its own feature flag | — | Must | Done | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Done | TC-038 |
 | REQ-039 | Admin Overview of what needs attention | — | Should | Done | TC-039 |
-| REQ-040 | Glossary menu item opens Learn IT Vocab | — | Must | Done | TC-040 |
+| REQ-040 | Glossary menu item opens Learn IT Vocab | — | Must | In build | TC-040 |
 
 ## REQ-001 — Browse prompts by phase or category
 
@@ -381,7 +381,7 @@ Intent: [compass/intent/2026-11-28-glossary-to-learn-it-vocab.md](../compass/int
 
 Design: [compass/design/2026-11-28-glossary-to-learn-it-vocab.md](../compass/design/2026-11-28-glossary-to-learn-it-vocab.md)
 
-- Given I am on any page · When I click Glossary in the side menu · Then https://huynhthu1704.github.io/learn-it-vocab/#home opens in a new tab and BAPO Path stays open
+- Given I am on any page · When I click Glossary in the side menu · Then https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba (the BA / PO / PM word list) opens in a new tab and BAPO Path stays open
 - Given a 375 px screen · When I tap Glossary in the bottom bar · Then the same address opens in a new tab, and nothing scrolls sideways
 - Given a screen reader · When it reads the Glossary item · Then it says the link opens in a new tab
 - Given an old link to #/general · When I open it · Then I still see the in-site Glossary page

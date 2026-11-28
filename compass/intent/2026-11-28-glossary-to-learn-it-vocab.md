@@ -14,6 +14,10 @@ Owner chose: the Glossary item in the side menu and the phone bottom bar; open i
 merge** (no feature flag). Asked about the `#/general` page, the Owner chose to keep it as it is, because it is the only
 place that lists the in-site Workplace and Software engineering glossaries.
 
+Follow-up on 2026-11-28, after the first version opened the site's home page: "make the link to BA/PO/PM". The menu
+now opens Learn IT Vocab on its BA / PO / PM word list (`#home?role=ba`), the same address as the two Learn IT Vocab
+cards on the Glossary page.
+
 ## Why
 The IT vocabulary moved to the sister site Learn IT Vocab; the in-site Glossary page is now mostly a signpost to it.
 
@@ -26,13 +30,12 @@ The IT vocabulary moved to the sister site Learn IT Vocab; the in-site Glossary 
 
 ## Success measure
 In e2e: the Glossary item in the side menu and in the phone bottom bar is a link to
-`https://huynhthu1704.github.io/learn-it-vocab/#home` that opens in a new tab and says so to screen readers; `#/general`
+`https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba` (the BA / PO / PM word list) that opens in a new tab and says so to screen readers; `#/general`
 still shows the in-site Glossary page.
 
 ## Out of scope
 - Moving or deleting term pages, category glossaries or Saved terms.
 - Changing the Learn IT Vocab site.
-- The two existing "Learn IT Vocab" cards, which keep their `?role=ba` link.
 
 ## Requirements
 REQ-040 — Glossary menu item opens Learn IT Vocab (#83)

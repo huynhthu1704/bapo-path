@@ -7,7 +7,8 @@ Role=Learner" on page "01 · System Design" is updated in place, so every screen
 
 ## Approach
 No new screens. The Glossary item in the side menu and the phone bottom bar becomes a normal link to
-`https://huynhthu1704.github.io/learn-it-vocab/#home` that opens in a new tab (`target="_blank"`, `rel="noreferrer"`).
+`https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba` (Learn IT Vocab's BA / PO / PM word list, the Owner's
+follow-up on 2026-11-28) that opens in a new tab (`target="_blank"`, `rel="noreferrer"`).
 Same icon (Globe), same label and position. In the side menu a small grey `ExternalLink` icon (14 px, `#94A3B8`) sits
 at the right end of the row, as on the existing Learn IT Vocab cards. The item is never shown as "active", because it
 leaves the site. The `glossary` feature flag still hides the item when it is off. No new feature flag (ADR-010).
@@ -34,4 +35,4 @@ leaves the site. The `glossary` feature flag still hides the item when it is off
 
 ## Notes
 - Menus and buttons stay English.
-- The two Learn IT Vocab cards on the `#/general` page keep their `?role=ba` link (out of scope).
+- The menu and the two Learn IT Vocab cards on the `#/general` page use the same address (`LEARN_IT_VOCAB`).

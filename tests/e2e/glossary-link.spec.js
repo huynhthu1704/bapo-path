@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { failOnPageErrors, actAs, expectNoHorizontalOverflow } from './helpers.js';
 
-const VOCAB = 'https://huynhthu1704.github.io/learn-it-vocab/#home';
+const VOCAB = 'https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba'; // the BA / PO / PM word list, as on the Learn IT Vocab cards
 const NAME = 'Glossary (opens Learn IT Vocab in a new tab)';
 
 const onboarded = (page) => page.addInitScript(() => {
