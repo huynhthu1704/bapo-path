@@ -7,7 +7,7 @@ import { TERMS, LEVEL_NAMES } from '../data/terms.js';
 import { subscribe, track } from '../busy.js';
 import { SKILLS, TRACKS } from '../data/skills.js';
 import { can, useFlags, flagOfPath, termFlag } from '../data/flags.js';
-import { LEARN_IT_VOCAB_HOME, GLOSSARY_EXTERNAL_LABEL } from '../data/links.js';
+import { LEARN_IT_VOCAB, GLOSSARY_EXTERNAL_LABEL } from '../data/links.js';
 
 /** REQ-037: whether a feature (a key of FLAGS in src/data/flags.js) is on for this visitor. Staff always see it. */
 export function useFeature(key) {
@@ -125,7 +125,7 @@ function Sidebar({ open, onClose }) {
           {items.map(([to, label, icon]) => (
             <Fragment key={to}>
               {to === '/general'
-                ? <a href={LEARN_IT_VOCAB_HOME} target="_blank" rel="noreferrer" className="nav-item" aria-label={GLOSSARY_EXTERNAL_LABEL}><Icon name={icon} size={20} />{label}<Icon name="ExternalLink" size={14} color="#94A3B8" style={{ marginLeft: 'auto' }} /></a>
+                ? <a href={LEARN_IT_VOCAB} target="_blank" rel="noreferrer" className="nav-item" aria-label={GLOSSARY_EXTERNAL_LABEL}><Icon name={icon} size={20} />{label}<Icon name="ExternalLink" size={14} color="#94A3B8" style={{ marginLeft: 'auto' }} /></a>
                 : <NavLink to={to} className={({ isActive }) => `nav-item ${isActive || (to === '/prompts' && PW_PATHS.test(location.hash)) ? 'active' : ''}`}><Icon name={icon} size={20} />{label}</NavLink>}
               {/* REQ-038: one Admin entry for staff, right under Home (opens the Admin area) */}
               {to === '/home' && role && <NavLink to="/admin" className={() => `nav-item ${/^#\/admin(\/|$)/.test(location.hash) ? 'active' : ''}`}><Icon name="Shield" size={20} />Admin</NavLink>}
@@ -198,7 +198,7 @@ function MobileNav() {
     <nav className="mobile-nav">
       {[['/home', 'Home', 'Home'], ['/roadmap', 'Roadmap', 'Route'], ['/general', 'Glossary', 'Globe'], ['/practice', 'Practice', 'Zap'], ['/profile', 'Me', 'User']].filter(([to]) => onPath(to)).map(([to, l, i]) => (
         to === '/general' // REQ-040: the Glossary tab opens Learn IT Vocab in a new tab
-          ? <a key={to} href={LEARN_IT_VOCAB_HOME} target="_blank" rel="noreferrer" aria-label={GLOSSARY_EXTERNAL_LABEL}><Icon name={i} size={20} />{l}</a>
+          ? <a key={to} href={LEARN_IT_VOCAB} target="_blank" rel="noreferrer" aria-label={GLOSSARY_EXTERNAL_LABEL}><Icon name={i} size={20} />{l}</a>
           : <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'active' : '')}><Icon name={i} size={20} />{l}</NavLink>
       ))}
     </nav>
