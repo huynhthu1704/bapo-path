@@ -116,6 +116,8 @@ export function StoreProvider({ children }) {
   const [demoSignedIn, setDemoSignedIn] = useState(readDemoSignedIn);
   const [askSignIn, setAskSignIn] = useState(false);
   const ready = useRef(false);
+  // #84: counts sign-in changes. A cloud load that finishes after a newer change (such as signing out) is ignored.
+  const authRun = useRef(0);
   // REQ-035: with the googleOnly flag on, a visitor who is not signed in can look around but nothing is saved.
   // A save opens the "Sign in to save" prompt; the changes wait in `pending` and are applied after sign-in.
   const pending = useRef([]);
@@ -126,12 +128,14 @@ export function StoreProvider({ children }) {
 
   // Google account: on sign-in, merge cloud progress with this browser, then keep the cloud copy up to date.
   useEffect(() => onUser(async (u) => {
+    const run = ++authRun.current; const stale = () => run !== authRun.current;
     ready.current = false; setUser(u); setAdmin(false); setStaffRole(null);
     if (!u) { setSync('off'); return; }
     setSync('loading');
     touchDirectory(u).catch(() => {}); // lets the Owner find this person on the Staff page
     try {
       const [cloud, adm, role] = await track(Promise.all([loadProgress(u.uid), isAdmin(u.uid), getStaffRole(u.uid)]));
+      if (stale()) return; // signed out (or another account signed in) while this was loading
       setAdmin(adm); setStaffRole(role);
       setState((local) => {
         const c = cloud && cloud.progress;
@@ -141,7 +145,7 @@ export function StoreProvider({ children }) {
       });
       applyPending();
       ready.current = true; setSync('saved');
-    } catch (e) { console.warn(e); setSync('error'); applyPending(); } // keep the held change on this device rather than lose it
+    } catch (e) { if (stale()) return; console.warn(e); setSync('error'); applyPending(); } // keep the held change on this device rather than lose it
   }), []);
   useEffect(() => {
     if (!user || !ready.current) return;
@@ -195,10 +199,12 @@ export function StoreProvider({ children }) {
   }, [apply]); // eslint-disable-line react-hooks/exhaustive-deps
   // #81: signing out removes the person's learning data from this device (their account copy is kept; signing in
   // again loads it). A change not yet synced is saved first; syncing stops before the reset so the account copy is
-  // never overwritten with the empty state.
+  // never overwritten with the empty state. #84: the last save shows the loading bar; signOut resolves to
+  // { unsaved: true } when it failed (the sign-out still goes ahead), and rejects when signing out itself fails.
   const latest = useRef(state); latest.current = state;
   const userRef = useRef(user); userRef.current = user;
   const signOut = useCallback(async () => {
+    let unsaved = false;
     if (LOCAL_MODE) {
       try { localStorage.removeItem(DEMO_SIGNED_KEY); } catch (e) { /* ignore */ }
       setDemoSignedIn(false);
@@ -206,13 +212,16 @@ export function StoreProvider({ children }) {
       const u = userRef.current; const wasReady = ready.current;
       if (u && wasReady) {
         const { toasts, lastResult, ...progress } = latest.current;
-        await saveProgress(u.uid, { name: progress.name, email: u.email, photo: u.photoURL || null }, progress).catch(() => {});
+        await track(saveProgress(u.uid, { name: progress.name, email: u.email, photo: u.photoURL || null }, progress))
+          .catch((e) => { console.warn(e); unsaved = true; setSync('error'); });
       }
       ready.current = false;
-      try { await logOut(); } catch (e) { ready.current = wasReady; throw e; }
+      try { await track(logOut()); } catch (e) { ready.current = wasReady; throw e; }
+      authRun.current += 1; // a sign-in still loading must not bring the cloud copy back after the reset
     }
     pending.current = []; setUnsavedResult(null); setAskSignIn(false);
     setState(fresh());
+    return { unsaved };
   }, []);
   const cancelSignIn = useCallback(() => { pending.current = []; setAskSignIn(false); }, []);
 
