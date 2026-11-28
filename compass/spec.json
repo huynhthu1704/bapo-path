@@ -727,7 +727,7 @@
       "title": "Glossary menu item opens Learn IT Vocab",
       "story": "As a learner I want the Glossary in the menu to take me straight to Learn IT Vocab, so that I reach the full IT vocabulary in one click.",
       "priority": "Must",
-      "status": "In build",
+      "status": "Done",
       "source": "Requested by the Owner in chat on 2026-11-28",
       "intent": "compass/intent/2026-11-28-glossary-to-learn-it-vocab.md",
       "design": "compass/design/2026-11-28-glossary-to-learn-it-vocab.md",
@@ -1134,7 +1134,7 @@
         "REQ-040"
       ],
       "type": "automated",
-      "status": "Not run",
+      "status": "Passing",
       "file": "tests/e2e/glossary-link.spec.js"
     }
   ]

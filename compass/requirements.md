@@ -42,7 +42,7 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-037 | Every feature behind its own feature flag | — | Must | Done | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Done | TC-038 |
 | REQ-039 | Admin Overview of what needs attention | — | Should | Done | TC-039 |
-| REQ-040 | Glossary menu item opens Learn IT Vocab | — | Must | In build | TC-040 |
+| REQ-040 | Glossary menu item opens Learn IT Vocab | — | Must | Done | TC-040 |
 
 ## REQ-001 — Browse prompts by phase or category
 
