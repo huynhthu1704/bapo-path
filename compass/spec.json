@@ -715,7 +715,7 @@
       "title": "Saved terms need sign-in",
       "story": "As a visitor who is not signed in I want the Saved page to ask me to sign in, so that I know my saved terms live in my account and are kept on every device.",
       "priority": "Should",
-      "status": "In build",
+      "status": "Done",
       "source": "Requested by the Owner in chat on 2026-11-28",
       "intent": "compass/intent/2026-11-28-save-terms-needs-sign-in.md",
       "design": "compass/design/2026-11-28-save-terms-needs-sign-in.md",
@@ -1121,7 +1121,7 @@
         "REQ-040"
       ],
       "type": "automated",
-      "status": "Not run",
+      "status": "Passing",
       "file": "tests/e2e/sign-in.spec.js"
     }
   ]
