@@ -240,7 +240,7 @@ export function Saved() {
   const { s, signedIn, googleOnly } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState('all');
-  // REQ-040: with Google-only sign-in on, saved terms belong to an account; a visitor who is not signed in is asked to sign in.
+  // REQ-041: with Google-only sign-in on, saved terms belong to an account; a visitor who is not signed in is asked to sign in.
   if (googleOnly && !signedIn) return (
     <>
       <PageHead title="Saved terms" sub="Sign in to keep your saved terms in your account, on every device." />

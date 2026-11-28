@@ -13,6 +13,15 @@ export default function Profile() {
   const r = rankInfo(s.xp, s.track);
   const rewards = useFeature('rewards'); // REQ-037: rank and streak only while XP, rank and streak are on
   const [name, setName] = useState(s.name); const [edit, setEdit] = useState(false); const [confirm, setConfirm] = useState(false);
+  // #84: a failed sign-out, or a last change that could not be saved before signing out, is shown under the button
+  const [outMsg, setOutMsg] = useState(null);
+  const doSignOut = async () => {
+    setOutMsg(null);
+    try {
+      const r = await signOut();
+      if (r && r.unsaved) setOutMsg({ kind: 'status', text: 'Signed out. Your last change could not be saved to your account.' });
+    } catch (e) { setOutMsg({ kind: 'alert', text: 'Could not sign out. Check your connection and try again.' }); }
+  };
   const avg = s.attempts.length ? Math.round((s.attempts.reduce((t, x) => t + x.score / x.total, 0) / s.attempts.length) * 100) : 0;
   const week = Array.from({ length: 7 }, (_, i) => addDays(dayStr(), i - 6));
   const max = Math.max(50, ...week.map((d) => s.activity[d] || 0));
@@ -33,9 +42,10 @@ export default function Profile() {
         <IconBox name={user || demoIn ? 'Cloud' : 'CloudOff'} tone={user || demoIn ? 'success' : 'ink'} />
         <div className="col grow gap4" style={{ gap: 2 }}>
           <span className="label">{user ? `Signed in with Google · ${user.email}` : demoIn ? 'Signed in (demo mode)' : 'Not signed in'}</span>
+          {outMsg && <span className="caption c-danger" role={outMsg.kind}>{outMsg.text}</span>}
           <span className="caption muted">{user && (sync === 'loading' || sync === 'saving') && <Spinner size={12} />} {user ? ({ loading: 'Loading your cloud progress…', saving: 'Saving…', saved: 'Progress, job search and search history are synced to your account.', error: 'Could not reach the server — changes are kept on this device.' }[sync] || '') : demoIn ? 'Demo mode: progress is saved in this browser.' : googleOnly ? 'Sign in with Google to save your progress, saved terms and results.' : enabled ? 'Sign in to sync your progress across devices and unlock your private job tracker and library.' : 'Google sign-in is not switched on for this site yet — progress is saved in this browser.'}</span>
         </div>
-        {user || demoIn ? <button className="btn btn-secondary" onClick={signOut}><Icon name="LogOut" size={16} />Sign out</button>
+        {user || demoIn ? <button className="btn btn-secondary" onClick={doSignOut}><Icon name="LogOut" size={16} />Sign out</button>
           : <GoogleButton primary label="Sign in with Google" />}
       </div>
       <div className={`grid ${rewards ? 'g4' : 'g3'}`}>

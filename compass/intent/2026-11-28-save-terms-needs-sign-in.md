@@ -36,4 +36,4 @@ unchanged. All covered by e2e tests.
 - Prompt favourites in the Prompt Workbench.
 
 ## Requirements
-REQ-040 — Saved terms need sign-in (#89)
+REQ-041 — Saved terms need sign-in (#89)

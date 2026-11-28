@@ -18,7 +18,7 @@
 // Roles: Owner = admins/{uid} (created by hand). Reviewer can do everything an Editor can, plus
 // publish / return / unpublish / archive. Nobody but the Owner may publish their own submission.
 import {
-  doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit as qLimit, addDoc, writeBatch, increment,
+  doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs, query, where, orderBy, limit as qLimit, addDoc, writeBatch, increment,
 } from 'firebase/firestore';
 import { getDb, LOCAL_MODE } from '../firebase.js';
 
@@ -273,6 +273,15 @@ export const setFeedbackStatus = (id, status) => db.set(`prompt_feedback/${id}`,
 
 // ---------- settings / feature flags ----------
 export const getSettings = () => db.get('settings/site');
+/** #79: calls cb(settings) now and every time settings/site changes, so open pages follow the Owner's feature switches.
+ *  Live site: a Firestore listener. Demo mode: the browser's storage event, fired when another tab saves. Returns stop(). */
+export function watchSettings(cb) {
+  if (!LOCAL_MODE) return onSnapshot(ref('settings/site'), (s) => cb(s.exists() ? s.data() : null), () => {});
+  getSettings().then(cb).catch(() => {});
+  const onStorage = (e) => { if (e.key === null || e.key === LOCAL_KEY) getSettings().then(cb).catch(() => {}); };
+  window.addEventListener('storage', onStorage);
+  return () => window.removeEventListener('storage', onStorage);
+}
 export async function saveFlags(flags, me, what) {
   await db.set('settings/site', { flags, updatedAt: now(), updatedBy: who(me) }, true);
   log(me, 'flag', null, '', what);

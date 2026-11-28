@@ -42,7 +42,8 @@ _Generated from `spec.json` by `node compass/build-views.mjs`; do not edit by ha
 | REQ-037 | Every feature behind its own feature flag | — | Must | Done | TC-037 |
 | REQ-038 | Restructured sidebar and one admin area | — | Must | Done | TC-038 |
 | REQ-039 | Admin Overview of what needs attention | — | Should | Done | TC-039 |
-| REQ-040 | Saved terms need sign-in | — | Should | Done | TC-040 |
+| REQ-040 | Glossary menu item opens Learn IT Vocab | — | Must | Done | TC-040 |
+| REQ-041 | Saved terms need sign-in | — | Should | Done | TC-041 |
 
 ## REQ-001 — Browse prompts by phase or category
 
@@ -371,7 +372,22 @@ Design: [compass/design/2026-11-27-admin-redesign-and-flags.md](../compass/desig
 - Given my role · When I open Admin → Overview · Then I see only the cards for sections my role can open
 - Given nothing is pending · When I open Admin → Overview · Then I see "Nothing to do right now"
 
-## REQ-040 — Saved terms need sign-in
+## REQ-040 — Glossary menu item opens Learn IT Vocab
+
+As a learner I want the Glossary in the menu to take me straight to Learn IT Vocab, so that I reach the full IT vocabulary in one click.
+
+Issue: #83
+
+Intent: [compass/intent/2026-11-28-glossary-to-learn-it-vocab.md](../compass/intent/2026-11-28-glossary-to-learn-it-vocab.md)
+
+Design: [compass/design/2026-11-28-glossary-to-learn-it-vocab.md](../compass/design/2026-11-28-glossary-to-learn-it-vocab.md)
+
+- Given I am on any page · When I click Glossary in the side menu · Then https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba (the BA / PO / PM word list) opens in a new tab and BAPO Path stays open
+- Given a 375 px screen · When I tap Glossary in the bottom bar · Then the same address opens in a new tab, and nothing scrolls sideways
+- Given a screen reader · When it reads the Glossary item · Then it says the link opens in a new tab
+- Given an old link to #/general · When I open it · Then I still see the in-site Glossary page
+
+## REQ-041 — Saved terms need sign-in
 
 As a visitor who is not signed in I want the Saved page to ask me to sign in, so that I know my saved terms live in my account and are kept on every device.
 
