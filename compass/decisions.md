@@ -13,6 +13,7 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 | ADR-007 | 2026-11-26 | Compass checks run as a separate CI workflow; existing job names stay | Accepted | REQ-026, REQ-027 |
 | ADR-008 | 2026-11-27 | "PM" in the learning roadmap means Product Manager | Accepted | REQ-036 |
 | ADR-009 | 2026-11-27 | The restructured sidebar ships without a feature flag | Accepted | REQ-038 |
+| ADR-010 | 2026-11-28 | The Glossary menu link to Learn IT Vocab ships without a feature flag | Accepted | REQ-040 |
 
 ## ADR-001 — Static site on GitHub Pages with Firebase as the only backend
 
@@ -103,3 +104,13 @@ _Generated from `spec.json` → `decisions`. Add an ADR in the same PR whenever 
 **Decision.** The Owner decided in chat on 2026-11-27: "no need feature flag for new sidebar". The new sidebar and the single admin area replace the old ones for everyone on merge.
 
 **Consequences.** No staged roll-out for the new layout: e2e tests at desktop and 375 px must cover it before merge. Old admin links redirect. Features themselves still roll out through their own flags.
+
+## ADR-010 — The Glossary menu link to Learn IT Vocab ships without a feature flag
+
+**Status:** Accepted · **Date:** 2026-11-28 · **Requirements:** REQ-040
+
+**Context.** ADR-002 puts new user-facing features behind a default-off flag. REQ-040 changes where an existing menu item (Glossary) points; the item itself is still controlled by the glossary flag (REQ-037).
+
+**Decision.** The Owner decided in chat on 2026-11-28 to make it live for everyone on merge (answer "Live on merge" to the roll-out question).
+
+**Consequences.** No staged roll-out: e2e tests at desktop and 375 px cover the new link before merge. The #/general page stays, so old links keep working.

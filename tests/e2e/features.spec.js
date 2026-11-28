@@ -105,7 +105,8 @@ test('TC-037c features that are live today stay visible to everyone with no save
   const menu = page.locator('aside[aria-label="Main menu"]');
   for (const name of ['Skill Roadmap', 'Glossary', 'BABOK & PMBOK', 'Domain Knowledge', 'Practice', 'Saved', 'Story Mode',
     'Speed Round', 'Collection', 'Study Circle', 'My Job Search', 'My Library', 'Achievements', 'References']) {
-    await expect(menu.getByRole('link', { name, exact: true, includeHidden: true })).toBeAttached();
+    // REQ-040: the Glossary item opens Learn IT Vocab in a new tab, and its name says so
+    await expect(menu.getByRole('link', { name: name === 'Glossary' ? 'Glossary (opens Learn IT Vocab in a new tab)' : name, exact: true, includeHidden: true })).toBeAttached();
   }
   await expect(menu.getByRole('link', { name: 'Prompt Workbench', includeHidden: true })).toHaveCount(0); // still Owner and staff only
   await expect(page.getByText('Daily quests')).toBeVisible();
