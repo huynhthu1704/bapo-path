@@ -131,6 +131,18 @@
       "reqIds": [
         "REQ-038"
       ]
+    },
+    {
+      "id": "ADR-010",
+      "date": "2026-11-28",
+      "title": "The Glossary menu link to Learn IT Vocab ships without a feature flag",
+      "status": "Accepted",
+      "context": "ADR-002 puts new user-facing features behind a default-off flag. REQ-040 changes where an existing menu item (Glossary) points; the item itself is still controlled by the glossary flag (REQ-037).",
+      "decision": "The Owner decided in chat on 2026-11-28 to make it live for everyone on merge (answer \"Live on merge\" to the roll-out question).",
+      "consequences": "No staged roll-out: e2e tests at desktop and 375 px cover the new link before merge. The #/general page stays, so old links keep working.",
+      "reqIds": [
+        "REQ-040"
+      ]
     }
   ],
   "requirements": [
@@ -709,6 +721,23 @@
         "Given nothing is pending\nWhen I open Admin → Overview\nThen I see \"Nothing to do right now\""
       ],
       "issue": 60
+    },
+    {
+      "id": "REQ-040",
+      "title": "Glossary menu item opens Learn IT Vocab",
+      "story": "As a learner I want the Glossary in the menu to take me straight to Learn IT Vocab, so that I reach the full IT vocabulary in one click.",
+      "priority": "Must",
+      "status": "In build",
+      "source": "Requested by the Owner in chat on 2026-11-28",
+      "intent": "compass/intent/2026-11-28-glossary-to-learn-it-vocab.md",
+      "design": "compass/design/2026-11-28-glossary-to-learn-it-vocab.md",
+      "ac": [
+        "Given I am on any page\nWhen I click Glossary in the side menu\nThen https://huynhthu1704.github.io/learn-it-vocab/#home opens in a new tab and BAPO Path stays open",
+        "Given a 375 px screen\nWhen I tap Glossary in the bottom bar\nThen the same address opens in a new tab, and nothing scrolls sideways",
+        "Given a screen reader\nWhen it reads the Glossary item\nThen it says the link opens in a new tab",
+        "Given an old link to #/general\nWhen I open it\nThen I still see the in-site Glossary page"
+      ],
+      "issue": 83
     }
   ],
   "tests": [
@@ -1097,6 +1126,16 @@
       "type": "automated",
       "status": "Passing",
       "file": "tests/e2e/admin-overview.spec.js"
+    },
+    {
+      "id": "TC-040",
+      "title": "Glossary menu item opens Learn IT Vocab in a new tab",
+      "reqIds": [
+        "REQ-040"
+      ],
+      "type": "automated",
+      "status": "Not run",
+      "file": "tests/e2e/glossary-link.spec.js"
     }
   ]
 }
