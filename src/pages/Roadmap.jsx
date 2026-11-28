@@ -257,7 +257,7 @@ export function Challenge() {
             <div className="row gap8">{list.map((_, n) => { const r = results[n]; return <span key={n} className="mark" style={{ borderRadius: 99, background: r === true ? 'var(--success)' : r === false ? 'var(--danger)' : n === i ? 'var(--primary)' : 'var(--bg)', color: r === undefined && n !== i ? 'var(--ink-3)' : '#fff' }}>{r === true ? <Icon name="Check" size={16} /> : r === false ? <Icon name="X" size={16} /> : n + 1}</span>; })}</div>
           </div>
           <div className="card p24 bg-accent-soft" style={{ borderColor: 'var(--accent-soft)' }}><span className="overline c-accent">Rewards</span>
-            {[['Unlock', `Unlock ${LEVELS[level]?.name || 'the next'} level`], ['Star', '+300 XP'], ['Award', 'Badge: Beginner Graduate'], ['FileText', 'Certificate (coming in v2)']].map(([ic, t]) => <div key={t} className="row center gap10 label"><Icon name={ic} size={18} color="#D97706" />{t}</div>)}
+            {[['Unlock', `Unlock ${LEVELS[level]?.name || 'the next'} level`], ['Star', '+300 XP'], ...(Number(level) === 1 ? [['Award', 'Badge: Beginner Graduate']] : []), ['FileText', 'Certificate (coming in v2)']].map(([ic, t]) => <div key={t} className="row center gap10 label"><Icon name={ic} size={18} color="#D97706" />{t}</div>)}
           </div>
         </div>
       </div>
