@@ -40,7 +40,6 @@ h1, h2, h3, p { margin: 0; }
 .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; color: var(--ink-2); font-weight: 600; font-size: 14px; }
 .nav-item:hover { background: var(--bg); }
 .nav-item.active { background: var(--primary-soft); color: var(--primary); }
-.nav-item .nav-ext { margin-left: auto; color: #94A3B8; } /* REQ-040: opens another site in a new tab */
 .rank-card { margin-top: auto; background: var(--primary-soft); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 
 .row { display: flex; gap: 16px; align-items: flex-start; }

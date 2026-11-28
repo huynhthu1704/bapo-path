@@ -15,8 +15,6 @@ async function opensVocab(page, link) {
   await expect(link).toHaveAttribute('href', VOCAB);
   await expect(link).toHaveAttribute('target', '_blank');
   await expect(link).toHaveAttribute('rel', /noreferrer/);
-  // Do not load the real site in tests: answer the request with an empty page.
-  await page.context().route('https://huynhthu1704.github.io/**', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Learn IT Vocab</title>' }));
   const [tab] = await Promise.all([page.context().waitForEvent('page'), link.click()]);
   await tab.waitForLoadState();
   expect(tab.url()).toBe(VOCAB);
@@ -26,6 +24,8 @@ async function opensVocab(page, link) {
 
 test('TC-040 the Glossary menu item opens Learn IT Vocab in a new tab @mobile', async ({ page }) => {
   const noErrors = failOnPageErrors(page);
+  // Do not load the real site in tests: answer the request with an empty page.
+  await page.context().route('https://huynhthu1704.github.io/**', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Learn IT Vocab</title>' }));
   await actAs(page, 'learner');
   await onboarded(page);
   await page.goto('#/home');
