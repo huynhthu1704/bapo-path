@@ -193,10 +193,26 @@ export function StoreProvider({ children }) {
     applyPending();
     return DEMO_USER;
   }, [apply]); // eslint-disable-line react-hooks/exhaustive-deps
-  const signOut = useCallback(() => {
-    if (!LOCAL_MODE) return logOut();
-    try { localStorage.removeItem(DEMO_SIGNED_KEY); } catch (e) { /* ignore */ }
-    setDemoSignedIn(false); return Promise.resolve();
+  // #81: signing out removes the person's learning data from this device (their account copy is kept; signing in
+  // again loads it). A change not yet synced is saved first; syncing stops before the reset so the account copy is
+  // never overwritten with the empty state.
+  const latest = useRef(state); latest.current = state;
+  const userRef = useRef(user); userRef.current = user;
+  const signOut = useCallback(async () => {
+    if (LOCAL_MODE) {
+      try { localStorage.removeItem(DEMO_SIGNED_KEY); } catch (e) { /* ignore */ }
+      setDemoSignedIn(false);
+    } else {
+      const u = userRef.current; const wasReady = ready.current;
+      if (u && wasReady) {
+        const { toasts, lastResult, ...progress } = latest.current;
+        await saveProgress(u.uid, { name: progress.name, email: u.email, photo: u.photoURL || null }, progress).catch(() => {});
+      }
+      ready.current = false;
+      try { await logOut(); } catch (e) { ready.current = wasReady; throw e; }
+    }
+    pending.current = []; setUnsavedResult(null); setAskSignIn(false);
+    setState(fresh());
   }, []);
   const cancelSignIn = useCallback(() => { pending.current = []; setAskSignIn(false); }, []);
 
