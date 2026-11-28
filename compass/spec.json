@@ -732,7 +732,7 @@
       "intent": "compass/intent/2026-11-28-glossary-to-learn-it-vocab.md",
       "design": "compass/design/2026-11-28-glossary-to-learn-it-vocab.md",
       "ac": [
-        "Given I am on any page\nWhen I click Glossary in the side menu\nThen https://huynhthu1704.github.io/learn-it-vocab/#home opens in a new tab and BAPO Path stays open",
+        "Given I am on any page\nWhen I click Glossary in the side menu\nThen https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba (the BA / PO / PM word list) opens in a new tab and BAPO Path stays open",
         "Given a 375 px screen\nWhen I tap Glossary in the bottom bar\nThen the same address opens in a new tab, and nothing scrolls sideways",
         "Given a screen reader\nWhen it reads the Glossary item\nThen it says the link opens in a new tab",
         "Given an old link to #/general\nWhen I open it\nThen I still see the in-site Glossary page"

@@ -381,7 +381,7 @@ Intent: [compass/intent/2026-11-28-glossary-to-learn-it-vocab.md](../compass/int
 
 Design: [compass/design/2026-11-28-glossary-to-learn-it-vocab.md](../compass/design/2026-11-28-glossary-to-learn-it-vocab.md)
 
-- Given I am on any page · When I click Glossary in the side menu · Then https://huynhthu1704.github.io/learn-it-vocab/#home opens in a new tab and BAPO Path stays open
+- Given I am on any page · When I click Glossary in the side menu · Then https://huynhthu1704.github.io/learn-it-vocab/#home?role=ba (the BA / PO / PM word list) opens in a new tab and BAPO Path stays open
 - Given a 375 px screen · When I tap Glossary in the bottom bar · Then the same address opens in a new tab, and nothing scrolls sideways
 - Given a screen reader · When it reads the Glossary item · Then it says the link opens in a new tab
 - Given an old link to #/general · When I open it · Then I still see the in-site Glossary page
