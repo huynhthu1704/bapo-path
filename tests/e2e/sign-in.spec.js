@@ -88,3 +88,41 @@ test('#45 the Owner can release Google-only sign-in from the Features panel', as
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.getByLabel('Full name')).toHaveCount(0);
 });
+
+// REQ-041 (#89): with Google-only sign-in on, the Saved page asks a visitor who is not signed in to sign in.
+// A guest who finished the setup and bookmarked a term in this browser before the flag was on.
+const guest = (page, saved = []) => page.addInitScript((ids) => {
+  const cur = JSON.parse(localStorage.getItem('bapo-path-v1') || '{}');
+  localStorage.setItem('bapo-path-v1', JSON.stringify({ ...cur, onboarded: true, saved: cur.saved || ids }));
+}, saved);
+
+test('TC-041a Saved asks a visitor who is not signed in to sign in, and shows no list @mobile', async ({ page }) => {
+  const noErrors = failOnPageErrors(page);
+  await guest(page, ['it-api']);
+  await page.goto(withFlag('/saved'));
+  const main = page.getByRole('main');
+  await expect(main.getByText('Sign in to see your saved terms')).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Practise saved terms' })).toHaveCount(0);
+  await expect(main.getByText('No saved terms yet')).toHaveCount(0);
+  await expect(main.getByRole('link', { name: /API/ })).toHaveCount(0);
+  await expectNoHorizontalOverflow(page);
+  noErrors();
+});
+
+test('TC-041b after signing in from Saved, I stay on Saved and see my saved terms', async ({ page }) => {
+  await guest(page, ['it-api']);
+  await page.goto(withFlag('/saved'));
+  await page.getByRole('main').getByRole('button', { name: 'Continue with Google' }).click();
+  await expect(page).toHaveURL(/#\/saved(\?|$)/);
+  await expect(page.getByText('Sign in to see your saved terms')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Practise saved terms' })).toBeVisible();
+  await expect(page.getByText('1 term you bookmarked', { exact: false })).toBeVisible();
+});
+
+test('TC-041c with the flag off, Saved works as before without signing in', async ({ page }) => {
+  await guest(page);
+  await page.goto('#/saved');
+  await expect(page.getByText('No saved terms yet')).toBeVisible();
+  await expect(page.getByText('Sign in to see your saved terms')).toHaveCount(0);
+});

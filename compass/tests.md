@@ -43,3 +43,4 @@ _Generated from `spec.json`. Process tests: `npm test` (`tests/compass/`). UI te
 | TC-038 | Restructured sidebar and one admin area | REQ-038 | automated | Passing | tests/e2e/navigation.spec.js |
 | TC-039 | Admin Overview of what needs attention | REQ-039 | automated | Passing | tests/e2e/admin-overview.spec.js |
 | TC-040 | Glossary menu item opens Learn IT Vocab in a new tab | REQ-040 | automated | Passing | tests/e2e/glossary-link.spec.js |
+| TC-041 | Saved terms need sign-in | REQ-041 | automated | Passing | tests/e2e/sign-in.spec.js |

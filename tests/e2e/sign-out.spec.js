@@ -18,14 +18,14 @@ test('#81 signing out clears saved terms and progress from the device', async ({
   await expect(page.getByText('Not signed in')).toBeVisible();
 
   await page.goto('#/saved');
-  await expect(page.getByText('No saved terms yet')).toBeVisible();
+  await expect(page.getByText('Sign in to see your saved terms')).toBeVisible(); // REQ-041: signed out → sign-in card
   await expect(page.getByRole('banner')).toContainText('0 XP');
   let s = await stored(page);
   expect(s.saved).toEqual([]);
   expect(s.xp).toBe(0);
   expect(s.name || '').toBe('');
   await page.reload();
-  await expect(page.getByText('No saved terms yet')).toBeVisible();
+  await expect(page.getByText('Sign in to see your saved terms')).toBeVisible(); // REQ-041: signed out → sign-in card
   s = await stored(page);
   expect(s.saved).toEqual([]);
   noErrors();

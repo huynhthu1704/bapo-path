@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, LevelTag, FeatureLink, useFeatures } from '../components/ui.jsx';
+import { Icon, Tag, IconBox, Progress, Crumbs, PageHead, LevelTag, FeatureLink, GoogleButton, useFeatures } from '../components/ui.jsx';
 import { useStore } from '../store.jsx';
 import { CATEGORIES, CAT_BY_ID, TERMS, TERM_BY_ID, termsIn } from '../data/terms.js';
 import { DOMAINS, DOMAIN_BY_ID } from '../data/domains.js';
@@ -237,9 +237,21 @@ export function DomainDetail() {
 
 export function Saved() {
   const { on } = useFeatures();
-  const { s } = useStore();
+  const { s, signedIn, googleOnly } = useStore();
   const nav = useNavigate();
   const [f, setF] = useState('all');
+  // REQ-041: with Google-only sign-in on, saved terms belong to an account; a visitor who is not signed in is asked to sign in.
+  if (googleOnly && !signedIn) return (
+    <>
+      <PageHead title="Saved terms" sub="Sign in to keep your saved terms in your account, on every device." />
+      <div className="card p28" style={{ alignItems: 'center', textAlign: 'center', gap: 14 }}>
+        <IconBox name="Lock" tone="primary" size={64} iconSize={30} />
+        <span className="h2">Sign in to see your saved terms</span>
+        <span className="body muted" style={{ maxWidth: 520 }}>Saved terms belong to your Google account, so they are kept on every device. Sign in with Google to see and add them.</span>
+        <GoogleButton label="Continue with Google" primary />
+      </div>
+    </>
+  );
   const items = s.saved.map((id) => TERM_BY_ID[id]).filter(Boolean);
   const cats = [...new Set(items.map((t) => t.cat))];
   const list = items.filter((t) => f === 'all' || t.cat === f);
